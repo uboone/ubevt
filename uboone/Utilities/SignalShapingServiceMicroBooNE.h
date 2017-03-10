@@ -225,6 +225,8 @@ namespace util {
     double fTimeScaleFactor;
     bool   fStretchFullResponse;
     
+    DoubleVec fCalibResponseTOffset; // calibrated time offset to align U/V/Y Signals
+    
     DoubleVec fFieldRespAmpVec;
     DoubleVec2 fShapeTimeConst; ///< time constants for exponential shaping
     std::vector<int> fDeconvPol;         ///< switch for DeconvKernel normalization sign (+ -> max pos ADC, - -> max neg ADC). Entry 0,1,2 = U,V,Y plane settings

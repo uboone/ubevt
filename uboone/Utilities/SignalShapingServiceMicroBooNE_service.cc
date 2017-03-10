@@ -92,6 +92,8 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
   fTimeScaleParams               = pset.get<DoubleVec>("TimeScaleParams");
   fStretchFullResponse           = pset.get<bool>("StretchFullResponse");
   
+  fCalibResponseTOffset = pset.get< DoubleVec >("CalibResponseTOffset");
+  
   // Construct parameterized collection filter function.
   fGetFilterFromHisto = pset.get<bool>("GetFilterFromHisto");  
   fFilterWidthCorrectionFactor = pset.get<DoubleVec>("FilterWidthCorrectionFactor", DoubleVec() = {1.0, 1.0, 1.0});   
@@ -361,7 +363,7 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
 	  }
 
 	  tOffset *= f3DCorrectionVec[_vw]*fTimeScaleFactor;
-	  fFieldResponseTOffset[ktype].at(_vw) = (-tOffset)*1000.;
+	  fFieldResponseTOffset[ktype].at(_vw) = (-tOffset + fCalibResponseTOffset[_vw])*1000.;
 	  
 	  fin->Close();
 	  
