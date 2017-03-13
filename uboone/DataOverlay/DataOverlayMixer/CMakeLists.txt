@@ -20,8 +20,9 @@ art_make(
                         ${ART_FRAMEWORK_PRINCIPAL}
                         ${ART_FRAMEWORK_SERVICES_REGISTRY}
                         ${ART_FRAMEWORK_SERVICES_SYSTEM_FILECATALOGMETADATA_SERVICE}
-                        art_Persistency_Common canvas
-                        art_Utilities canvas
+                        art_Persistency_Common
+                        art_Utilities
+			canvas
 			ifdh
                         ${MF_MESSAGELOGGER}
                         ${BOOST_LIB}
@@ -44,6 +45,7 @@ art_make(
                         ${ART_FRAMEWORK_SERVICES_OPTIONAL_TFILESERVICE_SERVICE}
 			${BOOST_LIB}
                         ${FHICLCPP}
+                        cetlib cetlib_except
 )							   
 
 install_headers()
