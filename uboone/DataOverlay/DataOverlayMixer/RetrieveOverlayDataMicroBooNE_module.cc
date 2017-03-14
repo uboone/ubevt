@@ -146,7 +146,7 @@ mix::RetrieveOverlayDataMicroBooNE::RetrieveOverlayDataMicroBooNE(fhicl::Paramet
   fSamProject(fpset.get<std::string>("SamProject", "")),
   fSamStation(fpset.get<std::string>("SamStation", "")),
   fSamAppFamily(fpset.get<std::string>("SamAppFamily", "art")),
-  fSamAppName(fpset.get<std::string>("SamAppName", "mix")),
+  fSamAppName(fpset.get<std::string>("SamAppName", "retrieve")),
   fSamAppVersion(fpset.get<std::string>("SamAppVersion", "1")),
   fSamUser(fpset.get<std::string>("SamUser", "")),
   fSamDescription(fpset.get<std::string>("SamDescription", "")),
