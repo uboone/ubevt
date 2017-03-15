@@ -11,7 +11,7 @@ microboone_databaseretrievalalg.DBUrl: "http://dbdata0vm.fnal.gov:8186/uboonecon
 
 microboone_calibservicehelper:
 {
-    EventMixingModuleLabel: "mixer"
+    EventMixingModuleLabel: "retriever"
 }
 
 
