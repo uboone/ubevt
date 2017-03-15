@@ -43,6 +43,7 @@
 
 #include "DataOverlay/RawDigitMixer.h"
 #include "lardataobj/RawData/RawDigit.h"
+#include "lardataobj/RawData/TriggerData.h"
 #include "larcoreobj/SimpleTypesAndConstants/RawTypes.h"
 
 #include "DataOverlay/OpDetWaveformMixer.h"
@@ -85,6 +86,10 @@ public:
   		     std::vector<raw::RawDigit> & output,
   		     art::PtrRemapper const &);
   
+  bool MixTriggerData( std::vector< std::vector<raw::Trigger> const* > const& inputs,
+		       std::vector<raw::Trigger> & output,
+		       art::PtrRemapper const &);
+
   bool MixOpDetWaveforms_HighGain( std::vector< std::vector<raw::OpDetWaveform> const* > const& inputs,
 				   std::vector<raw::OpDetWaveform> & output,
 				   art::PtrRemapper const &);
@@ -111,13 +116,18 @@ private:
 
   std::string          fRawDigitDataModuleLabel;
   std::string          fOpDetDataModuleLabel;
+  std::string          fTriggerDataModuleLabel;
   std::string          fRawDigitMCModuleLabel;
   std::string          fOpDetMCModuleLabel;
+  std::string          fTriggerMCModuleLabel;
 
   std::string          fRawDigitInputSourceModuleLabel;
   std::string          fOpDetInputSourceModuleLabel;
+  std::string          fTriggerInputSourceModuleLabel;
+
   std::string          fRawDigitMixerSourceModuleLabel;
   std::string          fOpDetMixerSourceModuleLabel;
+  std::string          fTriggerMixerSourceModuleLabel;
 
   std::string          fG4InputModuleLabel;
   std::string          fGeneratorInputModuleLabel;
@@ -148,6 +158,7 @@ private:
   art::Handle< std::vector<raw::RawDigit> > inputDigitHandle;
   art::Handle< std::vector<raw::OpDetWaveform> > inputOpDetHandle_HighGain;
   art::Handle< std::vector<raw::OpDetWaveform> > inputOpDetHandle_LowGain;
+  art::Handle< std::vector<raw::Trigger> > inputTriggerHandle;
 
   void GenerateMCRawDigitScaleMap(std::vector<raw::RawDigit> const&);
   std::unordered_map<raw::ChannelID_t,float> fMCRawDigitScaleMap;
@@ -175,8 +186,10 @@ mix::OverlayRawDataDetailMicroBooNE::OverlayRawDataDetailMicroBooNE(fhicl::Param
   fInputFileIsData(fpset.get<bool>("InputFileIsData")),
   fRawDigitDataModuleLabel(fpset.get<std::string>("RawDigitDataModuleLabel")),
   fOpDetDataModuleLabel(fpset.get<std::string>("OpDetDataModuleLabel")),
+  fTriggerDataModuleLabel(fpset.get<std::string>("TriggerDataModuleLabel")),
   fRawDigitMCModuleLabel(fpset.get<std::string>("RawDigitMCModuleLabel")),
   fOpDetMCModuleLabel(fpset.get<std::string>("OpDetMCModuleLabel")),
+  fTriggerMCModuleLabel(fpset.get<std::string>("TriggerMCModuleLabel")),
   fEventsToMix(fpset.get<size_t>("EventsToMix",1)),
   fDefaultMCRawDigitScale(fpset.get<float>("DefaultMCRawDigitScale",1)),
   fDefaultMCOpDetScale(fpset.get<float>("DefaultMCOpDetScale",1)),
@@ -209,14 +222,18 @@ mix::OverlayRawDataDetailMicroBooNE::OverlayRawDataDetailMicroBooNE(fhicl::Param
   if(fInputFileIsData){
     fRawDigitInputSourceModuleLabel = fRawDigitDataModuleLabel;
     fOpDetInputSourceModuleLabel    = fOpDetDataModuleLabel;
+    fTriggerInputSourceModuleLabel    = fTriggerDataModuleLabel;
     fRawDigitMixerSourceModuleLabel = fRawDigitMCModuleLabel;
     fOpDetMixerSourceModuleLabel    = fOpDetMCModuleLabel;
+    fTriggerMixerSourceModuleLabel    = fTriggerMCModuleLabel;
   }
   else if(!fInputFileIsData){
     fRawDigitInputSourceModuleLabel = fRawDigitMCModuleLabel;
     fOpDetInputSourceModuleLabel    = fOpDetMCModuleLabel;
+    fTriggerInputSourceModuleLabel    = fTriggerMCModuleLabel;
     fRawDigitMixerSourceModuleLabel = fRawDigitDataModuleLabel;
     fOpDetMixerSourceModuleLabel    = fOpDetDataModuleLabel;
+    fTriggerMixerSourceModuleLabel    = fTriggerDataModuleLabel;
   }
   
   if(fInputFileIsData){
@@ -274,6 +291,9 @@ mix::OverlayRawDataDetailMicroBooNE::OverlayRawDataDetailMicroBooNE(fhicl::Param
 		       *this );
   helper.declareMixOp( art::InputTag(fOpDetMixerSourceModuleLabel,"OpdetBeamLowGain"),
 		       &OverlayRawDataDetailMicroBooNE::MixOpDetWaveforms_LowGain,
+		       *this );
+  helper.declareMixOp( art::InputTag(fTriggerMixerSourceModuleLabel),
+		       &OverlayRawDataDetailMicroBooNE::MixTriggerData,
 		       *this );
 
   //If it produces something on its own, declare it here
@@ -397,6 +417,9 @@ void mix::OverlayRawDataDetailMicroBooNE::startEvent(const art::Event& event) {
   fODMixer.SetSaturationPoint(fDefaultOpDetSatPoint);
   fODMixer.SetMinSampleSize(fOpDetMinSampleSize);
 
+  event.getByLabel(fTriggerInputSourceModuleLabel,inputTriggerHandle);
+  if(!inputTriggerHandle.isValid())
+    throw cet::exception("OverlayRawDataMicroBooNE") << "Bad input trigger handle." << std::endl;;
 
   fEventMixingSummary.reset(new std::vector<mix::EventMixingSummary>);
 }
@@ -532,6 +555,40 @@ bool mix::OverlayRawDataDetailMicroBooNE::MixOpDetWaveforms_LowGain( std::vector
     GenerateMCOpDetLowGainScaleMap(*(inputs[0]));  
     fODMixer.DeclareData(*(inputs[0]),output);
     fODMixer.Mix(*inputOpDetHandle_LowGain,fMCOpDetLowGainScaleMap,output);
+  }
+  
+  return true;
+}
+
+bool mix::OverlayRawDataDetailMicroBooNE::MixTriggerData( std::vector< std::vector<raw::Trigger> const* > const& inputs,
+							  std::vector<raw::Trigger> & output,
+							  art::PtrRemapper const & remap) {
+  
+  //make sure we only have two collections for now
+  if(inputs.size()!=fEventsToMix || (inputs.size()!=1 && !fInputFileIsData)){
+    std::stringstream err_str;
+    err_str << "ERROR! We have the wrong number of collections of raw triggers we are adding! " << inputs.size();
+    throw std::runtime_error(err_str.str());
+  }
+
+  output.clear();
+  unsigned int trig_num; double trig_time,gate_time; unsigned int trig_bits;
+  
+  if(fInputFileIsData){
+    trig_num = inputTriggerHandle->at(0).TriggerNumber();
+    trig_time = inputTriggerHandle->at(0).TriggerTime();
+    gate_time = inputTriggerHandle->at(0).BeamGateTime();
+    trig_bits = (inputTriggerHandle->at(0).TriggerBits() | inputs[0]->at(0).TriggerBits());
+    
+    output.emplace_back(trig_num,trig_time,gate_time,trig_bits);
+  }
+  else if(!fInputFileIsData){
+    trig_num = inputs[0]->at(0).TriggerNumber();
+    trig_time = inputs[0]->at(0).TriggerTime();
+    gate_time = inputs[0]->at(0).BeamGateTime();
+    trig_bits = (inputTriggerHandle->at(0).TriggerBits() | inputs[0]->at(0).TriggerBits());
+    
+    output.emplace_back(trig_num,trig_time,gate_time,trig_bits);
   }
   
   return true;

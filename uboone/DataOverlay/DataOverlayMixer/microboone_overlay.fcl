@@ -8,9 +8,11 @@ microboone_overlay:{
   coverageFraction : 1
   detail : {
     RawDigitDataModuleLabel : daq
+    TriggerDataModuleLabel : daq
     OpDetDataModuleLabel : pmtreadout
     RawDigitMCModuleLabel : daq
     OpDetMCModuleLabel : pmtreadout
+    TriggerMCModuleLabel : triggersim
     InputFileIsData : false
     G4InputModuleLabel : largeant
     GeneratorInputModuleLabel : generator
