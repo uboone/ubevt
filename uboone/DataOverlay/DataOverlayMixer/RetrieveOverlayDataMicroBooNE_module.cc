@@ -42,6 +42,7 @@
 #include "lardataobj/MCBase/MCShower.h"
 
 #include "lardataobj/RawData/RawDigit.h"
+#include "lardataobj/RawData/TriggerData.h"
 #include "larcoreobj/SimpleTypesAndConstants/RawTypes.h"
 
 #include "lardataobj/RawData/OpDetWaveform.h"
@@ -91,11 +92,14 @@ private:
 
   std::string          fRawDigitDataModuleLabel;
   std::string          fOpDetDataModuleLabel;
+  std::string          fTriggerDataModuleLabel;
   std::string          fRawDigitMCModuleLabel;
   std::string          fOpDetMCModuleLabel;
+  std::string          fTriggerMCModuleLabel;
 
   std::string          fRawDigitMixerSourceModuleLabel;
   std::string          fOpDetMixerSourceModuleLabel;
+  std::string          fTriggerMixerSourceModuleLabel;
 
   std::string          fG4InputModuleLabel;
   std::string          fGeneratorInputModuleLabel;
@@ -133,8 +137,10 @@ mix::RetrieveOverlayDataMicroBooNE::RetrieveOverlayDataMicroBooNE(fhicl::Paramet
   fInputFileIsData(fpset.get<bool>("InputFileIsData")),
   fRawDigitDataModuleLabel(fpset.get<std::string>("RawDigitDataModuleLabel")),
   fOpDetDataModuleLabel(fpset.get<std::string>("OpDetDataModuleLabel")),
+  fTriggerDataModuleLabel(fpset.get<std::string>("TriggerDataModuleLabel")),
   fRawDigitMCModuleLabel(fpset.get<std::string>("RawDigitMCModuleLabel")),
   fOpDetMCModuleLabel(fpset.get<std::string>("OpDetMCModuleLabel")),
+  fTriggerMCModuleLabel(fpset.get<std::string>("TriggerMCModuleLabel")),
   fEventsToMix(fpset.get<size_t>("EventsToMix",1)),
 
 
@@ -166,10 +172,12 @@ mix::RetrieveOverlayDataMicroBooNE::RetrieveOverlayDataMicroBooNE(fhicl::Paramet
   if(fInputFileIsData){
     fRawDigitMixerSourceModuleLabel = fRawDigitMCModuleLabel;
     fOpDetMixerSourceModuleLabel    = fOpDetMCModuleLabel;
+    fTriggerMixerSourceModuleLabel  = fTriggerMCModuleLabel;
   }
   else if(!fInputFileIsData){
     fRawDigitMixerSourceModuleLabel = fRawDigitDataModuleLabel;
     fOpDetMixerSourceModuleLabel    = fOpDetDataModuleLabel;
+    fTriggerMixerSourceModuleLabel  = fTriggerDataModuleLabel;
   }
   
   if(fInputFileIsData){
@@ -229,6 +237,10 @@ mix::RetrieveOverlayDataMicroBooNE::RetrieveOverlayDataMicroBooNE(fhicl::Paramet
 		       *this );
   helper.declareMixOp( art::InputTag(fOpDetMixerSourceModuleLabel,"OpdetBeamLowGain"),
 		       &RetrieveOverlayDataMicroBooNE::MixSimpleCopy<raw::OpDetWaveform>,
+		       *this );
+
+  helper.declareMixOp( art::InputTag(fTriggerMixerSourceModuleLabel),
+		       &RetrieveOverlayDataMicroBooNE::MixSimpleCopy<raw::Trigger>,
 		       *this );
 
   //If it produces something on its own, declare it here
