@@ -231,11 +231,11 @@ double spacecharge::SpaceChargeMicroBooNE::GetOnePosOffsetParametric(double xVal
   {
     for(int j = 0; j < 7; j++)
     {
-      parA[0][j] = g1_x[j]->Eval(zValNew);
-      parA[1][j] = g2_x[j]->Eval(zValNew);
-      parA[2][j] = g3_x[j]->Eval(zValNew);
-      parA[3][j] = g4_x[j]->Eval(zValNew);
-      parA[4][j] = g5_x[j]->Eval(zValNew);
+      parA[0][j] = g1_x[j]->Eval(zValNew, nullptr, nullptr);
+      parA[1][j] = g2_x[j]->Eval(zValNew, nullptr, nullptr);
+      parA[2][j] = g3_x[j]->Eval(zValNew, nullptr, nullptr);
+      parA[3][j] = g4_x[j]->Eval(zValNew, nullptr, nullptr);
+      parA[4][j] = g5_x[j]->Eval(zValNew, nullptr, nullptr);
     }
   
     f1_x->SetParameters(parA[0]);
@@ -248,12 +248,12 @@ double spacecharge::SpaceChargeMicroBooNE::GetOnePosOffsetParametric(double xVal
   {
     for(int j = 0; j < 6; j++)
     {
-      parA[0][j] = g1_y[j]->Eval(zValNew);
-      parA[1][j] = g2_y[j]->Eval(zValNew);
-      parA[2][j] = g3_y[j]->Eval(zValNew);
-      parA[3][j] = g4_y[j]->Eval(zValNew);
-      parA[4][j] = g5_y[j]->Eval(zValNew);
-      parA[5][j] = g6_y[j]->Eval(zValNew);
+      parA[0][j] = g1_y[j]->Eval(zValNew, nullptr, nullptr);
+      parA[1][j] = g2_y[j]->Eval(zValNew, nullptr, nullptr);
+      parA[2][j] = g3_y[j]->Eval(zValNew, nullptr, nullptr);
+      parA[3][j] = g4_y[j]->Eval(zValNew, nullptr, nullptr);
+      parA[4][j] = g5_y[j]->Eval(zValNew, nullptr, nullptr);
+      parA[5][j] = g6_y[j]->Eval(zValNew, nullptr, nullptr);
     }
   
     f1_y->SetParameters(parA[0]);
@@ -267,10 +267,10 @@ double spacecharge::SpaceChargeMicroBooNE::GetOnePosOffsetParametric(double xVal
   {
     for(int j = 0; j < 5; j++)
     {
-      parA[0][j] = g1_z[j]->Eval(zValNew);
-      parA[1][j] = g2_z[j]->Eval(zValNew);
-      parA[2][j] = g3_z[j]->Eval(zValNew);
-      parA[3][j] = g4_z[j]->Eval(zValNew);
+      parA[0][j] = g1_z[j]->Eval(zValNew, nullptr, nullptr);
+      parA[1][j] = g2_z[j]->Eval(zValNew, nullptr, nullptr);
+      parA[2][j] = g3_z[j]->Eval(zValNew, nullptr, nullptr);
+      parA[3][j] = g4_z[j]->Eval(zValNew, nullptr, nullptr);
     }
   
     f1_z->SetParameters(parA[0]);
@@ -394,11 +394,11 @@ double spacecharge::SpaceChargeMicroBooNE::GetOneEfieldOffsetParametric(double x
   {
     for(int j = 0; j < 7; j++)
     {
-      parA[0][j] = g1_Ex[j]->Eval(zValNew);
-      parA[1][j] = g2_Ex[j]->Eval(zValNew);
-      parA[2][j] = g3_Ex[j]->Eval(zValNew);
-      parA[3][j] = g4_Ex[j]->Eval(zValNew);
-      parA[4][j] = g5_Ex[j]->Eval(zValNew);
+      parA[0][j] = g1_Ex[j]->Eval(zValNew, nullptr, nullptr);
+      parA[1][j] = g2_Ex[j]->Eval(zValNew, nullptr, nullptr);
+      parA[2][j] = g3_Ex[j]->Eval(zValNew, nullptr, nullptr);
+      parA[3][j] = g4_Ex[j]->Eval(zValNew, nullptr, nullptr);
+      parA[4][j] = g5_Ex[j]->Eval(zValNew, nullptr, nullptr);
     }
   
     f1_Ex->SetParameters(parA[0]);
@@ -411,12 +411,12 @@ double spacecharge::SpaceChargeMicroBooNE::GetOneEfieldOffsetParametric(double x
   {
     for(int j = 0; j < 6; j++)
     {
-      parA[0][j] = g1_Ey[j]->Eval(zValNew);
-      parA[1][j] = g2_Ey[j]->Eval(zValNew);
-      parA[2][j] = g3_Ey[j]->Eval(zValNew);
-      parA[3][j] = g4_Ey[j]->Eval(zValNew);
-      parA[4][j] = g5_Ey[j]->Eval(zValNew);
-      parA[5][j] = g6_Ey[j]->Eval(zValNew);
+      parA[0][j] = g1_Ey[j]->Eval(zValNew, nullptr, nullptr);
+      parA[1][j] = g2_Ey[j]->Eval(zValNew, nullptr, nullptr);
+      parA[2][j] = g3_Ey[j]->Eval(zValNew, nullptr, nullptr);
+      parA[3][j] = g4_Ey[j]->Eval(zValNew, nullptr, nullptr);
+      parA[4][j] = g5_Ey[j]->Eval(zValNew, nullptr, nullptr);
+      parA[5][j] = g6_Ey[j]->Eval(zValNew, nullptr, nullptr);
     }
   
     f1_Ey->SetParameters(parA[0]);
@@ -430,10 +430,10 @@ double spacecharge::SpaceChargeMicroBooNE::GetOneEfieldOffsetParametric(double x
   {
     for(int j = 0; j < 5; j++)
     {
-      parA[0][j] = g1_Ez[j]->Eval(zValNew);
-      parA[1][j] = g2_Ez[j]->Eval(zValNew);
-      parA[2][j] = g3_Ez[j]->Eval(zValNew);
-      parA[3][j] = g4_Ez[j]->Eval(zValNew);
+      parA[0][j] = g1_Ez[j]->Eval(zValNew, nullptr, nullptr);
+      parA[1][j] = g2_Ez[j]->Eval(zValNew, nullptr, nullptr);
+      parA[2][j] = g3_Ez[j]->Eval(zValNew, nullptr, nullptr);
+      parA[3][j] = g4_Ez[j]->Eval(zValNew, nullptr, nullptr);
     }
   
     f1_Ez->SetParameters(parA[0]);
