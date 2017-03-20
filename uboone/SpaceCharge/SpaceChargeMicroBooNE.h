@@ -63,23 +63,23 @@ namespace spacecharge {
       std::string fRepresentationType;
       std::string fInputFilename;
       
-      TGraph **g1_x = new TGraph*[7];
-      TGraph **g2_x = new TGraph*[7];
-      TGraph **g3_x = new TGraph*[7];
-      TGraph **g4_x = new TGraph*[7];
-      TGraph **g5_x = new TGraph*[7];
+      std::vector<TGraph *> g1_x { 7, nullptr };
+      std::vector<TGraph *> g2_x { 7, nullptr };
+      std::vector<TGraph *> g3_x { 7, nullptr };
+      std::vector<TGraph *> g4_x { 7, nullptr };
+      std::vector<TGraph *> g5_x { 7, nullptr };
       
-      TGraph **g1_y = new TGraph*[7];
-      TGraph **g2_y = new TGraph*[7];
-      TGraph **g3_y = new TGraph*[7];
-      TGraph **g4_y = new TGraph*[7];
-      TGraph **g5_y = new TGraph*[7];
-      TGraph **g6_y = new TGraph*[7];
+      std::vector<TGraph *> g1_y { 7, nullptr };
+      std::vector<TGraph *> g2_y { 7, nullptr };
+      std::vector<TGraph *> g3_y { 7, nullptr };
+      std::vector<TGraph *> g4_y { 7, nullptr };
+      std::vector<TGraph *> g5_y { 7, nullptr };
+      std::vector<TGraph *> g6_y { 7, nullptr };
       
-      TGraph **g1_z = new TGraph*[7];
-      TGraph **g2_z = new TGraph*[7];
-      TGraph **g3_z = new TGraph*[7];
-      TGraph **g4_z = new TGraph*[7];
+      std::vector<TGraph *> g1_z { 7, nullptr };
+      std::vector<TGraph *> g2_z { 7, nullptr };
+      std::vector<TGraph *> g3_z { 7, nullptr };
+      std::vector<TGraph *> g4_z { 7, nullptr };
       
       TF1 *f1_x = new TF1("f1_x","pol6");
       TF1 *f2_x = new TF1("f2_x","pol6");
@@ -102,23 +102,23 @@ namespace spacecharge {
       TF1 *f4_z = new TF1("f4_z","pol4");
       TF1 *fFinal_z = new TF1("fFinal_z","pol3");
 
-      TGraph **g1_Ex = new TGraph*[7];
-      TGraph **g2_Ex = new TGraph*[7];
-      TGraph **g3_Ex = new TGraph*[7];
-      TGraph **g4_Ex = new TGraph*[7];
-      TGraph **g5_Ex = new TGraph*[7];
+      std::vector<TGraph *> g1_Ex { 7, nullptr };
+      std::vector<TGraph *> g2_Ex { 7, nullptr };
+      std::vector<TGraph *> g3_Ex { 7, nullptr };
+      std::vector<TGraph *> g4_Ex { 7, nullptr };
+      std::vector<TGraph *> g5_Ex { 7, nullptr };
       
-      TGraph **g1_Ey = new TGraph*[7];
-      TGraph **g2_Ey = new TGraph*[7];
-      TGraph **g3_Ey = new TGraph*[7];
-      TGraph **g4_Ey = new TGraph*[7];
-      TGraph **g5_Ey = new TGraph*[7];
-      TGraph **g6_Ey = new TGraph*[7];
+      std::vector<TGraph *> g1_Ey { 7, nullptr };
+      std::vector<TGraph *> g2_Ey { 7, nullptr };
+      std::vector<TGraph *> g3_Ey { 7, nullptr };
+      std::vector<TGraph *> g4_Ey { 7, nullptr };
+      std::vector<TGraph *> g5_Ey { 7, nullptr };
+      std::vector<TGraph *> g6_Ey { 7, nullptr };
       
-      TGraph **g1_Ez = new TGraph*[7];
-      TGraph **g2_Ez = new TGraph*[7];
-      TGraph **g3_Ez = new TGraph*[7];
-      TGraph **g4_Ez = new TGraph*[7];
+      std::vector<TGraph *> g1_Ez { 7, nullptr };
+      std::vector<TGraph *> g2_Ez { 7, nullptr };
+      std::vector<TGraph *> g3_Ez { 7, nullptr };
+      std::vector<TGraph *> g4_Ez { 7, nullptr };
       
       TF1 *f1_Ex = new TF1("f1_Ex","pol6");
       TF1 *f2_Ex = new TF1("f2_Ex","pol6");
@@ -140,6 +140,12 @@ namespace spacecharge {
       TF1 *f3_Ez = new TF1("f3_Ez","pol4");
       TF1 *f4_Ez = new TF1("f4_Ez","pol4");
       TF1 *fFinal_Ez = new TF1("fFinal_Ez","pol3");
+    
+    /// Sorts specified graphs.
+    void SortGraphs(std::vector<TGraph*> const& graphs);
+    
+    /// Sorts all graphs currently loaded.
+    void SortAllGraphs();
     
   }; // class SpaceChargeMicroBooNE
 } //namespace spacecharge
