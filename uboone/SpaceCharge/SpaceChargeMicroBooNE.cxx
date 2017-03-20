@@ -130,6 +130,8 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
 
     infile->Close();
   }
+  
+  SortAllGraphs();
 
   if(fEnableCorrSCE == true)
   {
@@ -537,3 +539,45 @@ bool spacecharge::SpaceChargeMicroBooNE::IsInsideBoundaries(double xVal, double 
 
   return isInside;
 }
+
+
+
+//----------------------------------------------------------------------------
+void spacecharge::SpaceChargeMicroBooNE::SortGraphs(std::vector<TGraph*> const& graphs) {
+  for (TGraph* graph: graphs) if (graph) graph->Sort();
+} // spacecharge::SpaceChargeMicroBooNE::SortGraphs()
+
+
+//----------------------------------------------------------------------------
+void spacecharge::SpaceChargeMicroBooNE::SortAllGraphs() {
+  SortGraphs(g1_x);
+  SortGraphs(g2_x);
+  SortGraphs(g3_x);
+  SortGraphs(g4_x);
+  SortGraphs(g5_x);
+  SortGraphs(g1_y);
+  SortGraphs(g2_y);
+  SortGraphs(g3_y);
+  SortGraphs(g4_y);
+  SortGraphs(g5_y);
+  SortGraphs(g6_y);
+  SortGraphs(g1_z);
+  SortGraphs(g2_z);
+  SortGraphs(g3_z);
+  SortGraphs(g4_z);
+  SortGraphs(g1_Ex);
+  SortGraphs(g2_Ex);
+  SortGraphs(g3_Ex);
+  SortGraphs(g4_Ex);
+  SortGraphs(g5_Ex);
+  SortGraphs(g1_Ey);
+  SortGraphs(g2_Ey);
+  SortGraphs(g3_Ey);
+  SortGraphs(g4_Ey);
+  SortGraphs(g5_Ey);
+  SortGraphs(g6_Ey);
+  SortGraphs(g1_Ez);
+  SortGraphs(g2_Ez);
+  SortGraphs(g3_Ez);
+  SortGraphs(g4_Ez);
+} // spacecharge::SpaceChargeMicroBooNE::SortAllGraphs()
