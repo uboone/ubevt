@@ -215,20 +215,29 @@ std::vector<double> spacecharge::SpaceChargeMicroBooNE::GetPosOffsetsParametric(
 /// Provides one position offset using a parametric representation, for a given
 /// axis
 double spacecharge::SpaceChargeMicroBooNE::GetOnePosOffsetParametric(double xValNew, double yValNew, double zValNew, std::string axis) const
-{      
-  double parA[6][7];
-  double parB[6];
+{
   
-  for(int j = 0; j < 6; j++)
-  {
-    for(int i = 0; i < 7; i++)
-      parA[j][i] = 0.0;
+  f1_x_poly_t f1_x;
+  f2_x_poly_t f2_x;
+  f3_x_poly_t f3_x;
+  f4_x_poly_t f4_x;
+  f5_x_poly_t f5_x;
   
-    parB[j] = 0.0;
-  }
+  f1_y_poly_t f1_y;
+  f2_y_poly_t f2_y;
+  f3_y_poly_t f3_y;
+  f4_y_poly_t f4_y;
+  f5_y_poly_t f5_y;
+  f6_y_poly_t f6_y;
+  
+  f1_z_poly_t f1_z;
+  f2_z_poly_t f2_z;
+  f3_z_poly_t f3_z;
+  f4_z_poly_t f4_z;
   
   if(axis == "X")
   {
+    double parA[5][7];
     for(int j = 0; j < 7; j++)
     {
       parA[0][j] = g1_x[j]->Eval(zValNew, nullptr, nullptr);
@@ -238,14 +247,15 @@ double spacecharge::SpaceChargeMicroBooNE::GetOnePosOffsetParametric(double xVal
       parA[4][j] = g5_x[j]->Eval(zValNew, nullptr, nullptr);
     }
   
-    f1_x->SetParameters(parA[0]);
-    f2_x->SetParameters(parA[1]);
-    f3_x->SetParameters(parA[2]);
-    f4_x->SetParameters(parA[3]);
-    f5_x->SetParameters(parA[4]);
+    f1_x.SetParameters(parA[0]);
+    f2_x.SetParameters(parA[1]);
+    f3_x.SetParameters(parA[2]);
+    f4_x.SetParameters(parA[3]);
+    f5_x.SetParameters(parA[4]);
   }
   else if(axis == "Y")
   {
+    double parA[6][6];
     for(int j = 0; j < 6; j++)
     {
       parA[0][j] = g1_y[j]->Eval(zValNew, nullptr, nullptr);
@@ -256,15 +266,16 @@ double spacecharge::SpaceChargeMicroBooNE::GetOnePosOffsetParametric(double xVal
       parA[5][j] = g6_y[j]->Eval(zValNew, nullptr, nullptr);
     }
   
-    f1_y->SetParameters(parA[0]);
-    f2_y->SetParameters(parA[1]);
-    f3_y->SetParameters(parA[2]);
-    f4_y->SetParameters(parA[3]);
-    f5_y->SetParameters(parA[4]);
-    f6_y->SetParameters(parA[5]);
+    f1_y.SetParameters(parA[0]);
+    f2_y.SetParameters(parA[1]);
+    f3_y.SetParameters(parA[2]);
+    f4_y.SetParameters(parA[3]);
+    f5_y.SetParameters(parA[4]);
+    f6_y.SetParameters(parA[5]);
   }
   else if(axis == "Z")
   {
+    double parA[4][5];
     for(int j = 0; j < 5; j++)
     {
       parA[0][j] = g1_z[j]->Eval(zValNew, nullptr, nullptr);
@@ -273,10 +284,10 @@ double spacecharge::SpaceChargeMicroBooNE::GetOnePosOffsetParametric(double xVal
       parA[3][j] = g4_z[j]->Eval(zValNew, nullptr, nullptr);
     }
   
-    f1_z->SetParameters(parA[0]);
-    f2_z->SetParameters(parA[1]);
-    f3_z->SetParameters(parA[2]);
-    f4_z->SetParameters(parA[3]);
+    f1_z.SetParameters(parA[0]);
+    f2_z.SetParameters(parA[1]);
+    f3_z.SetParameters(parA[2]);
+    f4_z.SetParameters(parA[3]);
   }
   
   double aValNew;
@@ -296,36 +307,39 @@ double spacecharge::SpaceChargeMicroBooNE::GetOnePosOffsetParametric(double xVal
   double offsetValNew = 0.0;
   if(axis == "X")
   {
-    parB[0] = f1_x->Eval(aValNew);
-    parB[1] = f2_x->Eval(aValNew);
-    parB[2] = f3_x->Eval(aValNew);
-    parB[3] = f4_x->Eval(aValNew);
-    parB[4] = f5_x->Eval(aValNew);
+    double const parB[] = {
+      f1_x.Eval(aValNew),
+      f2_x.Eval(aValNew),
+      f3_x.Eval(aValNew),
+      f4_x.Eval(aValNew),
+      f5_x.Eval(aValNew)
+    };
   
-    fFinal_x->SetParameters(parB);
-    offsetValNew = 100.0*fFinal_x->Eval(bValNew);
+    offsetValNew = 100.0*fFinal_x_poly_t::Eval(bValNew, parB);
   }
   else if(axis == "Y")
   {
-    parB[0] = f1_y->Eval(aValNew);
-    parB[1] = f2_y->Eval(aValNew);
-    parB[2] = f3_y->Eval(aValNew);
-    parB[3] = f4_y->Eval(aValNew);
-    parB[4] = f5_y->Eval(aValNew);
-    parB[5] = f6_y->Eval(aValNew);
+    double const parB[] = {
+      f1_y.Eval(aValNew),
+      f2_y.Eval(aValNew),
+      f3_y.Eval(aValNew),
+      f4_y.Eval(aValNew),
+      f5_y.Eval(aValNew),
+      f6_y.Eval(aValNew)
+    };
   
-    fFinal_y->SetParameters(parB);
-    offsetValNew = 100.0*fFinal_y->Eval(bValNew);
+    offsetValNew = 100.0*fFinal_y_poly_t::Eval(bValNew, parB);
   }
   else if(axis == "Z")
   {
-    parB[0] = f1_z->Eval(aValNew);
-    parB[1] = f2_z->Eval(aValNew);
-    parB[2] = f3_z->Eval(aValNew);
-    parB[3] = f4_z->Eval(aValNew);
+    double const parB[] = {
+      f1_z.Eval(aValNew),
+      f2_z.Eval(aValNew),
+      f3_z.Eval(aValNew),
+      f4_z.Eval(aValNew)
+    };
   
-    fFinal_z->SetParameters(parB);
-    offsetValNew = 100.0*fFinal_z->Eval(bValNew);
+    offsetValNew = 100.0*fFinal_z_poly_t::Eval(bValNew, parB);
   }
   
   return offsetValNew;
@@ -378,20 +392,29 @@ std::vector<double> spacecharge::SpaceChargeMicroBooNE::GetEfieldOffsetsParametr
 /// Provides one E field offset using a parametric representation, for a given
 /// axis
 double spacecharge::SpaceChargeMicroBooNE::GetOneEfieldOffsetParametric(double xValNew, double yValNew, double zValNew, std::string axis) const
-{      
-  double parA[6][7];
-  double parB[6];
+{
   
-  for(int j = 0; j < 6; j++)
-  {
-    for(int i = 0; i < 7; i++)
-      parA[j][i] = 0.0;
+  f1_Ex_poly_t f1_Ex;
+  f2_Ex_poly_t f2_Ex;
+  f3_Ex_poly_t f3_Ex;
+  f4_Ex_poly_t f4_Ex;
+  f5_Ex_poly_t f5_Ex;
   
-    parB[j] = 0.0;
-  }
+  f1_Ey_poly_t f1_Ey;
+  f2_Ey_poly_t f2_Ey;
+  f3_Ey_poly_t f3_Ey;
+  f4_Ey_poly_t f4_Ey;
+  f5_Ey_poly_t f5_Ey;
+  f6_Ey_poly_t f6_Ey;
+  
+  f1_Ez_poly_t f1_Ez;
+  f2_Ez_poly_t f2_Ez;
+  f3_Ez_poly_t f3_Ez;
+  f4_Ez_poly_t f4_Ez;
   
   if(axis == "X")
   {
+    double parA[5][7];
     for(int j = 0; j < 7; j++)
     {
       parA[0][j] = g1_Ex[j]->Eval(zValNew, nullptr, nullptr);
@@ -401,14 +424,15 @@ double spacecharge::SpaceChargeMicroBooNE::GetOneEfieldOffsetParametric(double x
       parA[4][j] = g5_Ex[j]->Eval(zValNew, nullptr, nullptr);
     }
   
-    f1_Ex->SetParameters(parA[0]);
-    f2_Ex->SetParameters(parA[1]);
-    f3_Ex->SetParameters(parA[2]);
-    f4_Ex->SetParameters(parA[3]);
-    f5_Ex->SetParameters(parA[4]);
+    f1_Ex.SetParameters(parA[0]);
+    f2_Ex.SetParameters(parA[1]);
+    f3_Ex.SetParameters(parA[2]);
+    f4_Ex.SetParameters(parA[3]);
+    f5_Ex.SetParameters(parA[4]);
   }
   else if(axis == "Y")
   {
+    double parA[6][6];
     for(int j = 0; j < 6; j++)
     {
       parA[0][j] = g1_Ey[j]->Eval(zValNew, nullptr, nullptr);
@@ -419,15 +443,16 @@ double spacecharge::SpaceChargeMicroBooNE::GetOneEfieldOffsetParametric(double x
       parA[5][j] = g6_Ey[j]->Eval(zValNew, nullptr, nullptr);
     }
   
-    f1_Ey->SetParameters(parA[0]);
-    f2_Ey->SetParameters(parA[1]);
-    f3_Ey->SetParameters(parA[2]);
-    f4_Ey->SetParameters(parA[3]);
-    f5_Ey->SetParameters(parA[4]);
-    f6_Ey->SetParameters(parA[5]);
+    f1_Ey.SetParameters(parA[0]);
+    f2_Ey.SetParameters(parA[1]);
+    f3_Ey.SetParameters(parA[2]);
+    f4_Ey.SetParameters(parA[3]);
+    f5_Ey.SetParameters(parA[4]);
+    f6_Ey.SetParameters(parA[5]);
   }
   else if(axis == "Z")
   {
+    double parA[4][5];
     for(int j = 0; j < 5; j++)
     {
       parA[0][j] = g1_Ez[j]->Eval(zValNew, nullptr, nullptr);
@@ -436,10 +461,10 @@ double spacecharge::SpaceChargeMicroBooNE::GetOneEfieldOffsetParametric(double x
       parA[3][j] = g4_Ez[j]->Eval(zValNew, nullptr, nullptr);
     }
   
-    f1_Ez->SetParameters(parA[0]);
-    f2_Ez->SetParameters(parA[1]);
-    f3_Ez->SetParameters(parA[2]);
-    f4_Ez->SetParameters(parA[3]);
+    f1_Ez.SetParameters(parA[0]);
+    f2_Ez.SetParameters(parA[1]);
+    f3_Ez.SetParameters(parA[2]);
+    f4_Ez.SetParameters(parA[3]);
   }
   
   double aValNew;
@@ -459,36 +484,39 @@ double spacecharge::SpaceChargeMicroBooNE::GetOneEfieldOffsetParametric(double x
   double offsetValNew = 0.0;
   if(axis == "X")
   {
-    parB[0] = f1_Ex->Eval(aValNew);
-    parB[1] = f2_Ex->Eval(aValNew);
-    parB[2] = f3_Ex->Eval(aValNew);
-    parB[3] = f4_Ex->Eval(aValNew);
-    parB[4] = f5_Ex->Eval(aValNew);
+    double const parB[] = {
+      f1_Ex.Eval(aValNew),
+      f2_Ex.Eval(aValNew),
+      f3_Ex.Eval(aValNew),
+      f4_Ex.Eval(aValNew),
+      f5_Ex.Eval(aValNew)
+    };
   
-    fFinal_Ex->SetParameters(parB);
-    offsetValNew = fFinal_Ex->Eval(bValNew);
+    offsetValNew = fFinal_Ex_poly_t::Eval(bValNew, parB);
   }
   else if(axis == "Y")
   {
-    parB[0] = f1_Ey->Eval(aValNew);
-    parB[1] = f2_Ey->Eval(aValNew);
-    parB[2] = f3_Ey->Eval(aValNew);
-    parB[3] = f4_Ey->Eval(aValNew);
-    parB[4] = f5_Ey->Eval(aValNew);
-    parB[5] = f6_Ey->Eval(aValNew);
+    double const parB[] = {
+      f1_Ey.Eval(aValNew),
+      f2_Ey.Eval(aValNew),
+      f3_Ey.Eval(aValNew),
+      f4_Ey.Eval(aValNew),
+      f5_Ey.Eval(aValNew),
+      f6_Ey.Eval(aValNew)
+    };
   
-    fFinal_Ey->SetParameters(parB);
-    offsetValNew = fFinal_Ey->Eval(bValNew);
+    offsetValNew = fFinal_Ey_poly_t::Eval(bValNew, parB);
   }
   else if(axis == "Z")
   {
-    parB[0] = f1_Ez->Eval(aValNew);
-    parB[1] = f2_Ez->Eval(aValNew);
-    parB[2] = f3_Ez->Eval(aValNew);
-    parB[3] = f4_Ez->Eval(aValNew);
+    double const parB[] = {
+      f1_Ez.Eval(aValNew),
+      f2_Ez.Eval(aValNew),
+      f3_Ez.Eval(aValNew),
+      f4_Ez.Eval(aValNew)
+    };
   
-    fFinal_Ez->SetParameters(parB);
-    offsetValNew = fFinal_Ez->Eval(bValNew);
+    offsetValNew = fFinal_Ez_poly_t::Eval(bValNew, parB);
   }
   
   return offsetValNew;
