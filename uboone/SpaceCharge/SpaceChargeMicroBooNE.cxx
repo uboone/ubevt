@@ -8,18 +8,46 @@
 ////////////////////////////////////////////////////////////////////////
 
 // C++ language includes
-#include <iostream>
-#include <fstream>
 #include <string>
 #include <vector>
-#include "math.h"
-#include "stdio.h"
+#include <memory> // std::unique_ptr<>
 
 // LArSoft includes
 #include "uboone/SpaceCharge/SpaceChargeMicroBooNE.h"
 
 // Framework includes
 #include "cetlib/exception.h"
+
+// ROOT includes
+#include "TFile.h"
+
+
+namespace {
+  
+  /// TGraph wrapper with RAII.
+  class SortedTGraphFromFile {
+    TGraph* graph = nullptr;
+    
+      public:
+    SortedTGraphFromFile(TFile& file, char const* graphName)
+      : graph(static_cast<TGraph*>(file.Get(graphName)))
+      {
+        if (!graph) {
+          throw cet::exception("SpaceChargeMicroBooNE")
+            << "Graph '" << graphName << "' not found in '" << file.GetPath()
+            << "'\n";
+        }
+        graph->Sort();
+      }
+    
+    ~SortedTGraphFromFile() { delete graph; }
+    
+    TGraph const& operator* () const { return *graph; }
+    
+  }; // class SortedTGraphFromFile
+  
+} // local namespace
+
 
 //-----------------------------------------------
 spacecharge::SpaceChargeMicroBooNE::SpaceChargeMicroBooNE(
@@ -45,94 +73,92 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
     cet::search_path sp("FW_SEARCH_PATH");
     sp.find_file(fInputFilename,fname);
 
-    std::unique_ptr<TFile> infile(new TFile(fname.c_str(), "READ"));
-    if(!infile->IsOpen()) throw cet::exception("SpaceChargeMicroBooNE") << "Could not find the space charge effect file '" << fname << "'!\n";
+    TFile infile(fname.c_str(), "READ");
+    if(!infile.IsOpen()) throw cet::exception("SpaceChargeMicroBooNE") << "Could not find the space charge effect file '" << fname << "'!\n";
 
     if(fRepresentationType == "Parametric")
     {      
       for(int i = 0; i < 5; i++)
       {
-        g1_x[i] = (TGraph*)infile->Get(Form("deltaX/g1_%d",i));
-        g2_x[i] = (TGraph*)infile->Get(Form("deltaX/g2_%d",i));
-        g3_x[i] = (TGraph*)infile->Get(Form("deltaX/g3_%d",i));   
-        g4_x[i] = (TGraph*)infile->Get(Form("deltaX/g4_%d",i));
-        g5_x[i] = (TGraph*)infile->Get(Form("deltaX/g5_%d",i));
+        g1_x[i] = makeInterpolator(infile, Form("deltaX/g1_%d",i));
+        g2_x[i] = makeInterpolator(infile, Form("deltaX/g2_%d",i));
+        g3_x[i] = makeInterpolator(infile, Form("deltaX/g3_%d",i));   
+        g4_x[i] = makeInterpolator(infile, Form("deltaX/g4_%d",i));
+        g5_x[i] = makeInterpolator(infile, Form("deltaX/g5_%d",i));
 
-        g1_y[i] = (TGraph*)infile->Get(Form("deltaY/g1_%d",i));
-        g2_y[i] = (TGraph*)infile->Get(Form("deltaY/g2_%d",i));
-        g3_y[i] = (TGraph*)infile->Get(Form("deltaY/g3_%d",i));   
-        g4_y[i] = (TGraph*)infile->Get(Form("deltaY/g4_%d",i));
-        g5_y[i] = (TGraph*)infile->Get(Form("deltaY/g5_%d",i));
-        g6_y[i] = (TGraph*)infile->Get(Form("deltaY/g6_%d",i));
+        g1_y[i] = makeInterpolator(infile, Form("deltaY/g1_%d",i));
+        g2_y[i] = makeInterpolator(infile, Form("deltaY/g2_%d",i));
+        g3_y[i] = makeInterpolator(infile, Form("deltaY/g3_%d",i));   
+        g4_y[i] = makeInterpolator(infile, Form("deltaY/g4_%d",i));
+        g5_y[i] = makeInterpolator(infile, Form("deltaY/g5_%d",i));
+        g6_y[i] = makeInterpolator(infile, Form("deltaY/g6_%d",i));
 
-        g1_z[i] = (TGraph*)infile->Get(Form("deltaZ/g1_%d",i));
-        g2_z[i] = (TGraph*)infile->Get(Form("deltaZ/g2_%d",i));
-        g3_z[i] = (TGraph*)infile->Get(Form("deltaZ/g3_%d",i));   
-        g4_z[i] = (TGraph*)infile->Get(Form("deltaZ/g4_%d",i));
+        g1_z[i] = makeInterpolator(infile, Form("deltaZ/g1_%d",i));
+        g2_z[i] = makeInterpolator(infile, Form("deltaZ/g2_%d",i));
+        g3_z[i] = makeInterpolator(infile, Form("deltaZ/g3_%d",i));   
+        g4_z[i] = makeInterpolator(infile, Form("deltaZ/g4_%d",i));
 
-	g1_Ex[i] = (TGraph*)infile->Get(Form("deltaExOverE/g1_%d",i));
-	g2_Ex[i] = (TGraph*)infile->Get(Form("deltaExOverE/g2_%d",i));
-	g3_Ex[i] = (TGraph*)infile->Get(Form("deltaExOverE/g3_%d",i));
-	g4_Ex[i] = (TGraph*)infile->Get(Form("deltaExOverE/g4_%d",i));
-	g5_Ex[i] = (TGraph*)infile->Get(Form("deltaExOverE/g5_%d",i));
-
-	g1_Ey[i] = (TGraph*)infile->Get(Form("deltaEyOverE/g1_%d",i));
-	g2_Ey[i] = (TGraph*)infile->Get(Form("deltaEyOverE/g2_%d",i));
-	g3_Ey[i] = (TGraph*)infile->Get(Form("deltaEyOverE/g3_%d",i));
-	g4_Ey[i] = (TGraph*)infile->Get(Form("deltaEyOverE/g4_%d",i));
-	g5_Ey[i] = (TGraph*)infile->Get(Form("deltaEyOverE/g5_%d",i));
-	g6_Ey[i] = (TGraph*)infile->Get(Form("deltaEyOverE/g6_%d",i));
-
-	g1_Ez[i] = (TGraph*)infile->Get(Form("deltaEzOverE/g1_%d",i));
-	g2_Ez[i] = (TGraph*)infile->Get(Form("deltaEzOverE/g2_%d",i));
-	g3_Ez[i] = (TGraph*)infile->Get(Form("deltaEzOverE/g3_%d",i));
-	g4_Ez[i] = (TGraph*)infile->Get(Form("deltaEzOverE/g4_%d",i));
+        g1_Ex[i] = makeInterpolator(infile, Form("deltaExOverE/g1_%d",i));
+        g2_Ex[i] = makeInterpolator(infile, Form("deltaExOverE/g2_%d",i));
+        g3_Ex[i] = makeInterpolator(infile, Form("deltaExOverE/g3_%d",i));
+        g4_Ex[i] = makeInterpolator(infile, Form("deltaExOverE/g4_%d",i));
+        g5_Ex[i] = makeInterpolator(infile, Form("deltaExOverE/g5_%d",i));
+        
+        g1_Ey[i] = makeInterpolator(infile, Form("deltaEyOverE/g1_%d",i));
+        g2_Ey[i] = makeInterpolator(infile, Form("deltaEyOverE/g2_%d",i));
+        g3_Ey[i] = makeInterpolator(infile, Form("deltaEyOverE/g3_%d",i));
+        g4_Ey[i] = makeInterpolator(infile, Form("deltaEyOverE/g4_%d",i));
+        g5_Ey[i] = makeInterpolator(infile, Form("deltaEyOverE/g5_%d",i));
+        g6_Ey[i] = makeInterpolator(infile, Form("deltaEyOverE/g6_%d",i));
+        
+        g1_Ez[i] = makeInterpolator(infile, Form("deltaEzOverE/g1_%d",i));
+        g2_Ez[i] = makeInterpolator(infile, Form("deltaEzOverE/g2_%d",i));
+        g3_Ez[i] = makeInterpolator(infile, Form("deltaEzOverE/g3_%d",i));
+        g4_Ez[i] = makeInterpolator(infile, Form("deltaEzOverE/g4_%d",i));
       }
 
-      g1_x[5] = (TGraph*)infile->Get("deltaX/g1_5");
-      g2_x[5] = (TGraph*)infile->Get("deltaX/g2_5");
-      g3_x[5] = (TGraph*)infile->Get("deltaX/g3_5");   
-      g4_x[5] = (TGraph*)infile->Get("deltaX/g4_5");
-      g5_x[5] = (TGraph*)infile->Get("deltaX/g5_5");
+      g1_x[5] = makeInterpolator(infile, "deltaX/g1_5");
+      g2_x[5] = makeInterpolator(infile, "deltaX/g2_5");
+      g3_x[5] = makeInterpolator(infile, "deltaX/g3_5");   
+      g4_x[5] = makeInterpolator(infile, "deltaX/g4_5");
+      g5_x[5] = makeInterpolator(infile, "deltaX/g5_5");
 
-      g1_y[5] = (TGraph*)infile->Get("deltaY/g1_5");
-      g2_y[5] = (TGraph*)infile->Get("deltaY/g2_5");
-      g3_y[5] = (TGraph*)infile->Get("deltaY/g3_5");   
-      g4_y[5] = (TGraph*)infile->Get("deltaY/g4_5");
-      g5_y[5] = (TGraph*)infile->Get("deltaY/g5_5");
-      g6_y[5] = (TGraph*)infile->Get("deltaY/g6_5");
+      g1_y[5] = makeInterpolator(infile, "deltaY/g1_5");
+      g2_y[5] = makeInterpolator(infile, "deltaY/g2_5");
+      g3_y[5] = makeInterpolator(infile, "deltaY/g3_5");   
+      g4_y[5] = makeInterpolator(infile, "deltaY/g4_5");
+      g5_y[5] = makeInterpolator(infile, "deltaY/g5_5");
+      g6_y[5] = makeInterpolator(infile, "deltaY/g6_5");
       
-      g1_x[6] = (TGraph*)infile->Get("deltaX/g1_6");
-      g2_x[6] = (TGraph*)infile->Get("deltaX/g2_6");
-      g3_x[6] = (TGraph*)infile->Get("deltaX/g3_6");
-      g4_x[6] = (TGraph*)infile->Get("deltaX/g4_6");
-      g5_x[6] = (TGraph*)infile->Get("deltaX/g5_6");
+      g1_x[6] = makeInterpolator(infile, "deltaX/g1_6");
+      g2_x[6] = makeInterpolator(infile, "deltaX/g2_6");
+      g3_x[6] = makeInterpolator(infile, "deltaX/g3_6");
+      g4_x[6] = makeInterpolator(infile, "deltaX/g4_6");
+      g5_x[6] = makeInterpolator(infile, "deltaX/g5_6");
 
-      g1_Ex[5] = (TGraph*)infile->Get("deltaExOverE/g1_5");
-      g2_Ex[5] = (TGraph*)infile->Get("deltaExOverE/g2_5");
-      g3_Ex[5] = (TGraph*)infile->Get("deltaExOverE/g3_5");
-      g4_Ex[5] = (TGraph*)infile->Get("deltaExOverE/g4_5");
-      g5_Ex[5] = (TGraph*)infile->Get("deltaExOverE/g5_5");
-
-      g1_Ey[5] = (TGraph*)infile->Get("deltaEyOverE/g1_5");
-      g2_Ey[5] = (TGraph*)infile->Get("deltaEyOverE/g2_5");
-      g3_Ey[5] = (TGraph*)infile->Get("deltaEyOverE/g3_5");
-      g4_Ey[5] = (TGraph*)infile->Get("deltaEyOverE/g4_5");
-      g5_Ey[5] = (TGraph*)infile->Get("deltaEyOverE/g5_5");
-      g6_Ey[5] = (TGraph*)infile->Get("deltaEyOverE/g6_5");
-
-      g1_Ex[6] = (TGraph*)infile->Get("deltaExOverE/g1_6");
-      g2_Ex[6] = (TGraph*)infile->Get("deltaExOverE/g2_6");
-      g3_Ex[6] = (TGraph*)infile->Get("deltaExOverE/g3_6");
-      g4_Ex[6] = (TGraph*)infile->Get("deltaExOverE/g4_6");
-      g5_Ex[6] = (TGraph*)infile->Get("deltaExOverE/g5_6");
+      g1_Ex[5] = makeInterpolator(infile, "deltaExOverE/g1_5");
+      g2_Ex[5] = makeInterpolator(infile, "deltaExOverE/g2_5");
+      g3_Ex[5] = makeInterpolator(infile, "deltaExOverE/g3_5");
+      g4_Ex[5] = makeInterpolator(infile, "deltaExOverE/g4_5");
+      g5_Ex[5] = makeInterpolator(infile, "deltaExOverE/g5_5");
+      
+      g1_Ey[5] = makeInterpolator(infile, "deltaEyOverE/g1_5");
+      g2_Ey[5] = makeInterpolator(infile, "deltaEyOverE/g2_5");
+      g3_Ey[5] = makeInterpolator(infile, "deltaEyOverE/g3_5");
+      g4_Ey[5] = makeInterpolator(infile, "deltaEyOverE/g4_5");
+      g5_Ey[5] = makeInterpolator(infile, "deltaEyOverE/g5_5");
+      g6_Ey[5] = makeInterpolator(infile, "deltaEyOverE/g6_5");
+      
+      g1_Ex[6] = makeInterpolator(infile, "deltaExOverE/g1_6");
+      g2_Ex[6] = makeInterpolator(infile, "deltaExOverE/g2_6");
+      g3_Ex[6] = makeInterpolator(infile, "deltaExOverE/g3_6");
+      g4_Ex[6] = makeInterpolator(infile, "deltaExOverE/g4_6");
+      g5_Ex[6] = makeInterpolator(infile, "deltaExOverE/g5_6");
     }
 
-    infile->Close();
+    infile.Close();
   }
   
-  SortAllGraphs();
-
   if(fEnableCorrSCE == true)
   {
     // Grab other parameters from pset  
@@ -240,11 +266,11 @@ double spacecharge::SpaceChargeMicroBooNE::GetOnePosOffsetParametric(double xVal
     double parA[5][7];
     for(int j = 0; j < 7; j++)
     {
-      parA[0][j] = g1_x[j]->Eval(zValNew, nullptr, nullptr);
-      parA[1][j] = g2_x[j]->Eval(zValNew, nullptr, nullptr);
-      parA[2][j] = g3_x[j]->Eval(zValNew, nullptr, nullptr);
-      parA[3][j] = g4_x[j]->Eval(zValNew, nullptr, nullptr);
-      parA[4][j] = g5_x[j]->Eval(zValNew, nullptr, nullptr);
+      parA[0][j] = g1_x[j].Eval(zValNew);
+      parA[1][j] = g2_x[j].Eval(zValNew);
+      parA[2][j] = g3_x[j].Eval(zValNew);
+      parA[3][j] = g4_x[j].Eval(zValNew);
+      parA[4][j] = g5_x[j].Eval(zValNew);
     }
   
     f1_x.SetParameters(parA[0]);
@@ -258,12 +284,12 @@ double spacecharge::SpaceChargeMicroBooNE::GetOnePosOffsetParametric(double xVal
     double parA[6][6];
     for(int j = 0; j < 6; j++)
     {
-      parA[0][j] = g1_y[j]->Eval(zValNew, nullptr, nullptr);
-      parA[1][j] = g2_y[j]->Eval(zValNew, nullptr, nullptr);
-      parA[2][j] = g3_y[j]->Eval(zValNew, nullptr, nullptr);
-      parA[3][j] = g4_y[j]->Eval(zValNew, nullptr, nullptr);
-      parA[4][j] = g5_y[j]->Eval(zValNew, nullptr, nullptr);
-      parA[5][j] = g6_y[j]->Eval(zValNew, nullptr, nullptr);
+      parA[0][j] = g1_y[j].Eval(zValNew);
+      parA[1][j] = g2_y[j].Eval(zValNew);
+      parA[2][j] = g3_y[j].Eval(zValNew);
+      parA[3][j] = g4_y[j].Eval(zValNew);
+      parA[4][j] = g5_y[j].Eval(zValNew);
+      parA[5][j] = g6_y[j].Eval(zValNew);
     }
   
     f1_y.SetParameters(parA[0]);
@@ -278,10 +304,10 @@ double spacecharge::SpaceChargeMicroBooNE::GetOnePosOffsetParametric(double xVal
     double parA[4][5];
     for(int j = 0; j < 5; j++)
     {
-      parA[0][j] = g1_z[j]->Eval(zValNew, nullptr, nullptr);
-      parA[1][j] = g2_z[j]->Eval(zValNew, nullptr, nullptr);
-      parA[2][j] = g3_z[j]->Eval(zValNew, nullptr, nullptr);
-      parA[3][j] = g4_z[j]->Eval(zValNew, nullptr, nullptr);
+      parA[0][j] = g1_z[j].Eval(zValNew);
+      parA[1][j] = g2_z[j].Eval(zValNew);
+      parA[2][j] = g3_z[j].Eval(zValNew);
+      parA[3][j] = g4_z[j].Eval(zValNew);
     }
   
     f1_z.SetParameters(parA[0]);
@@ -417,11 +443,11 @@ double spacecharge::SpaceChargeMicroBooNE::GetOneEfieldOffsetParametric(double x
     double parA[5][7];
     for(int j = 0; j < 7; j++)
     {
-      parA[0][j] = g1_Ex[j]->Eval(zValNew, nullptr, nullptr);
-      parA[1][j] = g2_Ex[j]->Eval(zValNew, nullptr, nullptr);
-      parA[2][j] = g3_Ex[j]->Eval(zValNew, nullptr, nullptr);
-      parA[3][j] = g4_Ex[j]->Eval(zValNew, nullptr, nullptr);
-      parA[4][j] = g5_Ex[j]->Eval(zValNew, nullptr, nullptr);
+      parA[0][j] = g1_Ex[j].Eval(zValNew);
+      parA[1][j] = g2_Ex[j].Eval(zValNew);
+      parA[2][j] = g3_Ex[j].Eval(zValNew);
+      parA[3][j] = g4_Ex[j].Eval(zValNew);
+      parA[4][j] = g5_Ex[j].Eval(zValNew);
     }
   
     f1_Ex.SetParameters(parA[0]);
@@ -435,12 +461,12 @@ double spacecharge::SpaceChargeMicroBooNE::GetOneEfieldOffsetParametric(double x
     double parA[6][6];
     for(int j = 0; j < 6; j++)
     {
-      parA[0][j] = g1_Ey[j]->Eval(zValNew, nullptr, nullptr);
-      parA[1][j] = g2_Ey[j]->Eval(zValNew, nullptr, nullptr);
-      parA[2][j] = g3_Ey[j]->Eval(zValNew, nullptr, nullptr);
-      parA[3][j] = g4_Ey[j]->Eval(zValNew, nullptr, nullptr);
-      parA[4][j] = g5_Ey[j]->Eval(zValNew, nullptr, nullptr);
-      parA[5][j] = g6_Ey[j]->Eval(zValNew, nullptr, nullptr);
+      parA[0][j] = g1_Ey[j].Eval(zValNew);
+      parA[1][j] = g2_Ey[j].Eval(zValNew);
+      parA[2][j] = g3_Ey[j].Eval(zValNew);
+      parA[3][j] = g4_Ey[j].Eval(zValNew);
+      parA[4][j] = g5_Ey[j].Eval(zValNew);
+      parA[5][j] = g6_Ey[j].Eval(zValNew);
     }
   
     f1_Ey.SetParameters(parA[0]);
@@ -455,10 +481,10 @@ double spacecharge::SpaceChargeMicroBooNE::GetOneEfieldOffsetParametric(double x
     double parA[4][5];
     for(int j = 0; j < 5; j++)
     {
-      parA[0][j] = g1_Ez[j]->Eval(zValNew, nullptr, nullptr);
-      parA[1][j] = g2_Ez[j]->Eval(zValNew, nullptr, nullptr);
-      parA[2][j] = g3_Ez[j]->Eval(zValNew, nullptr, nullptr);
-      parA[3][j] = g4_Ez[j]->Eval(zValNew, nullptr, nullptr);
+      parA[0][j] = g1_Ez[j].Eval(zValNew);
+      parA[1][j] = g2_Ez[j].Eval(zValNew);
+      parA[2][j] = g3_Ez[j].Eval(zValNew);
+      parA[3][j] = g4_Ez[j].Eval(zValNew);
     }
   
     f1_Ez.SetParameters(parA[0]);
@@ -569,43 +595,13 @@ bool spacecharge::SpaceChargeMicroBooNE::IsInsideBoundaries(double xVal, double 
 }
 
 
+//----------------------------------------------------------------------------
+gsl::Interpolator spacecharge::SpaceChargeMicroBooNE::makeInterpolator
+  (TFile& file, char const* graphName)
+{
+  SortedTGraphFromFile graph(file, graphName);
+  return gsl::Interpolator(*graph);
+} // spacecharge::SpaceChargeMicroBooNE::makeInterpolator()
+
 
 //----------------------------------------------------------------------------
-void spacecharge::SpaceChargeMicroBooNE::SortGraphs(std::vector<TGraph*> const& graphs) {
-  for (TGraph* graph: graphs) if (graph) graph->Sort();
-} // spacecharge::SpaceChargeMicroBooNE::SortGraphs()
-
-
-//----------------------------------------------------------------------------
-void spacecharge::SpaceChargeMicroBooNE::SortAllGraphs() {
-  SortGraphs(g1_x);
-  SortGraphs(g2_x);
-  SortGraphs(g3_x);
-  SortGraphs(g4_x);
-  SortGraphs(g5_x);
-  SortGraphs(g1_y);
-  SortGraphs(g2_y);
-  SortGraphs(g3_y);
-  SortGraphs(g4_y);
-  SortGraphs(g5_y);
-  SortGraphs(g6_y);
-  SortGraphs(g1_z);
-  SortGraphs(g2_z);
-  SortGraphs(g3_z);
-  SortGraphs(g4_z);
-  SortGraphs(g1_Ex);
-  SortGraphs(g2_Ex);
-  SortGraphs(g3_Ex);
-  SortGraphs(g4_Ex);
-  SortGraphs(g5_Ex);
-  SortGraphs(g1_Ey);
-  SortGraphs(g2_Ey);
-  SortGraphs(g3_Ey);
-  SortGraphs(g4_Ey);
-  SortGraphs(g5_Ey);
-  SortGraphs(g6_Ey);
-  SortGraphs(g1_Ez);
-  SortGraphs(g2_Ez);
-  SortGraphs(g3_Ez);
-  SortGraphs(g4_Ez);
-} // spacecharge::SpaceChargeMicroBooNE::SortAllGraphs()
