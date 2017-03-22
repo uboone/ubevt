@@ -15,10 +15,12 @@
 // FHiCL libraries
 #include "fhiclcpp/ParameterSet.h"
 
+// GNU Scientific library
+#include "gsl/gsl_interp.h" // gsl_interp, gsl_interp_linear, ...
+#include "gsl/gsl_poly.h" // gsl_poly_eval()
+
 // ROOT includes
 #include "TGraph.h"
-#include "TF1.h"
-#include "TFile.h"
 
 // C/C++ standard libraries
 #include <string>
@@ -27,12 +29,64 @@
 #include <algorithm> // std::copy_n()
 
 
+// forward declarations
+class TFile;
 
-namespace spacecharge {
+
+namespace gsl {
+  
+  /// Wrapper to GSL interpolator, with RAII and data extraction from TGraph.
+  class Interpolator {
+    
+    std::vector<double> xa, ya; ///< Input data.
+    gsl_interp* fInterp = nullptr; ///< Pointer to the GSL interpolator.
+    
+    void swap(Interpolator& with)
+      {
+        std::swap(xa, with.xa);
+        std::swap(ya, with.ya);
+        std::swap(fInterp, with.fInterp);
+      }
+    
+      public:
+    
+    /// Default constructor: object will be useless until reassigned.
+    Interpolator() = default;
+    
+    /// Initializes from the data of a TGraph. The graph is assumed sorted.
+    Interpolator(TGraph const& graph)
+      : xa(graph.GetX(), graph.GetX() + graph.GetN())
+      , ya(graph.GetY(), graph.GetY() + graph.GetN())
+      , fInterp(gsl_interp_alloc(gsl_interp_linear, xa.size()))
+      {
+        assert(graph.TestBit(TGraph::kIsSortedX));
+        gsl_interp_init(fInterp, xa.data(), ya.data(), xa.size());
+      }
+    
+    ~Interpolator()
+      { if (fInterp) { gsl_interp_free(fInterp); fInterp = nullptr; } }
+    
+    Interpolator(Interpolator const&) = delete;
+    Interpolator(Interpolator&& from) { swap(from); }
+    Interpolator& operator= (Interpolator const&) = delete;
+    Interpolator& operator= (Interpolator&& from)
+      { swap(from); return *this; }
+    
+    /// Interpolates to `x`, capping it into x range limits.
+    double Eval(double x) const
+      {
+        if (x <= xa.front()) return ya.front();
+        if (x >= xa.back()) return ya.back();
+        // use no accelerator
+        return gsl_interp_eval(fInterp, xa.data(), ya.data(), x, nullptr);
+      }
+    
+  }; // class Interpolator
+  
   
   /// GSL polynomial evaluation wrapper.
   template <unsigned int N>
-  struct SimplePolynomialBase {
+  struct PolynomialBase {
     static constexpr unsigned int Degree = N; ///< Degree of the polynomial.
     
     /// Number of parameters.
@@ -47,13 +101,13 @@ namespace spacecharge {
     static double Eval(double x, Params_t const& params)
       { return Eval(x, params.data()); }
     
-  }; // class SimplePolynomialBase<>
+  }; // class PolynomialBase<>
   
   
   /// Implementation of polynomial evaluations mimicking some of TF1 I/F.
   template <unsigned int N>
-  class SimplePolynomial: public SimplePolynomialBase<N> {
-    using PolyImpl_t = SimplePolynomialBase<N>;
+  class Polynomial: public PolynomialBase<N> {
+    using PolyImpl_t = PolynomialBase<N>;
       public:
     static constexpr unsigned int Degree = PolyImpl_t::Degree;
     static constexpr unsigned int NParams = PolyImpl_t::NParams;
@@ -61,14 +115,14 @@ namespace spacecharge {
     using Params_t = typename PolyImpl_t::Params_t;
     
     /// Default constructor: coefficients are *not initialised*.
-    SimplePolynomial() = default;
+    Polynomial() = default;
     
     /// Copies the specified parameters into this object.
     void SetParameters(double const* params)
       { std::copy_n(params, NParams, fParams.begin()); }
     
     
-    using SimplePolynomialBase<N>::Eval;
+    using PolynomialBase<N>::Eval;
     
     /// Evaluates the polynomial at the specified point `x`.
     double Eval(double x) const
@@ -77,7 +131,13 @@ namespace spacecharge {
       protected:
     Params_t fParams; ///< Parameters of the polynomial.
     
-  }; // class SimplePolynomial<>
+  }; // class Polynomial<>
+  
+} // namespace gsl
+
+
+namespace spacecharge {
+  
   
   
   class SpaceChargeMicroBooNE : public SpaceCharge {
@@ -116,89 +176,88 @@ namespace spacecharge {
       std::string fRepresentationType;
       std::string fInputFilename;
       
-      std::vector<TGraph *> g1_x { 7, nullptr };
-      std::vector<TGraph *> g2_x { 7, nullptr };
-      std::vector<TGraph *> g3_x { 7, nullptr };
-      std::vector<TGraph *> g4_x { 7, nullptr };
-      std::vector<TGraph *> g5_x { 7, nullptr };
+      std::vector<gsl::Interpolator> g1_x{ 7U };
+      std::vector<gsl::Interpolator> g2_x{ 7U };
+      std::vector<gsl::Interpolator> g3_x{ 7U };
+      std::vector<gsl::Interpolator> g4_x{ 7U };
+      std::vector<gsl::Interpolator> g5_x{ 7U };
       
-      std::vector<TGraph *> g1_y { 7, nullptr };
-      std::vector<TGraph *> g2_y { 7, nullptr };
-      std::vector<TGraph *> g3_y { 7, nullptr };
-      std::vector<TGraph *> g4_y { 7, nullptr };
-      std::vector<TGraph *> g5_y { 7, nullptr };
-      std::vector<TGraph *> g6_y { 7, nullptr };
+      std::vector<gsl::Interpolator> g1_y{ 7U };
+      std::vector<gsl::Interpolator> g2_y{ 7U };
+      std::vector<gsl::Interpolator> g3_y{ 7U };
+      std::vector<gsl::Interpolator> g4_y{ 7U };
+      std::vector<gsl::Interpolator> g5_y{ 7U };
+      std::vector<gsl::Interpolator> g6_y{ 7U };
       
-      std::vector<TGraph *> g1_z { 7, nullptr };
-      std::vector<TGraph *> g2_z { 7, nullptr };
-      std::vector<TGraph *> g3_z { 7, nullptr };
-      std::vector<TGraph *> g4_z { 7, nullptr };
+      std::vector<gsl::Interpolator> g1_z{ 7U };
+      std::vector<gsl::Interpolator> g2_z{ 7U };
+      std::vector<gsl::Interpolator> g3_z{ 7U };
+      std::vector<gsl::Interpolator> g4_z{ 7U };
       
-      typedef SimplePolynomial<6> f1_x_poly_t;
-      typedef SimplePolynomial<6> f2_x_poly_t;
-      typedef SimplePolynomial<6> f3_x_poly_t;
-      typedef SimplePolynomial<6> f4_x_poly_t;
-      typedef SimplePolynomial<6> f5_x_poly_t;
-      typedef SimplePolynomialBase<4> fFinal_x_poly_t;
+      typedef gsl::Polynomial<6> f1_x_poly_t;
+      typedef gsl::Polynomial<6> f2_x_poly_t;
+      typedef gsl::Polynomial<6> f3_x_poly_t;
+      typedef gsl::Polynomial<6> f4_x_poly_t;
+      typedef gsl::Polynomial<6> f5_x_poly_t;
+      typedef gsl::PolynomialBase<4> fFinal_x_poly_t;
       
-      typedef SimplePolynomial<5> f1_y_poly_t;
-      typedef SimplePolynomial<5> f2_y_poly_t;
-      typedef SimplePolynomial<5> f3_y_poly_t;
-      typedef SimplePolynomial<5> f4_y_poly_t;
-      typedef SimplePolynomial<5> f5_y_poly_t;
-      typedef SimplePolynomial<5> f6_y_poly_t;
-      typedef SimplePolynomialBase<5> fFinal_y_poly_t;
+      typedef gsl::Polynomial<5> f1_y_poly_t;
+      typedef gsl::Polynomial<5> f2_y_poly_t;
+      typedef gsl::Polynomial<5> f3_y_poly_t;
+      typedef gsl::Polynomial<5> f4_y_poly_t;
+      typedef gsl::Polynomial<5> f5_y_poly_t;
+      typedef gsl::Polynomial<5> f6_y_poly_t;
+      typedef gsl::PolynomialBase<5> fFinal_y_poly_t;
       
-      typedef SimplePolynomial<4> f1_z_poly_t;
-      typedef SimplePolynomial<4> f2_z_poly_t;
-      typedef SimplePolynomial<4> f3_z_poly_t;
-      typedef SimplePolynomial<4> f4_z_poly_t;
-      typedef SimplePolynomialBase<3> fFinal_z_poly_t;
+      typedef gsl::Polynomial<4> f1_z_poly_t;
+      typedef gsl::Polynomial<4> f2_z_poly_t;
+      typedef gsl::Polynomial<4> f3_z_poly_t;
+      typedef gsl::Polynomial<4> f4_z_poly_t;
+      typedef gsl::PolynomialBase<3> fFinal_z_poly_t;
     
-      std::vector<TGraph *> g1_Ex { 7, nullptr };
-      std::vector<TGraph *> g2_Ex { 7, nullptr };
-      std::vector<TGraph *> g3_Ex { 7, nullptr };
-      std::vector<TGraph *> g4_Ex { 7, nullptr };
-      std::vector<TGraph *> g5_Ex { 7, nullptr };
+      std::vector<gsl::Interpolator> g1_Ex{ 7U };
+      std::vector<gsl::Interpolator> g2_Ex{ 7U };
+      std::vector<gsl::Interpolator> g3_Ex{ 7U };
+      std::vector<gsl::Interpolator> g4_Ex{ 7U };
+      std::vector<gsl::Interpolator> g5_Ex{ 7U };
       
-      std::vector<TGraph *> g1_Ey { 7, nullptr };
-      std::vector<TGraph *> g2_Ey { 7, nullptr };
-      std::vector<TGraph *> g3_Ey { 7, nullptr };
-      std::vector<TGraph *> g4_Ey { 7, nullptr };
-      std::vector<TGraph *> g5_Ey { 7, nullptr };
-      std::vector<TGraph *> g6_Ey { 7, nullptr };
+      std::vector<gsl::Interpolator> g1_Ey{ 7U };
+      std::vector<gsl::Interpolator> g2_Ey{ 7U };
+      std::vector<gsl::Interpolator> g3_Ey{ 7U };
+      std::vector<gsl::Interpolator> g4_Ey{ 7U };
+      std::vector<gsl::Interpolator> g5_Ey{ 7U };
+      std::vector<gsl::Interpolator> g6_Ey{ 7U };
       
-      std::vector<TGraph *> g1_Ez { 7, nullptr };
-      std::vector<TGraph *> g2_Ez { 7, nullptr };
-      std::vector<TGraph *> g3_Ez { 7, nullptr };
-      std::vector<TGraph *> g4_Ez { 7, nullptr };
+      std::vector<gsl::Interpolator> g1_Ez{ 7U };
+      std::vector<gsl::Interpolator> g2_Ez{ 7U };
+      std::vector<gsl::Interpolator> g3_Ez{ 7U };
+      std::vector<gsl::Interpolator> g4_Ez{ 7U };
       
-      typedef SimplePolynomial<6> f1_Ex_poly_t;
-      typedef SimplePolynomial<6> f2_Ex_poly_t;
-      typedef SimplePolynomial<6> f3_Ex_poly_t;
-      typedef SimplePolynomial<6> f4_Ex_poly_t;
-      typedef SimplePolynomial<6> f5_Ex_poly_t;
-      typedef SimplePolynomialBase<4> fFinal_Ex_poly_t;
+      typedef gsl::Polynomial<6> f1_Ex_poly_t;
+      typedef gsl::Polynomial<6> f2_Ex_poly_t;
+      typedef gsl::Polynomial<6> f3_Ex_poly_t;
+      typedef gsl::Polynomial<6> f4_Ex_poly_t;
+      typedef gsl::Polynomial<6> f5_Ex_poly_t;
+      typedef gsl::PolynomialBase<4> fFinal_Ex_poly_t;
       
-      typedef SimplePolynomial<5> f1_Ey_poly_t;
-      typedef SimplePolynomial<5> f2_Ey_poly_t;
-      typedef SimplePolynomial<5> f3_Ey_poly_t;
-      typedef SimplePolynomial<5> f4_Ey_poly_t;
-      typedef SimplePolynomial<5> f5_Ey_poly_t;
-      typedef SimplePolynomial<5> f6_Ey_poly_t;
-      typedef SimplePolynomialBase<5> fFinal_Ey_poly_t;
+      typedef gsl::Polynomial<5> f1_Ey_poly_t;
+      typedef gsl::Polynomial<5> f2_Ey_poly_t;
+      typedef gsl::Polynomial<5> f3_Ey_poly_t;
+      typedef gsl::Polynomial<5> f4_Ey_poly_t;
+      typedef gsl::Polynomial<5> f5_Ey_poly_t;
+      typedef gsl::Polynomial<5> f6_Ey_poly_t;
+      typedef gsl::PolynomialBase<5> fFinal_Ey_poly_t;
       
-      typedef SimplePolynomial<4> f1_Ez_poly_t;
-      typedef SimplePolynomial<4> f2_Ez_poly_t;
-      typedef SimplePolynomial<4> f3_Ez_poly_t;
-      typedef SimplePolynomial<4> f4_Ez_poly_t;
-      typedef SimplePolynomialBase<3> fFinal_Ez_poly_t;
+      typedef gsl::Polynomial<4> f1_Ez_poly_t;
+      typedef gsl::Polynomial<4> f2_Ez_poly_t;
+      typedef gsl::Polynomial<4> f3_Ez_poly_t;
+      typedef gsl::Polynomial<4> f4_Ez_poly_t;
+      typedef gsl::PolynomialBase<3> fFinal_Ez_poly_t;
     
-    /// Sorts specified graphs.
-    void SortGraphs(std::vector<TGraph*> const& graphs);
     
-    /// Sorts all graphs currently loaded.
-    void SortAllGraphs();
+    /// Returns a new GSL interpolator with data from TGraph in specified file.
+    static gsl::Interpolator makeInterpolator
+      (TFile& file, char const* graphName);
     
   }; // class SpaceChargeMicroBooNE
 } //namespace spacecharge
@@ -209,9 +268,14 @@ namespace spacecharge {
 //--- Template implementation
 //---
 template <unsigned int N>
-double spacecharge::SimplePolynomialBase<N>::Eval
+double gsl::PolynomialBase<N>::Eval
   (double x, double const* params)
 {
+  // GSL implementation
+  return gsl_poly_eval(params, NParams, x);
+#if 0
+  // hand-craft implementation
+  
   // gave up using GSL because I cant figure out how to convince CET build to link to it
   double const* param = params + NParams;
   double p = *--param;
@@ -220,7 +284,9 @@ double spacecharge::SimplePolynomialBase<N>::Eval
     p += *--param;
   }
   return p;
-} // spacecharge::SimplePolynomialBase<N>::Eval()
+#endif // 0
+} // gsl::PolynomialBase<N>::Eval()
+
 
 //------------------------------------------------------------------------------
 
