@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <memory> // std::unique_ptr<>
+#include <cassert>
 
 // LArSoft includes
 #include "uboone/SpaceCharge/SpaceChargeMicroBooNE.h"
@@ -66,7 +67,13 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
 
   if((fEnableSimSpatialSCE == true) || (fEnableSimEfieldSCE == true))
   {
-    fRepresentationType = pset.get<std::string>("RepresentationType");
+    auto const reprTypeString = pset.get<std::string>("RepresentationType");
+    fRepresentationType = ParseRepresentationType(reprTypeString);
+    if (fRepresentationType == SpaceChargeRepresentation_t::kUnknown) {
+      throw cet::exception("SpaceChargeMicroBooNE")
+        << "Unknown space charge representation type: '" << reprTypeString
+        << "'\n";
+    }
     fInputFilename = pset.get<std::string>("InputFilename");
 
     std::string fname;
@@ -76,85 +83,89 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
     TFile infile(fname.c_str(), "READ");
     if(!infile.IsOpen()) throw cet::exception("SpaceChargeMicroBooNE") << "Could not find the space charge effect file '" << fname << "'!\n";
 
-    if(fRepresentationType == "Parametric")
-    {      
-      for(int i = 0; i < 5; i++)
-      {
-        g1_x[i] = makeInterpolator(infile, Form("deltaX/g1_%d",i));
-        g2_x[i] = makeInterpolator(infile, Form("deltaX/g2_%d",i));
-        g3_x[i] = makeInterpolator(infile, Form("deltaX/g3_%d",i));   
-        g4_x[i] = makeInterpolator(infile, Form("deltaX/g4_%d",i));
-        g5_x[i] = makeInterpolator(infile, Form("deltaX/g5_%d",i));
+    switch (fRepresentationType) {
+      case SpaceChargeRepresentation_t::kParametric:
+        for(int i = 0; i < 5; i++)
+        {
+          g1_x[i] = makeInterpolator(infile, Form("deltaX/g1_%d",i));
+          g2_x[i] = makeInterpolator(infile, Form("deltaX/g2_%d",i));
+          g3_x[i] = makeInterpolator(infile, Form("deltaX/g3_%d",i));   
+          g4_x[i] = makeInterpolator(infile, Form("deltaX/g4_%d",i));
+          g5_x[i] = makeInterpolator(infile, Form("deltaX/g5_%d",i));
 
-        g1_y[i] = makeInterpolator(infile, Form("deltaY/g1_%d",i));
-        g2_y[i] = makeInterpolator(infile, Form("deltaY/g2_%d",i));
-        g3_y[i] = makeInterpolator(infile, Form("deltaY/g3_%d",i));   
-        g4_y[i] = makeInterpolator(infile, Form("deltaY/g4_%d",i));
-        g5_y[i] = makeInterpolator(infile, Form("deltaY/g5_%d",i));
-        g6_y[i] = makeInterpolator(infile, Form("deltaY/g6_%d",i));
+          g1_y[i] = makeInterpolator(infile, Form("deltaY/g1_%d",i));
+          g2_y[i] = makeInterpolator(infile, Form("deltaY/g2_%d",i));
+          g3_y[i] = makeInterpolator(infile, Form("deltaY/g3_%d",i));   
+          g4_y[i] = makeInterpolator(infile, Form("deltaY/g4_%d",i));
+          g5_y[i] = makeInterpolator(infile, Form("deltaY/g5_%d",i));
+          g6_y[i] = makeInterpolator(infile, Form("deltaY/g6_%d",i));
 
-        g1_z[i] = makeInterpolator(infile, Form("deltaZ/g1_%d",i));
-        g2_z[i] = makeInterpolator(infile, Form("deltaZ/g2_%d",i));
-        g3_z[i] = makeInterpolator(infile, Form("deltaZ/g3_%d",i));   
-        g4_z[i] = makeInterpolator(infile, Form("deltaZ/g4_%d",i));
+          g1_z[i] = makeInterpolator(infile, Form("deltaZ/g1_%d",i));
+          g2_z[i] = makeInterpolator(infile, Form("deltaZ/g2_%d",i));
+          g3_z[i] = makeInterpolator(infile, Form("deltaZ/g3_%d",i));   
+          g4_z[i] = makeInterpolator(infile, Form("deltaZ/g4_%d",i));
 
-        g1_Ex[i] = makeInterpolator(infile, Form("deltaExOverE/g1_%d",i));
-        g2_Ex[i] = makeInterpolator(infile, Form("deltaExOverE/g2_%d",i));
-        g3_Ex[i] = makeInterpolator(infile, Form("deltaExOverE/g3_%d",i));
-        g4_Ex[i] = makeInterpolator(infile, Form("deltaExOverE/g4_%d",i));
-        g5_Ex[i] = makeInterpolator(infile, Form("deltaExOverE/g5_%d",i));
+          g1_Ex[i] = makeInterpolator(infile, Form("deltaExOverE/g1_%d",i));
+          g2_Ex[i] = makeInterpolator(infile, Form("deltaExOverE/g2_%d",i));
+          g3_Ex[i] = makeInterpolator(infile, Form("deltaExOverE/g3_%d",i));
+          g4_Ex[i] = makeInterpolator(infile, Form("deltaExOverE/g4_%d",i));
+          g5_Ex[i] = makeInterpolator(infile, Form("deltaExOverE/g5_%d",i));
+          
+          g1_Ey[i] = makeInterpolator(infile, Form("deltaEyOverE/g1_%d",i));
+          g2_Ey[i] = makeInterpolator(infile, Form("deltaEyOverE/g2_%d",i));
+          g3_Ey[i] = makeInterpolator(infile, Form("deltaEyOverE/g3_%d",i));
+          g4_Ey[i] = makeInterpolator(infile, Form("deltaEyOverE/g4_%d",i));
+          g5_Ey[i] = makeInterpolator(infile, Form("deltaEyOverE/g5_%d",i));
+          g6_Ey[i] = makeInterpolator(infile, Form("deltaEyOverE/g6_%d",i));
+          
+          g1_Ez[i] = makeInterpolator(infile, Form("deltaEzOverE/g1_%d",i));
+          g2_Ez[i] = makeInterpolator(infile, Form("deltaEzOverE/g2_%d",i));
+          g3_Ez[i] = makeInterpolator(infile, Form("deltaEzOverE/g3_%d",i));
+          g4_Ez[i] = makeInterpolator(infile, Form("deltaEzOverE/g4_%d",i));
+        }
+
+        g1_x[5] = makeInterpolator(infile, "deltaX/g1_5");
+        g2_x[5] = makeInterpolator(infile, "deltaX/g2_5");
+        g3_x[5] = makeInterpolator(infile, "deltaX/g3_5");   
+        g4_x[5] = makeInterpolator(infile, "deltaX/g4_5");
+        g5_x[5] = makeInterpolator(infile, "deltaX/g5_5");
+
+        g1_y[5] = makeInterpolator(infile, "deltaY/g1_5");
+        g2_y[5] = makeInterpolator(infile, "deltaY/g2_5");
+        g3_y[5] = makeInterpolator(infile, "deltaY/g3_5");   
+        g4_y[5] = makeInterpolator(infile, "deltaY/g4_5");
+        g5_y[5] = makeInterpolator(infile, "deltaY/g5_5");
+        g6_y[5] = makeInterpolator(infile, "deltaY/g6_5");
         
-        g1_Ey[i] = makeInterpolator(infile, Form("deltaEyOverE/g1_%d",i));
-        g2_Ey[i] = makeInterpolator(infile, Form("deltaEyOverE/g2_%d",i));
-        g3_Ey[i] = makeInterpolator(infile, Form("deltaEyOverE/g3_%d",i));
-        g4_Ey[i] = makeInterpolator(infile, Form("deltaEyOverE/g4_%d",i));
-        g5_Ey[i] = makeInterpolator(infile, Form("deltaEyOverE/g5_%d",i));
-        g6_Ey[i] = makeInterpolator(infile, Form("deltaEyOverE/g6_%d",i));
+        g1_x[6] = makeInterpolator(infile, "deltaX/g1_6");
+        g2_x[6] = makeInterpolator(infile, "deltaX/g2_6");
+        g3_x[6] = makeInterpolator(infile, "deltaX/g3_6");
+        g4_x[6] = makeInterpolator(infile, "deltaX/g4_6");
+        g5_x[6] = makeInterpolator(infile, "deltaX/g5_6");
+
+        g1_Ex[5] = makeInterpolator(infile, "deltaExOverE/g1_5");
+        g2_Ex[5] = makeInterpolator(infile, "deltaExOverE/g2_5");
+        g3_Ex[5] = makeInterpolator(infile, "deltaExOverE/g3_5");
+        g4_Ex[5] = makeInterpolator(infile, "deltaExOverE/g4_5");
+        g5_Ex[5] = makeInterpolator(infile, "deltaExOverE/g5_5");
         
-        g1_Ez[i] = makeInterpolator(infile, Form("deltaEzOverE/g1_%d",i));
-        g2_Ez[i] = makeInterpolator(infile, Form("deltaEzOverE/g2_%d",i));
-        g3_Ez[i] = makeInterpolator(infile, Form("deltaEzOverE/g3_%d",i));
-        g4_Ez[i] = makeInterpolator(infile, Form("deltaEzOverE/g4_%d",i));
-      }
-
-      g1_x[5] = makeInterpolator(infile, "deltaX/g1_5");
-      g2_x[5] = makeInterpolator(infile, "deltaX/g2_5");
-      g3_x[5] = makeInterpolator(infile, "deltaX/g3_5");   
-      g4_x[5] = makeInterpolator(infile, "deltaX/g4_5");
-      g5_x[5] = makeInterpolator(infile, "deltaX/g5_5");
-
-      g1_y[5] = makeInterpolator(infile, "deltaY/g1_5");
-      g2_y[5] = makeInterpolator(infile, "deltaY/g2_5");
-      g3_y[5] = makeInterpolator(infile, "deltaY/g3_5");   
-      g4_y[5] = makeInterpolator(infile, "deltaY/g4_5");
-      g5_y[5] = makeInterpolator(infile, "deltaY/g5_5");
-      g6_y[5] = makeInterpolator(infile, "deltaY/g6_5");
-      
-      g1_x[6] = makeInterpolator(infile, "deltaX/g1_6");
-      g2_x[6] = makeInterpolator(infile, "deltaX/g2_6");
-      g3_x[6] = makeInterpolator(infile, "deltaX/g3_6");
-      g4_x[6] = makeInterpolator(infile, "deltaX/g4_6");
-      g5_x[6] = makeInterpolator(infile, "deltaX/g5_6");
-
-      g1_Ex[5] = makeInterpolator(infile, "deltaExOverE/g1_5");
-      g2_Ex[5] = makeInterpolator(infile, "deltaExOverE/g2_5");
-      g3_Ex[5] = makeInterpolator(infile, "deltaExOverE/g3_5");
-      g4_Ex[5] = makeInterpolator(infile, "deltaExOverE/g4_5");
-      g5_Ex[5] = makeInterpolator(infile, "deltaExOverE/g5_5");
-      
-      g1_Ey[5] = makeInterpolator(infile, "deltaEyOverE/g1_5");
-      g2_Ey[5] = makeInterpolator(infile, "deltaEyOverE/g2_5");
-      g3_Ey[5] = makeInterpolator(infile, "deltaEyOverE/g3_5");
-      g4_Ey[5] = makeInterpolator(infile, "deltaEyOverE/g4_5");
-      g5_Ey[5] = makeInterpolator(infile, "deltaEyOverE/g5_5");
-      g6_Ey[5] = makeInterpolator(infile, "deltaEyOverE/g6_5");
-      
-      g1_Ex[6] = makeInterpolator(infile, "deltaExOverE/g1_6");
-      g2_Ex[6] = makeInterpolator(infile, "deltaExOverE/g2_6");
-      g3_Ex[6] = makeInterpolator(infile, "deltaExOverE/g3_6");
-      g4_Ex[6] = makeInterpolator(infile, "deltaExOverE/g4_6");
-      g5_Ex[6] = makeInterpolator(infile, "deltaExOverE/g5_6");
-    }
+        g1_Ey[5] = makeInterpolator(infile, "deltaEyOverE/g1_5");
+        g2_Ey[5] = makeInterpolator(infile, "deltaEyOverE/g2_5");
+        g3_Ey[5] = makeInterpolator(infile, "deltaEyOverE/g3_5");
+        g4_Ey[5] = makeInterpolator(infile, "deltaEyOverE/g4_5");
+        g5_Ey[5] = makeInterpolator(infile, "deltaEyOverE/g5_5");
+        g6_Ey[5] = makeInterpolator(infile, "deltaEyOverE/g6_5");
+        
+        g1_Ex[6] = makeInterpolator(infile, "deltaExOverE/g1_6");
+        g2_Ex[6] = makeInterpolator(infile, "deltaExOverE/g2_6");
+        g3_Ex[6] = makeInterpolator(infile, "deltaExOverE/g3_6");
+        g4_Ex[6] = makeInterpolator(infile, "deltaExOverE/g4_6");
+        g5_Ex[6] = makeInterpolator(infile, "deltaExOverE/g5_6");
+        break; // kParametric
+      case SpaceChargeRepresentation_t::kUnknown:
+        assert(false); // logic error
+        break;
+    } // switch
 
     infile.Close();
   }
@@ -174,6 +185,7 @@ bool spacecharge::SpaceChargeMicroBooNE::Update(uint64_t ts)
 
   return true;
 }
+
 
 //----------------------------------------------------------------------------
 /// Return boolean indicating whether or not to turn simulation of SCE on for
@@ -211,10 +223,15 @@ std::vector<double> spacecharge::SpaceChargeMicroBooNE::GetPosOffsets(double xVa
   }
   else
   {
-    if(fRepresentationType == "Parametric")
-      thePosOffsets = GetPosOffsetsParametric(xVal,yVal,zVal);
-    else
-      thePosOffsets.resize(3,0.0);
+    switch (fRepresentationType) {
+      case SpaceChargeRepresentation_t::kParametric:
+        thePosOffsets = GetPosOffsetsParametric(xVal,yVal,zVal);
+        break;
+      case SpaceChargeRepresentation_t::kUnknown:
+        assert(false); // logic error: can't be unknown
+        thePosOffsets.resize(3,0.0);
+        break;
+    } // switch
   }
 
   return thePosOffsets;
@@ -384,10 +401,15 @@ std::vector<double> spacecharge::SpaceChargeMicroBooNE::GetEfieldOffsets(double 
   }
   else
   {
-    if(fRepresentationType == "Parametric")
-      theEfieldOffsets = GetEfieldOffsetsParametric(xVal,yVal,zVal);
-    else
-      theEfieldOffsets.resize(3,0.0);
+    switch (fRepresentationType) {
+      case SpaceChargeRepresentation_t::kParametric:
+        theEfieldOffsets = GetEfieldOffsetsParametric(xVal,yVal,zVal);
+        break;
+      case SpaceChargeRepresentation_t::kUnknown:
+        assert(false); // logic error: can't be unknown
+        theEfieldOffsets.resize(3,0.0);
+        break;
+    } // switch
   }
 
   theEfieldOffsets.at(0) = -1.0*theEfieldOffsets.at(0);
@@ -593,6 +615,19 @@ bool spacecharge::SpaceChargeMicroBooNE::IsInsideBoundaries(double xVal, double 
 
   return isInside;
 }
+
+
+//----------------------------------------------------------------------------
+
+spacecharge::SpaceChargeMicroBooNE::SpaceChargeRepresentation_t
+spacecharge::SpaceChargeMicroBooNE::ParseRepresentationType
+  (std::string repr_str)
+{
+  
+  if (repr_str == "Parametric") return SpaceChargeRepresentation_t::kParametric;
+  else                          return SpaceChargeRepresentation_t::kUnknown;
+  
+} // spacecharge::SpaceChargeMicroBooNE::ParseRepresentationType()
 
 
 //----------------------------------------------------------------------------

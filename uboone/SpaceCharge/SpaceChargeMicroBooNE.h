@@ -144,6 +144,11 @@ namespace spacecharge {
  
     public:
 
+      typedef enum {
+        kParametric,
+        kUnknown
+      } SpaceChargeRepresentation_t;
+    
       explicit SpaceChargeMicroBooNE(fhicl::ParameterSet const& pset);
       SpaceChargeMicroBooNE(SpaceChargeMicroBooNE const&) = delete;
       virtual ~SpaceChargeMicroBooNE() = default;
@@ -156,10 +161,12 @@ namespace spacecharge {
       bool EnableCorrSCE() const override;
       std::vector<double> GetPosOffsets(double xVal, double yVal, double zVal) const override;
       std::vector<double> GetEfieldOffsets(double xVal, double yVal, double zVal) const override;
- 
-    private:
+      
     protected:
 
+      static SpaceChargeRepresentation_t ParseRepresentationType
+        (std::string repr_str);
+      
       std::vector<double> GetPosOffsetsParametric(double xVal, double yVal, double zVal) const;
       double GetOnePosOffsetParametric(double xVal, double yVal, double zVal, std::string axis) const;
       std::vector<double> GetEfieldOffsetsParametric(double xVal, double yVal, double zVal) const;
@@ -173,7 +180,7 @@ namespace spacecharge {
       bool fEnableSimEfieldSCE;
       bool fEnableCorrSCE;
       
-      std::string fRepresentationType;
+      SpaceChargeRepresentation_t fRepresentationType;
       std::string fInputFilename;
       
       std::vector<gsl::Interpolator> g1_x{ 7U };
@@ -255,9 +262,9 @@ namespace spacecharge {
       typedef gsl::PolynomialBase<3> fFinal_Ez_poly_t;
     
     
-    /// Returns a new GSL interpolator with data from TGraph in specified file.
-    static gsl::Interpolator makeInterpolator
-      (TFile& file, char const* graphName);
+      /// Returns a new GSL interpolator with data from TGraph in specified file.
+      static gsl::Interpolator makeInterpolator
+        (TFile& file, char const* graphName);
     
   }; // class SpaceChargeMicroBooNE
 } //namespace spacecharge
