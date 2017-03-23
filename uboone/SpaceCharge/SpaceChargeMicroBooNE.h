@@ -168,9 +168,14 @@ namespace spacecharge {
         (std::string repr_str);
       
       std::vector<double> GetPosOffsetsParametric(double xVal, double yVal, double zVal) const;
-      double GetOnePosOffsetParametric(double xVal, double yVal, double zVal, std::string axis) const;
+      double GetOnePosOffsetParametricX(double xValNew, double yValNew, double zValNew) const;
+      double GetOnePosOffsetParametricY(double xValNew, double yValNew, double zValNew) const;
+      double GetOnePosOffsetParametricZ(double xValNew, double yValNew, double zValNew) const;
+
       std::vector<double> GetEfieldOffsetsParametric(double xVal, double yVal, double zVal) const;
-      double GetOneEfieldOffsetParametric(double xVal, double yVal, double zVal, std::string axis) const;
+      double GetOneEfieldOffsetParametricX(double xVal, double yVal, double zVal) const;
+      double GetOneEfieldOffsetParametricY(double xVal, double yVal, double zVal) const;
+      double GetOneEfieldOffsetParametricZ(double xVal, double yVal, double zVal) const;
       double TransformX(double xVal) const;
       double TransformY(double yVal) const;
       double TransformZ(double zVal) const;
