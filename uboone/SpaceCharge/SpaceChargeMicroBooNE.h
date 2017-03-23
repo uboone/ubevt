@@ -188,23 +188,23 @@ namespace spacecharge {
       SpaceChargeRepresentation_t fRepresentationType;
       std::string fInputFilename;
       
-      std::vector<gsl::Interpolator> g1_x{ 7U };
-      std::vector<gsl::Interpolator> g2_x{ 7U };
-      std::vector<gsl::Interpolator> g3_x{ 7U };
-      std::vector<gsl::Interpolator> g4_x{ 7U };
-      std::vector<gsl::Interpolator> g5_x{ 7U };
+      std::array<gsl::Interpolator, 7U> g1_x;
+      std::array<gsl::Interpolator, 7U> g2_x;
+      std::array<gsl::Interpolator, 7U> g3_x;
+      std::array<gsl::Interpolator, 7U> g4_x;
+      std::array<gsl::Interpolator, 7U> g5_x;
       
-      std::vector<gsl::Interpolator> g1_y{ 7U };
-      std::vector<gsl::Interpolator> g2_y{ 7U };
-      std::vector<gsl::Interpolator> g3_y{ 7U };
-      std::vector<gsl::Interpolator> g4_y{ 7U };
-      std::vector<gsl::Interpolator> g5_y{ 7U };
-      std::vector<gsl::Interpolator> g6_y{ 7U };
+      std::array<gsl::Interpolator, 7U> g1_y;
+      std::array<gsl::Interpolator, 7U> g2_y;
+      std::array<gsl::Interpolator, 7U> g3_y;
+      std::array<gsl::Interpolator, 7U> g4_y;
+      std::array<gsl::Interpolator, 7U> g5_y;
+      std::array<gsl::Interpolator, 7U> g6_y;
       
-      std::vector<gsl::Interpolator> g1_z{ 7U };
-      std::vector<gsl::Interpolator> g2_z{ 7U };
-      std::vector<gsl::Interpolator> g3_z{ 7U };
-      std::vector<gsl::Interpolator> g4_z{ 7U };
+      std::array<gsl::Interpolator, 7U> g1_z;
+      std::array<gsl::Interpolator, 7U> g2_z;
+      std::array<gsl::Interpolator, 7U> g3_z;
+      std::array<gsl::Interpolator, 7U> g4_z;
       
       typedef gsl::Polynomial<6> f1_x_poly_t;
       typedef gsl::Polynomial<6> f2_x_poly_t;
@@ -227,23 +227,23 @@ namespace spacecharge {
       typedef gsl::Polynomial<4> f4_z_poly_t;
       typedef gsl::PolynomialBase<3> fFinal_z_poly_t;
     
-      std::vector<gsl::Interpolator> g1_Ex{ 7U };
-      std::vector<gsl::Interpolator> g2_Ex{ 7U };
-      std::vector<gsl::Interpolator> g3_Ex{ 7U };
-      std::vector<gsl::Interpolator> g4_Ex{ 7U };
-      std::vector<gsl::Interpolator> g5_Ex{ 7U };
+      std::array<gsl::Interpolator, 7U> g1_Ex;
+      std::array<gsl::Interpolator, 7U> g2_Ex;
+      std::array<gsl::Interpolator, 7U> g3_Ex;
+      std::array<gsl::Interpolator, 7U> g4_Ex;
+      std::array<gsl::Interpolator, 7U> g5_Ex;
       
-      std::vector<gsl::Interpolator> g1_Ey{ 7U };
-      std::vector<gsl::Interpolator> g2_Ey{ 7U };
-      std::vector<gsl::Interpolator> g3_Ey{ 7U };
-      std::vector<gsl::Interpolator> g4_Ey{ 7U };
-      std::vector<gsl::Interpolator> g5_Ey{ 7U };
-      std::vector<gsl::Interpolator> g6_Ey{ 7U };
+      std::array<gsl::Interpolator, 7U> g1_Ey;
+      std::array<gsl::Interpolator, 7U> g2_Ey;
+      std::array<gsl::Interpolator, 7U> g3_Ey;
+      std::array<gsl::Interpolator, 7U> g4_Ey;
+      std::array<gsl::Interpolator, 7U> g5_Ey;
+      std::array<gsl::Interpolator, 7U> g6_Ey;
       
-      std::vector<gsl::Interpolator> g1_Ez{ 7U };
-      std::vector<gsl::Interpolator> g2_Ez{ 7U };
-      std::vector<gsl::Interpolator> g3_Ez{ 7U };
-      std::vector<gsl::Interpolator> g4_Ez{ 7U };
+      std::array<gsl::Interpolator, 7U> g1_Ez;
+      std::array<gsl::Interpolator, 7U> g2_Ez;
+      std::array<gsl::Interpolator, 7U> g3_Ez;
+      std::array<gsl::Interpolator, 7U> g4_Ez;
       
       typedef gsl::Polynomial<6> f1_Ex_poly_t;
       typedef gsl::Polynomial<6> f2_Ex_poly_t;
