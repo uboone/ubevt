@@ -9,8 +9,6 @@
 
 // C++ language includes
 #include <string>
-#include <vector>
-#include <memory> // std::unique_ptr<>
 #include <cassert>
 
 // LArSoft includes
