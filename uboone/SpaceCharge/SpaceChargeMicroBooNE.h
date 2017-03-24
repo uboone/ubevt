@@ -60,7 +60,7 @@ namespace gsl {
       , ya(graph.GetY(), graph.GetY() + graph.GetN())
       , fInterp(gsl_interp_alloc(gsl_interp_linear, xa.size()))
       {
-        assert(graph.TestBit(TGraph::kIsSortedX));
+        // assert(graph.TestBit(TGraph::kIsSortedX));
         gsl_interp_init(fInterp, xa.data(), ya.data(), xa.size());
       }
     
