@@ -46,7 +46,7 @@ microboone_channelstatus_provider:
   UseFile: false
 }
 microboone_channelstatus_provider.DatabaseRetrievalAlg.DBFolderName: "channelstatus_data"
-microboone_channelstatus_provider.DatabaseRetrievalAlg.DBTag: "v1r3"
+microboone_channelstatus_provider.DatabaseRetrievalAlg.DBTag: "v1r4"
 
 microboone_channelstatus_service:
 {
