@@ -213,6 +213,7 @@ bool spacecharge::SpaceChargeMicroBooNE::EnableCorrSCE() const
 /// used in ionization electron drift
 geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetPosOffsets(geo::Point_t const& point) const
 {
+  if (!EnableSimSpatialSCE()) return {}; // no correction, zero displacement
   if(!IsInsideBoundaries(point)) return {}; // zero-initialised
   switch (fRepresentationType) {
     
@@ -377,6 +378,7 @@ double spacecharge::SpaceChargeMicroBooNE::GetOnePosOffsetParametricZ
 /// used in charge/light yield calculation (e.g.)
 geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetEfieldOffsets(geo::Point_t const& point) const
 {
+  if (!EnableSimEfieldSCE()) return {}; // no correction, zero distortion
   if(!IsInsideBoundaries(point)) return {}; // zero-initialised
   
   switch (fRepresentationType) {
