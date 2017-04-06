@@ -188,7 +188,7 @@ namespace spacecharge {
       bool fEnableSimEfieldSCE;
       bool fEnableCorrSCE;
       
-      SpaceChargeRepresentation_t fRepresentationType;
+      SpaceChargeRepresentation_t fRepresentationType = kUnknown;
       std::string fInputFilename;
       
       std::array<gsl::Interpolator, 7U> g1_x;
