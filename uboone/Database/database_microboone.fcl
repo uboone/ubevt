@@ -71,7 +71,7 @@ microboone_electronlifetime_provider:
 }
 microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBFolderName: "elifetime_data_tmp"
 microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBUrl: "http://dbdata0vm.fnal.gov:8086/uboonecon_dev/app/"
-microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBTag: "v1r0"
+microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBTag: "v1r4"
 
 microboone_electronlifetime_service:
 {
@@ -115,7 +115,7 @@ microboone_electronicscalib_provider:
 }
 microboone_electronicscalib_provider.DatabaseRetrievalAlg.DBFolderName: "electronicscalib_data"
 microboone_electronicscalib_provider.DatabaseRetrievalAlg.DBUrl: "http://dbdata0vm.fnal.gov:8086/uboonecon_dev/app/"
-microboone_electronicscalib_provider.DatabaseRetrievalAlg.DBTag: "v1r1"
+microboone_electronicscalib_provider.DatabaseRetrievalAlg.DBTag: "v1r2"
 
 microboone_electronicscalib_service:
 {
