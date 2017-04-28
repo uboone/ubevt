@@ -17,13 +17,13 @@ art_make(
                         ${ART_FRAMEWORK_PRINCIPAL}
                         ${ART_FRAMEWORK_SERVICES_REGISTRY}
                         ${ART_FRAMEWORK_SERVICES_SYSTEM_FILECATALOGMETADATA_SERVICE}
-                        art_Persistency_Common canvas_Persistency_Common
-                        art_Utilities canvas_Utilities
+                        art_Persistency_Common canvas
+                        art_Utilities canvas
 			ifdh
                         ${MF_MESSAGELOGGER}
                         ${BOOST_LIB}
                         ${FHICLCPP}
-                        ${CETLIB}
+                        cetlib cetlib_except
 			${ROOT_BASIC_LIB_LIST}
 )	
 
