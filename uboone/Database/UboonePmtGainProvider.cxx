@@ -121,7 +121,7 @@ namespace lariov {
         float ped_rms        = std::stof( line.substr(current_comma+1, line.find(',',current_comma+1)-(current_comma+1)) );
         
         current_comma = line.find(',',current_comma+1);
-        float ped_rms_err    = std::stof( line.substr(current_comma+1, line.find(',',current_comma+1)-(current_comma+1)) );	
+        float ped_rms_err    = std::stof( line.substr(current_comma+1) );	
 
         CalibrationExtraInfo extra_info("PmtGain");
 	extra_info.AddOrReplaceStringData("gain_fit_status",gain_fit_status);
