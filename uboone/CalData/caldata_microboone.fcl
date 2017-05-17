@@ -1,54 +1,21 @@
 #include "caldata.fcl"
 #include "roialg.fcl"
+#include "deconTools_microboone.fcl"
 #include "database_microboone.fcl"
 
 BEGIN_PROLOG
 
-microboone_roifinderstandard:
-{
-    tool_type:    ROIFinderStandard
-    NumBinsHalf:  3
-    Threshold:    [ 3, 3, 3 ] # abs(threshold) for finding a Region Of Interest
-    NumSigma:     [ 4, 4, 6 ]
-    uPlaneROIPad: [ 50, 50 ] # number of bins to pad both ends of the ROIs
-    vPlaneROIPad: [ 50, 50 ] # number of bins to pad both ends of the ROIs
-    zPlaneROIPad: [ 50, 50 ] # number of bins to pad both ends of the ROIs
-}
-
-microboone_baselinestandard:
-{
-    tool_type: BaselineStandard
-    NumBinsToAverage: 20
-}
-
-microboone_baselinewaveformproperties:
-{
-    tool_type:        BaselineWaveformProperties
-    ROIPropertiesAlg: { ROIAlgParams: @local::roiAlg_DigitAboveBaseline }
-}
-
-microboone_nobaseline:
-{
-    tool_type:        NoBaseline
-}
-
 microboone_calroi:
 {
- module_type:                "CalWireROI"
- DigitModuleLabel:           "daq"
- NoiseSource:                3
- FFTSize:                    128      # re-initialize FFT service to this size
- SaveWireWF:                 0
- MinAllowedChannelStatus:    3 # All channels greater than or equal to this status level are considered
- DodQdxCalib:                false  # apply wire-by-wire calibration?
- dQdxCalibFileName:          "dQdxCalibrationPlanev1.txt"
+    module_type:                "CalWireROI"
+    DigitModuleLabel:           "daq"
+    NoiseSource:                3
+    FFTSize:                    128      # re-initialize FFT service to this size
+    SaveWireWF:                 0
+    MinAllowedChannelStatus:    3 # All channels greater than or equal to this status level are considered
 
- ROIFinder:                  @local::microboone_roifinderstandard
- Baseline:                   @local::microboone_baselinestandard
- 
-# ROIPropertiesAlg:          { ROIAlgParams: @local::roiAlg_DigitAboveBaseline }
-
- MinROIAverageTickThreshold: -0.5
+    ROIFinder:                  @local::microboone_roifinderstandard
+    Deconvolution:              @local::microboone_roideconvolution
 }
 
 microboone_calwire:
