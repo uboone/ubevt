@@ -33,6 +33,16 @@ set( uboone_tool_lib_list
     )
 
 
+simple_plugin( ROIDeconvolution  "tool"
+               ${uboone_tool_lib_list}
+               BASENAME_ONLY
+             )
+
+simple_plugin( MCC7Deconvolution  "tool"
+               ${uboone_tool_lib_list}
+               BASENAME_ONLY
+             )
+
 simple_plugin( ROIFinderStandard  "tool"
                ${uboone_tool_lib_list}
 	           BASENAME_ONLY
