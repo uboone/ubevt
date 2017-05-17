@@ -4,7 +4,7 @@
 ////////////////////////////////////////////////////////////////////////
 
 #include <cmath>
-#include "IROIFinder.h"
+#include "uboone/CalData/DeconTools/IROIFinder.h"
 #include "art/Utilities/ToolMacros.h"
 #include "art/Framework/Services/Optional/TFileService.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
