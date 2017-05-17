@@ -50,6 +50,7 @@
 
 #include "art/Utilities/make_tool.h"
 #include "uboone/CalData/DeconTools/IROIFinder.h"
+#include "uboone/CalData/DeconTools/IDeconvolution.h"
 #include "uboone/CalData/DeconTools/IBaseline.h"
 
 ///creation of calibrated signals on wires
@@ -81,14 +82,9 @@ class CalWireROI : public art::EDProducer
     int                                                      fSaveWireWF;                 ///< Save recob::wire object waveforms
     size_t                                                   fEventCount;                 ///< count of event processed
     int                                                      fMinAllowedChanStatus;       ///< Don't consider channels with lower status
-    bool                                                     fDodQdxCalib;                ///< Do we apply wire-by-wire calibration?
-    std::string                                              fdQdxCalibFileName;          ///< Text file for constants to do wire-by-wire calibration
-    std::map<unsigned int, float>                            fdQdxCalib;                  ///< Map to do wire-by-wire calibration, key is channel
-                                                                                          ///< number, content is correction factor
-    float                                                    fMinROIAverageTickThreshold; ///< try to remove bad ROIs
     
     std::unique_ptr<uboone_tool::IROIFinder>                 fROIFinder;
-    std::unique_ptr<uboone_tool::IBaseline>                  fBaseline;
+    std::unique_ptr<uboone_tool::IDeconvolution>             fDeconvolution;
     
     const geo::GeometryCore*                                 fGeometry = lar::providerFrom<geo::Geometry>();
     art::ServiceHandle<util::LArFFT>                         fFFT;
@@ -139,15 +135,14 @@ void CalWireROI::reconfigure(fhicl::ParameterSet const& p)
             << "CalWireROI can not yet handle deconvolution with dynamic induced charge effects turned on.  Please use CalWireMicroBooNE instead.";
     }
     
-    fROIFinder = art::make_tool<uboone_tool::IROIFinder>(p.get<fhicl::ParameterSet>("ROIFinder"));
-    fBaseline  = art::make_tool<uboone_tool::IBaseline> (p.get<fhicl::ParameterSet>("Baseline"));
+    fROIFinder = art::make_tool<uboone_tool::IROIFinder>        (p.get<fhicl::ParameterSet>("ROIFinder"));
+    fDeconvolution = art::make_tool<uboone_tool::IDeconvolution>(p.get<fhicl::ParameterSet>("Deconvolution"));
     
     fDigitModuleLabel           = p.get< std::string >   ("DigitModuleLabel", "daq");
     fNoiseSource                = p.get< unsigned short >("NoiseSource",          3);
     fFFTSize                    = p.get< size_t >        ("FFTSize"                );
     fSaveWireWF                 = p.get< int >           ("SaveWireWF"             );
     fMinAllowedChanStatus       = p.get< int >           ("MinAllowedChannelStatus");
-    fMinROIAverageTickThreshold = p.get<float>           ("MinROIAverageTickThreshold",-0.5);
     
     fSpillName.clear();
     
@@ -156,38 +151,6 @@ void CalWireROI::reconfigure(fhicl::ParameterSet const& p)
     {
         fSpillName = fDigitModuleLabel.substr( pos+1 );
         fDigitModuleLabel = fDigitModuleLabel.substr( 0, pos );
-    }
-
-    //wire-by-wire calibration
-    fDodQdxCalib = p.get< bool >("DodQdxCalib", false);
-    
-    if (fDodQdxCalib)
-    {
-        fdQdxCalibFileName = p.get< std::string >("dQdxCalibFileName");
-        std::string fullname;
-        cet::search_path sp("FW_SEARCH_PATH");
-        sp.find_file(fdQdxCalibFileName, fullname);
-
-        if (fullname.empty())
-        {
-            std::cout << "Input file " << fdQdxCalibFileName << " not found" << std::endl;
-            throw cet::exception("File not found");
-        }
-        else
-            std::cout << "Applying wire-by-wire calibration using file " << fdQdxCalibFileName << std::endl;
-
-        std::ifstream inFile(fullname, std::ios::in);
-        std::string line;
-      
-        while (std::getline(inFile,line))
-        {
-            unsigned int channel;
-            float        constant;
-            std::stringstream linestream(line);
-            linestream >> channel >> constant;
-            fdQdxCalib[channel] = constant;
-            if (channel%1000==0) std::cout<<"Channel "<<channel<<" correction factor "<<fdQdxCalib[channel]<<std::endl;
-        }
     }
 	
     return;
@@ -239,8 +202,6 @@ void CalWireROI::produce(art::Event& evt)
     raw::ChannelID_t channel = raw::InvalidChannelID; // channel number
     
     const lariov::ChannelStatusProvider& chanFilt = art::ServiceHandle<lariov::ChannelStatusService>()->GetProvider();
-
-    double deconNorm = fSignalShaping->GetDeconNorm();
     
     // loop over all wires
     wirecol->reserve(digitVecHandle->size());
@@ -290,129 +251,13 @@ void CalWireROI::produce(art::Event& evt)
             else if (fNoiseSource != 2) raw_noise = std::max(raw_noise,rms_noise);
             
             // vector of candidate ROI begin and end bins
-            uboone_tool::IROIFinder::CandidateROIVec roiVec;
+            uboone_tool::IROIFinder::CandidateROIVec candRoiVec;
 
             // Now find the candidate ROI's
-            fROIFinder->FindROIs(rawAdcLessPedVec, thePlane, raw_noise, roiVec);
+            fROIFinder->FindROIs(rawAdcLessPedVec, thePlane, raw_noise, candRoiVec);
             
-            // And now process them
-            for(auto& roi : roiVec)
-            {
-                // First up: copy out the relevent ADC bins into the ROI holder
-                size_t roiLen = roi.second - roi.first;
-                
-                // We want the deconvolution buffer size to be a power of 2 in length
-                // to facilitate the FFT
-                size_t deconSize = fFFTSize;
-                
-                while(1)
-                {
-                    if (roiLen > deconSize) deconSize *= 2;
-                    else break;
-                }
-
-                // In theory, most ROI's are around the same size so this should mostly be a noop
-                fSignalShaping->SetDecon(deconSize, channel);
-                
-                deconSize = fFFT->FFTSize();
-                
-                std::vector<float> holder(deconSize);
-                
-                // Extend the ROI to accommodate the extra bins for the FFT
-                // The idea is to try to center the desired ROI in the buffer used by deconvolution
-                size_t halfLeftOver = (deconSize - roiLen) / 2;               // Number bins either side of ROI
-                size_t roiStart     = halfLeftOver;                           // Start in the buffer of the ROI
-                size_t roiStop      = halfLeftOver + roiLen;                  // Stop in the buffer of the ROI
-                int    firstOffset  = roi.first - halfLeftOver;               // Offset into the ADC vector of buffer start
-                int    secondOffset = roi.second + halfLeftOver + roiLen % 2; // Offset into the ADC vector of buffer end
-
-                // Check for the two edge conditions - starting before the ADC vector or running off the end
-                // In either case we shift the actual roi within the FFT buffer
-                // First is the case where we would be starting before the ADC vector
-                if (firstOffset < 0)
-                {
-                    roiStart     += firstOffset;  // remember that firstOffset is negative
-                    roiStop      += firstOffset;
-                    secondOffset -= firstOffset;
-                    firstOffset   = 0;
-                }
-                // Second is the case where we would overshoot the end
-                else if (size_t(secondOffset) > rawAdcLessPedVec.size())
-                {
-                    size_t overshoot = secondOffset - rawAdcLessPedVec.size();
-                    
-                    roiStart     += overshoot;
-                    roiStop      += overshoot;
-                    firstOffset  -= overshoot;
-                    secondOffset  = rawAdcLessPedVec.size();
-                }
-
-                // Fill the buffer and do the deconvolution
-                std::copy(rawAdcLessPedVec.begin()+firstOffset, rawAdcLessPedVec.begin()+secondOffset, holder.begin());
-                
-                // Leon's algorithm for identifying charge collection on the afflicted v plane wires
-                if (thePlane == 1 && wids[0].Wire > 1180 && wids[0].Wire < 1890)
-                {
-                    std::vector<float>::iterator maxItr = std::max_element(holder.begin() + roiStart, holder.begin() + roiStop);
-                    std::vector<float>::iterator minItr = std::min_element(maxItr,                    holder.begin() + roiStop);
-                    
-                    if (std::distance(maxItr,minItr) <= 30)
-                    {
-                        float maxPulseHeight = *maxItr;
-                        float minPulseHeight = *minItr;
-                        
-                        if (maxPulseHeight >= 40. && std::fabs(minPulseHeight/maxPulseHeight) < 0.5)
-                        {
-                            std::cout << "********> plane: " << thePlane << ", wire: " << wids[0].Wire << ", start: " << firstOffset << ", stop: " << secondOffset << std::endl;
-                            std::cout << "          max to min distance: " << std::distance(maxItr,minItr) << ", max/min: " << maxPulseHeight << "/" << minPulseHeight << std::endl;
-                            //                            deconChannel = 6000;
-                        }
-                    }
-                }
-
-                // Deconvolute the raw signal
-                fSignalShaping->Deconvolute(channel,holder);
-                
-                // "normalize" the vector
-                std::transform(holder.begin(),holder.end(),holder.begin(),[deconNorm](float& deconVal){return deconVal/deconNorm;});
-
-                // Now we do the baseline determination and correct the ROI
-                float base = fBaseline->GetBaseline(holder, channel, roiStart, roiLen);
-                
-                std::transform(holder.begin(),holder.end(),holder.begin(),[base](float& adcVal){return adcVal - base;});
-                
-                // Get rid of the leading and trailing "extra" bins needed to keep the FFT happy
-                std::copy(holder.begin() + roiStart, holder.begin() + roiStop, holder.begin());
-                
-                holder.resize(roiLen);
-
-                // apply wire-by-wire calibration
-                if (fDodQdxCalib)
-                {
-                    if(fdQdxCalib.find(channel) != fdQdxCalib.end())
-                    {
-                        float constant = fdQdxCalib[channel];
-
-                        for (size_t iholder = 0; iholder < holder.size(); ++iholder) holder[iholder] *= constant;
-                    }
-                }
-
-                //wes 23.12.2016 --- sum up the roi, and if it's very negative get rid of it
-                float average_val = std::accumulate(holder.begin(),holder.end(),0.0) / holder.size();
-                float min         = *std::min_element(holder.begin(),holder.end());
-                float max         = *std::max_element(holder.begin(),holder.end());
-                
-                if ((max + average_val) > 1. && (average_val > fMinROIAverageTickThreshold ||  std::abs(min)<std::abs(max)))
-                {
-                    // add the range into ROIVec
-                    ROIVec.add_range(roi.first, std::move(holder));
-                }
-                else
-                {
-                    std::cout << "=======> Rejecting ROI due to average_val, plane: " << thePlane << ", wire: " << wids[0].Wire << ", val: " << average_val << ", min/max " << min << "/" << max << ", firstOffset: " << firstOffset << ", len: " << roiLen << std::endl;
-                }
-            } // loop over candidate roi's
-        } // end if not a bad channel
+            fDeconvolution->Deconvolve(rawAdcLessPedVec, channel, candRoiVec, ROIVec);
+       } // end if not a bad channel
 
         // create the new wire directly in wirecol
         wirecol->push_back(recob::WireCreator(std::move(ROIVec),*digitVec).move());
