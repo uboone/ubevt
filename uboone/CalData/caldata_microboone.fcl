@@ -4,27 +4,57 @@
 
 BEGIN_PROLOG
 
+microboone_roifinderstandard:
+{
+    tool_type:    ROIFinderStandard
+    NumBinsHalf:  3
+    Threshold:    [ 3, 3, 3 ] # abs(threshold) for finding a Region Of Interest
+    NumSigma:     [ 4, 4, 6 ]
+    uPlaneROIPad: [ 50, 50 ] # number of bins to pad both ends of the ROIs
+    vPlaneROIPad: [ 50, 50 ] # number of bins to pad both ends of the ROIs
+    zPlaneROIPad: [ 50, 50 ] # number of bins to pad both ends of the ROIs
+}
+
+microboone_baselinestandard:
+{
+    tool_type: BaselineStandard
+    NumBinsToAverage: 20
+}
+
+microboone_baselinewaveformproperties:
+{
+    tool_type:        BaselineWaveformProperties
+    ROIPropertiesAlg: { ROIAlgParams: @local::roiAlg_DigitAboveBaseline }
+}
+
+microboone_nobaseline:
+{
+    tool_type:        NoBaseline
+}
+
 microboone_calroi:
 {
  module_type:        "CalWireROI"
  DigitModuleLabel:   "daq"
  NoiseSource:        3
- NumBinsHalf:        3
- Threshold:          [ 3, 3, 3 ] # abs(threshold) for finding a Region Of Interest
- NumSigma:           [ 4, 4, 6 ]
- uPlaneROIPad: [ 50, 50 ] # number of bins to pad both ends of the ROIs
- vPlaneROIPad: [ 50, 50 ] # number of bins to pad both ends of the ROIs
- zPlaneROIPad: [ 50, 50 ] # number of bins to pad both ends of the ROIs
- DoBaselineSub:   true # subtract baseline after deconvolution?
- uPlaneRamp:       true # Set true if U plane response includes a pre-ROI ramp
- FFTSize:     256      # re-initialize FFT service to this size
+# NumBinsHalf:        3
+# Threshold:          [ 3, 3, 3 ] # abs(threshold) for finding a Region Of Interest
+# NumSigma:           [ 4, 4, 6 ]
+# uPlaneROIPad: [ 50, 50 ] # number of bins to pad both ends of the ROIs
+# vPlaneROIPad: [ 50, 50 ] # number of bins to pad both ends of the ROIs
+# zPlaneROIPad: [ 50, 50 ] # number of bins to pad both ends of the ROIs
+# DoBaselineSub:   true # subtract baseline after deconvolution?
+ FFTSize:     128      # re-initialize FFT service to this size
  SaveWireWF:  0
  MinAllowedChannelStatus: 3 # All channels greater than or equal to this status level are considered
- DoBaselineSub_WaveformPropertiesAlg:   false # subtract baseline after deconvolution?
+# DoBaselineSub_WaveformPropertiesAlg:   false # subtract baseline after deconvolution?
  DodQdxCalib:           false  # apply wire-by-wire calibration?
  dQdxCalibFileName:     "dQdxCalibrationPlanev1.txt"
+
+ ROIFinder:             @local::microboone_roifinderstandard
+ Baseline:              @local::microboone_baselinestandard
  
- ROIPropertiesAlg:      { ROIAlgParams: @local::roiAlg_DigitAboveBaseline }
+# ROIPropertiesAlg:      { ROIAlgParams: @local::roiAlg_DigitAboveBaseline }
 
  MinROIAverageTickThreshold: -0.5
 
