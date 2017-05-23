@@ -14,8 +14,6 @@
 #include "larcore/Geometry/Geometry.h"
 #include "uboone/Utilities/SignalShapingServiceMicroBooNE.h"
 #include "lardata/Utilities/LArFFT.h"
-#include "larevt/CalibrationDBI/Interface/DetPedestalService.h"
-#include "larevt/CalibrationDBI/Interface/DetPedestalProvider.h"
 
 #include "art/Utilities/make_tool.h"
 #include "uboone/CalData/DeconTools/WaveformPropertiesAlg.h"
@@ -59,14 +57,12 @@ private:
     const geo::GeometryCore*                                 fGeometry = lar::providerFrom<geo::Geometry>();
     art::ServiceHandle<util::LArFFT>                         fFFT;
     art::ServiceHandle<util::SignalShapingServiceMicroBooNE> fSignalShaping;
-    const lariov::DetPedestalProvider&                       fPedestalRetrievalAlg;
 };
     
 //----------------------------------------------------------------------
 // Constructor.
 MCC7Deconvolution::MCC7Deconvolution(const fhicl::ParameterSet& pset) :
-                      fROIPropertiesAlg(pset.get<fhicl::ParameterSet>("ROIPropertiesAlg")),
-                      fPedestalRetrievalAlg(art::ServiceHandle<lariov::DetPedestalService>()->GetPedestalProvider())
+                      fROIPropertiesAlg(pset.get<fhicl::ParameterSet>("ROIPropertiesAlg"))
 {
     configure(pset);
 }
@@ -143,11 +139,10 @@ void MCC7Deconvolution::Deconvolve(IROIFinder::Waveform&             waveform,
     rawAdcLessPedVec.resize(transformSize,0.);
     
     size_t binOffset = transformSize > dataSize ? (transformSize - dataSize) / 2 : 0;
-    float  pdstl     = fPedestalRetrievalAlg.PedMean(channel);
     double deconNorm = fSignalShaping->GetDeconNorm();
     
-    // Get the pedestal subtracted data, centered in the deconvolution vector
-    std::transform(waveform.begin(),waveform.end(),rawAdcLessPedVec.begin()+binOffset,[pdstl](const short& adc){return std::round(float(adc) - pdstl);});
+    // Copy the input (assumed pedestal subtracted) waveforms into our zero padded deconvolution buffer
+    std::copy(waveform.begin(),waveform.end(),rawAdcLessPedVec.begin()+binOffset);
     
     // Strategy is to run deconvolution on the entire channel and then pick out the ROI's we found above
     fSignalShaping->Deconvolute(channel,rawAdcLessPedVec);
