@@ -109,26 +109,26 @@ namespace util
     // Convoluted pulse.
 
     std::vector<double> tconvc(tinc);
-    sss->Convolute(6000, tconvc);
+    sss->Convolute(6000, tconvc, 0.0, 0.0);
     TH1D* hconvc = dirc.make<TH1D>("conv", "Collection Convoluted", nhist+1, -0.5, nhist+0.5);
     vector_to_hist(tconvc, hconvc);
 
     // Deconvoluted pulse.
 
     std::vector<double> tdeconvc(tconvc);
-    sss->Deconvolute(6000, tdeconvc);
+    sss->Deconvolute(6000, tdeconvc, 0.0, 0.0);
     TH1D* hdeconvc = dirc.make<TH1D>("deconv", "Collection Deconvoluted", nhist+1, -0.5, nhist+0.5);
     vector_to_hist(tdeconvc, hdeconvc);
 
     // Get collection response function and fill histogram.
 
-    const std::vector<double>&  respc = sss->SignalShaping(6000).Response();
+    const std::vector<double>&  respc = sss->SignalShaping(6000,"nominal").Response();
     TH1D* hrfc = dirc.make<TH1D>("resp", "Collection Response", nhist+1, -nhist/2-0.5, nhist/2+0.5);
     vector_to_hist(respc, hrfc);
 
     // Get collection convolution kernel and fill histogram.
 
-    const std::vector<TComplex>&  kernc = sss->SignalShaping(6000).ConvKernel();
+    const std::vector<TComplex>&  kernc = sss->SignalShaping(6000,"nominal").ConvKernel();
     std::vector<double> kernrc(kernc.size());
     for(unsigned int i=0; i<kernrc.size(); ++i)
       kernrc[i] = kernc[i].Rho();
@@ -138,7 +138,7 @@ namespace util
 
     // Get collection filter function and fill histogram.
 
-    const std::vector<TComplex>&  filtc = sss->SignalShaping(6000).Filter();
+    const std::vector<TComplex>&  filtc = sss->SignalShaping(6000,"nominal").Filter();
     std::vector<double> filtrc(filtc.size());
     for(unsigned int i=0; i<filtrc.size(); ++i)
       filtrc[i] = filtc[i].Re();
@@ -159,26 +159,26 @@ namespace util
     // Convoluted pulse.
 
     std::vector<double> utconvi(utini);
-    sss->Convolute(0, utconvi);
+    sss->Convolute(0, utconvi, 0.0, 0.0);
     TH1D* uhconvi = udiri.make<TH1D>("conv", "InductionU Convoluted", nhist+1, -0.5, nhist+0.5);
     vector_to_hist(utconvi, uhconvi);
 
     // Deconvoluted pulse.
 
     std::vector<double> utdeconvi(utconvi);
-    sss->Deconvolute(0, utdeconvi);
+    sss->Deconvolute(0, utdeconvi, 0.0, 0.0);
     TH1D* uhdeconvi = udiri.make<TH1D>("deconv", "InductionU Deconvoluted", nhist+1, -0.5, nhist+0.5);
     vector_to_hist(utdeconvi, uhdeconvi);
 
     // Get induction response function and fill histogram.
 
-    const std::vector<double>&  urespi = sss->SignalShaping(0).Response();
+    const std::vector<double>&  urespi = sss->SignalShaping(0,"nominal").Response();
     TH1D* uhrfi = udiri.make<TH1D>("resp", "InductionU Response", nhist+1, -nhist/2-0.5, nhist/2+0.5);
     vector_to_hist(urespi, uhrfi);
 
     // Get induction convolution kernel and fill histogram.
 
-    const std::vector<TComplex>&  ukerni = sss->SignalShaping(0).ConvKernel();
+    const std::vector<TComplex>&  ukerni = sss->SignalShaping(0,"nominal").ConvKernel();
     std::vector<double> ukernri(ukerni.size());
     for(unsigned int i=0; i<ukernri.size(); ++i)
       ukernri[i] = ukerni[i].Rho();
@@ -188,7 +188,7 @@ namespace util
 
     // Get induction filter function and fill histogram.
 
-    const std::vector<TComplex>&  ufilti = sss->SignalShaping(3000).Filter();
+    const std::vector<TComplex>&  ufilti = sss->SignalShaping(3000,"nominal").Filter();
     std::vector<double> ufiltri(ufilti.size());
     for(unsigned int i=0; i<ufiltri.size(); ++i)
       ufiltri[i] = ufilti[i].Re();
@@ -207,26 +207,26 @@ namespace util
     // Convoluted pulse.
 
     std::vector<double> tconvi(tini);
-    sss->Convolute(3000, tconvi);
+    sss->Convolute(3000, tconvi, 0.0, 0.0);
     TH1D* hconvi = diri.make<TH1D>("conv", "InductionV Convoluted", nhist+1, -0.5, nhist+0.5);
     vector_to_hist(tconvi, hconvi);
 
     // Deconvoluted pulse.
 
     std::vector<double> tdeconvi(tconvi);
-    sss->Deconvolute(3000, tdeconvi);
+    sss->Deconvolute(3000, tdeconvi, 0.0, 0.0);
     TH1D* hdeconvi = diri.make<TH1D>("deconv", "InductionV Deconvoluted", nhist+1, -0.5, nhist+0.5);
     vector_to_hist(tdeconvi, hdeconvi);
 
     // Get induction response function and fill histogram.
 
-    const std::vector<double>&  respi = sss->SignalShaping(3000).Response();
+    const std::vector<double>&  respi = sss->SignalShaping(3000,"nominal").Response();
     TH1D* hrfi = diri.make<TH1D>("resp", "InductionV Response", nhist+1, -nhist/2-0.5, nhist/2+0.5);
     vector_to_hist(respi, hrfi);
 
     // Get induction convolution kernel and fill histogram.
 
-    const std::vector<TComplex>&  kerni = sss->SignalShaping(3000).ConvKernel();
+    const std::vector<TComplex>&  kerni = sss->SignalShaping(3000,"nominal").ConvKernel();
     std::vector<double> kernri(kerni.size());
     for(unsigned int i=0; i<kernri.size(); ++i)
       kernri[i] = kerni[i].Rho();
@@ -236,7 +236,7 @@ namespace util
 
     // Get induction filter function and fill histogram.
 
-    const std::vector<TComplex>&  filti = sss->SignalShaping(3000).Filter();
+    const std::vector<TComplex>&  filti = sss->SignalShaping(3000,"nominal").Filter();
     std::vector<double> filtri(filti.size());
     for(unsigned int i=0; i<filtri.size(); ++i)
       filtri[i] = filti[i].Re();
