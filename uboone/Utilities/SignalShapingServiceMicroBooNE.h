@@ -104,28 +104,45 @@ namespace util {
     public:
     
       SignalShapingContainer() {
-        this->Reset();
+        this->ResetAll();
       }
       
       ~SignalShapingContainer() {}
       
-      SignalShaping& Response(const std::string& response_name) {
-        return fResponseMap[response_name];
+      SignalShaping& ConvolutionResponse(const std::string& response_name) {
+        return fConvResponseMap[response_name];
       }
       
-      const SignalShaping& Response(const std::string& response_name) const {
-        return fResponseMap.at(response_name);
+      const SignalShaping& ConvolutionResponse(const std::string& response_name) const {
+        return fConvResponseMap.at(response_name);
       }
       
-      void Reset() {
-        for (auto& resp : fResponseMap) {
+      SignalShaping& DeconvolutionResponse(const std::string& response_name) {
+        return fDeconvResponseMap[response_name];
+      }
+      
+      const SignalShaping& DeconvolutionResponse(const std::string& response_name) const {
+        return fDeconvResponseMap.at(response_name);
+      }
+      
+      void ResetAll() {
+        for (auto& resp : fConvResponseMap) {
+	  resp.second.Reset();
+	}
+	for (auto& resp : fDeconvResponseMap) {
 	  resp.second.Reset();
 	}
       }
       
+      void CopyConvolutionMap() {
+        fDeconvResponseMap.clear();
+	fDeconvResponseMap = fConvResponseMap;
+      }
+      
     private:
       
-      std::map<std::string, SignalShaping> fResponseMap;
+      std::map<std::string, SignalShaping> fConvResponseMap;
+      std::map<std::string, SignalShaping> fDeconvResponseMap;
   };
 
   class SignalShapingServiceMicroBooNE {
@@ -159,8 +176,10 @@ namespace util {
       //------------------------------------------------------------
 
       // Responses and Kernels
-      const util::SignalShaping&   SignalShaping(size_t channel, const std::string& response_name="") const;
-      const std::vector<TComplex>& GetConvKernel(unsigned int channel, const std::string& response_name ) const;  // M. Mooney    
+      const util::SignalShaping&   SignalShaping(size_t channel, unsigned int ktype, const std::string& response_name="") const;
+      const std::vector<TComplex>& GetConvKernel(unsigned int channel, const std::string& response_name ) const;  // M. Mooney 
+      void  SetDecon(size_t datasize);
+      const std::vector<unsigned int>&   GetNResponses() const { return fNResponses; } 
       
       int FieldResponseTOffset(unsigned int const channel) const;
 
@@ -171,9 +190,9 @@ namespace util {
 
 
       // Noise-related
-      DoubleVec2 GetNoiseFactVec() { return fNoiseFactVec; }
-      double     GetDeconNorm()    { return fDeconNorm;};
-      double     GetRawNoise(unsigned int const channel) const ;
+      const DoubleVec2& GetNoiseFactVec() const { return fNoiseFactVec; }
+      double     GetDeconNorm() const { return fDeconNorm; }
+      double     GetRawNoise(unsigned int const channel) const;
       double     GetDeconNoise(unsigned int const channel) const; 
 
 
@@ -195,7 +214,7 @@ namespace util {
 
       // Sample the response function, including a configurable
       // drift velocity of electrons
-      void SetResponseSampling();
+      void SetResponseSampling(unsigned int ktype);
 
       // Get the name of the (possibly YZ-dependent) response to use, 
       // as well as a charge_fraction for scaling before convolution/deconvolution
@@ -304,7 +323,8 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(s
 template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(size_t channel, std::vector<T>& func, const std::string& response_name) const
 {
 
-  SignalShaping(channel, response_name).Convolute(func);
+  init();
+  fSignalShapingVec[channel].ConvolutionResponse(response_name).Convolute(func);
   
   int time_offset = FieldResponseTOffset(channel);
   
@@ -342,7 +362,9 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute
 // Do deconvolution.
 template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute(size_t channel, std::vector<T>& func, const std::string& response_name) const
 {
-  SignalShaping(channel, response_name).Deconvolute(func);
+
+  init();
+  fSignalShapingVec[channel].DeconvolutionResponse(response_name).Deconvolute(func);
 
   int time_offset = FieldResponseTOffset(channel);
   
