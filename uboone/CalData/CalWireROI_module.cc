@@ -135,23 +135,6 @@ class CalWireROI : public art::EDProducer
 //////////////////////////////////////////////////////
 void CalWireROI::reconfigure(fhicl::ParameterSet const& p)
 {
-    // Get signal shaping service.
-    art::ServiceHandle<util::SignalShapingServiceMicroBooNE> sss;
-    bool doInducedChargeDeconv = false;
-    std::vector<std::vector<size_t> > respNums = sss->GetNResponses();
-    for (size_t i = 0; i < respNums.at(1).size(); i++)
-    {
-        if (respNums.at(1).at(i) > 1) {
-            doInducedChargeDeconv = true;
-        }
-    }
-
-    // Throw exception if deconvolution should include dynamic induced charge effects (not yet implemented in CalROI) - M. Mooney
-    if (doInducedChargeDeconv == true)
-    {
-        throw art::Exception(art::errors::Configuration)
-            << "CalWireROI can not yet handle deconvolution with dynamic induced charge effects turned on.  Please use CalWireMicroBooNE instead.";
-    }
 
     std::vector<unsigned short> uin;    std::vector<unsigned short> vin;
     std::vector<unsigned short> zin;
@@ -325,17 +308,15 @@ void CalWireROI::produce(art::Event& evt)
             size_t                   thePlane = wids[0].Plane;
             
             // Set up the deconvolution and the vector to deconvolve
-          
-            // Set up the deconvolution and the vector to deconvolve
-            // This is called only once per event, but under the hood nothing happens
-            //   unless the FFT vector length changes (which it shouldn't for a run)
+	    // This function changes the fft size if it is not compatible with datasize,
+	    // then resamples all of the deconvolution kernels to the new size
+	    // Though this is called once per rawdigit, in practice it is only called once 
+	    // per event unless the datasize changes or the fft size is changed elsewhere in the job
             if (!transformSize)
             {
-                sss->SetDecon(dataSize, channel);
+                sss->SetDecon(dataSize);
                 transformSize = fFFT->FFTSize();
             }
-            //sss->SetDecon(dataSize, channel);
-            //size_t transformSize = fFFT->FFTSize();
             
             std::vector<float> rawAdcLessPedVec;
             
@@ -458,7 +439,7 @@ void CalWireROI::produce(art::Event& evt)
             }
             
             // Strategy is to run deconvolution on the entire channel and then pick out the ROI's we found above
-            sss->Deconvolute(channel,rawAdcLessPedVec);
+            sss->Deconvolute(channel,rawAdcLessPedVec,"nominal");
             
             std::vector<float> holder;
             
@@ -666,7 +647,7 @@ void CalWireROI::doDecon(std::vector<float>&                                    
                          recob::Wire::RegionsOfInterest_t&                         ROIVec,
                          art::ServiceHandle<util::SignalShapingServiceMicroBooNE>& sss)
 {
-    sss->Deconvolute(channel,holder);
+    sss->Deconvolute(channel,holder,"nominal");
 
     // transfer the ROIs and start bins into the vector that will be
     // put into the event
