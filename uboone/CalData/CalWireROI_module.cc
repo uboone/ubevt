@@ -48,9 +48,8 @@
 #include "larevt/CalibrationDBI/Interface/ChannelStatusService.h"
 #include "larevt/CalibrationDBI/Interface/ChannelStatusProvider.h"
 
-#include "art/Utilities/make_tool.h"
-#include "uboone/CalData/DeconTools/IROIFinder.h"
-#include "uboone/CalData/DeconTools/IDeconvolution.h"
+#include "uboone/CalData/DeconTools/ROIFinderStandard.h"
+#include "uboone/CalData/DeconTools/ROIDeconvolution.h"
 #include "uboone/CalData/DeconTools/IBaseline.h"
 
 ///creation of calibrated signals on wires
@@ -135,8 +134,8 @@ void CalWireROI::reconfigure(fhicl::ParameterSet const& p)
             << "CalWireROI can not yet handle deconvolution with dynamic induced charge effects turned on.  Please use CalWireMicroBooNE instead.";
     }
     
-    fROIFinder = art::make_tool<uboone_tool::IROIFinder>        (p.get<fhicl::ParameterSet>("ROIFinder"));
-    fDeconvolution = art::make_tool<uboone_tool::IDeconvolution>(p.get<fhicl::ParameterSet>("Deconvolution"));
+    fROIFinder = std::unique_ptr<uboone_tool::IROIFinder>(new uboone_tool::ROIFinderStandard(p.get<fhicl::ParameterSet>("ROIFinder")));
+    fDeconvolution = std::unique_ptr<uboone_tool::IDeconvolution>(new uboone_tool::ROIDeconvolution(p.get<fhicl::ParameterSet>("Deconvolution")));
     
     fDigitModuleLabel           = p.get< std::string >   ("DigitModuleLabel", "daq");
     fNoiseSource                = p.get< unsigned short >("NoiseSource",          3);

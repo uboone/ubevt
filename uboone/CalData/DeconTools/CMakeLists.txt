@@ -1,6 +1,6 @@
 cet_enable_asserts()
 
-set( uboone_tool_lib_list
+art_make(   LIB_LIBRARIES
             SignalShapingServiceMicroBooNE_service
             lardata_Utilities_LArFFT_service
 			larcore_Geometry
@@ -21,7 +21,6 @@ set( uboone_tool_lib_list
 			${ART_FRAMEWORK_SERVICES_OPTIONAL_TFILESERVICE_SERVICE}
 			${ART_FRAMEWORK_SERVICES_SYSTEM_FILECATALOGMETADATA_SERVICE}
 			art_Utilities
-			canvas
 			${MF_MESSAGELOGGER}
 			${MF_UTILITIES}
 			${FHICLCPP}
@@ -32,36 +31,6 @@ set( uboone_tool_lib_list
 			${ROOT_BASIC_LIB_LIST}
     )
 
-
-simple_plugin( ROIDeconvolution  "tool"
-               ${uboone_tool_lib_list}
-               BASENAME_ONLY
-             )
-
-simple_plugin( MCC7Deconvolution  "tool"
-               ${uboone_tool_lib_list}
-               BASENAME_ONLY
-             )
-
-simple_plugin( ROIFinderStandard  "tool"
-               ${uboone_tool_lib_list}
-	           BASENAME_ONLY
-             )
-
-simple_plugin( BaselineStandard  "tool"
-               ${uboone_tool_lib_list}
-               BASENAME_ONLY
-             )
-
-simple_plugin( BaselineWaveformProperties "tool"
-               ${uboone_tool_lib_list}
-               BASENAME_ONLY
-             )
-
-simple_plugin( NoBaseline "tool"
-               ${uboone_tool_lib_list}
-               BASENAME_ONLY
-             )
 
 install_headers()
 install_source()

@@ -9,6 +9,7 @@ art_make( BASENAME_ONLY
 			${ROOT_BASIC_LIB_LIST}
 	  MODULE_LIBRARIES larcore_Geometry
 	                CalData
+			uboone_CalData_DeconTools
   	  		NoiseFilterAlgs
 	  		larcore_Geometry_Geometry_service
 	                lardata_Utilities

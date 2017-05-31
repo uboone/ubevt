@@ -5,7 +5,6 @@
 
 #include <cmath>
 #include "uboone/CalData/DeconTools/IBaseline.h"
-#include "art/Utilities/ToolMacros.h"
 #include "art/Framework/Services/Optional/TFileService.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "cetlib/exception.h"
@@ -60,5 +59,4 @@ void NoBaseline::outputHistograms(art::TFileDirectory& histDir) const
     return;
 }
     
-DEFINE_ART_CLASS_TOOL(NoBaseline)
 }

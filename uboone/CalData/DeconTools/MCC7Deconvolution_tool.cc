@@ -5,7 +5,6 @@
 
 #include <cmath>
 #include "uboone/CalData/DeconTools/IDeconvolution.h"
-#include "art/Utilities/ToolMacros.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h"
 #include "art/Framework/Services/Optional/TFileService.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
@@ -15,7 +14,6 @@
 #include "uboone/Utilities/SignalShapingServiceMicroBooNE.h"
 #include "lardata/Utilities/LArFFT.h"
 
-#include "art/Utilities/make_tool.h"
 #include "uboone/CalData/DeconTools/WaveformPropertiesAlg.h"
 
 #include "TH1D.h"
@@ -338,5 +336,4 @@ void MCC7Deconvolution::outputHistograms(art::TFileDirectory& histDir) const
     return;
 }
     
-DEFINE_ART_CLASS_TOOL(MCC7Deconvolution)
 }

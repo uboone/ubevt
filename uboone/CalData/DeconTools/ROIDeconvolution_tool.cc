@@ -4,18 +4,13 @@
 ////////////////////////////////////////////////////////////////////////
 
 #include <cmath>
-#include "uboone/CalData/DeconTools/IDeconvolution.h"
-#include "art/Utilities/ToolMacros.h"
+#include "uboone/CalData/DeconTools/ROIDeconvolution.h"
 #include "art/Framework/Services/Optional/TFileService.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "cetlib/exception.h"
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
-#include "larcore/Geometry/Geometry.h"
-#include "uboone/Utilities/SignalShapingServiceMicroBooNE.h"
-#include "lardata/Utilities/LArFFT.h"
 
-#include "art/Utilities/make_tool.h"
-#include "uboone/CalData/DeconTools/IBaseline.h"
+#include "uboone/CalData/DeconTools/BaselineStandard.h"
 
 #include "TH1D.h"
 
@@ -23,37 +18,6 @@
 
 namespace uboone_tool
 {
-
-class ROIDeconvolution : IDeconvolution
-{
-public:
-    explicit ROIDeconvolution(const fhicl::ParameterSet& pset);
-    
-    ~ROIDeconvolution();
-    
-    void configure(const fhicl::ParameterSet& pset)              override;
-    void outputHistograms(art::TFileDirectory&)            const override;
-    
-    void Deconvolve(IROIFinder::Waveform&,
-                    raw::ChannelID_t,
-                    IROIFinder::CandidateROIVec&,
-                    recob::Wire::RegionsOfInterest_t& )    const override;
-    
-private:
-    // Member variables from the fhicl file
-    size_t                                                   fFFTSize;                    ///< FFT size for ROI deconvolution
-    float                                                    fMinROIAverageTickThreshold; ///< try to remove bad ROIs
-    bool                                                     fDodQdxCalib;                ///< Do we apply wire-by-wire calibration?
-    std::string                                              fdQdxCalibFileName;          ///< Text file for constants to do wire-by-wire calibration
-    std::map<unsigned int, float>                            fdQdxCalib;                  ///< Map to do wire-by-wire calibration, key is channel
-    ///< number, content is correction factor
-    
-    std::unique_ptr<uboone_tool::IBaseline>                  fBaseline;
-    
-    const geo::GeometryCore*                                 fGeometry = lar::providerFrom<geo::Geometry>();
-    art::ServiceHandle<util::LArFFT>                         fFFT;
-    art::ServiceHandle<util::SignalShapingServiceMicroBooNE> fSignalShaping;
-};
     
 //----------------------------------------------------------------------
 // Constructor.
@@ -105,7 +69,7 @@ void ROIDeconvolution::configure(const fhicl::ParameterSet& pset)
     }
     
     // Recover the baseline tool
-    fBaseline  = art::make_tool<uboone_tool::IBaseline> (pset.get<fhicl::ParameterSet>("Baseline"));
+    fBaseline  = std::unique_ptr<uboone_tool::IBaseline>(new uboone_tool::BaselineStandard(pset.get<fhicl::ParameterSet>("Baseline")));
     
     // Get signal shaping service.
     fSignalShaping = art::ServiceHandle<util::SignalShapingServiceMicroBooNE>();
@@ -274,5 +238,4 @@ void ROIDeconvolution::outputHistograms(art::TFileDirectory& histDir) const
     return;
 }
     
-DEFINE_ART_CLASS_TOOL(ROIDeconvolution)
 }
