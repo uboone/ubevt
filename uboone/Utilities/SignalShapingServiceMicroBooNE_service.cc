@@ -64,6 +64,7 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
   //------------------------------------------------------------
   //Read most fcl parameters here
   //------------------------------------------------------------
+  fSetDeconKernelsUponInit = pset.get<bool>("SetDeconKernelsUponInit");
   
   //Convolution- and deconvolution-related objects
   fDeconvPol          = pset.get<std::vector<int> >("DeconvPol");
@@ -76,6 +77,8 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
   
   //Electronics Response-related parameters
   fADCPerPCAtLowestASICGain = pset.get<double>("ADCPerPCAtLowestASICGain");
+  
+  fElectResponse.resize(geo->Nchannels());
   
   
   //Field Response-related parameters
@@ -361,17 +364,19 @@ void util::SignalShapingServiceMicroBooNE::init()
   SetFilters();
 
   // Configure deconvolution kernels.
-  for (unsigned int channel=0; channel!=geo->Nchannels(); ++channel) {
-    size_t view = geo->View(channel);
-    for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
-      std::string resp_name = itResp->first;
-      fSignalShapingVec[channel].ConvolutionResponse(resp_name).AddFilterFunction(fFilterVec[view]);
-      fSignalShapingVec[channel].ConvolutionResponse(resp_name).SetDeconvKernelPolarity( fDeconvPol.at(view) );
-      fSignalShapingVec[channel].ConvolutionResponse(resp_name).CalculateDeconvKernel();
+  if (fSetDeconKernelsUponInit) {
+    for (unsigned int channel=0; channel!=geo->Nchannels(); ++channel) {
+      size_t view = geo->View(channel);
+      for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
+	std::string resp_name = itResp->first;
+	fSignalShapingVec[channel].ConvolutionResponse(resp_name).AddFilterFunction(fFilterVec[view]);
+	fSignalShapingVec[channel].ConvolutionResponse(resp_name).SetDeconvKernelPolarity( fDeconvPol.at(view) );
+	fSignalShapingVec[channel].ConvolutionResponse(resp_name).CalculateDeconvKernel();
+      }
+
+      //copy kernels to DeconvolutionResponse so that they can be separately modified later
+      fSignalShapingVec[channel].CopyConvolutionMap();
     }
-    
-    //copy kernels to DeconvolutionResponse so that they can be separately modified later
-    fSignalShapingVec[channel].CopyConvolutionMap();
   }
    
   //Print responses if desired
@@ -394,7 +399,8 @@ void util::SignalShapingServiceMicroBooNE::init()
       }
       std::cout << std::endl;    
     }
-  }  
+  } 
+   
 } //end init()
 
 
@@ -423,20 +429,43 @@ void util::SignalShapingServiceMicroBooNE::SetDecon(size_t datasize)
   // do this test for *every* ss
   // But it will in general only happen once per run! 
   size_t FFTSize = fft->FFTSize();
+  bool changedFFTSize = false;
   if (datasize > FFTSize || datasize <= FFTSize/2){
     fft->ReinitializeFFT( datasize, fft->FFTOptions(), fft->FFTFitBins() );
+    changedFFTSize = true;
   }  
-  else return;  //do nothing if datasize is ok
 
+  //check if any deconvolution responses do not exist
+  bool allResponsesExist = true;
+  for (unsigned int channel=0; channel!=geo->Nchannels(); ++channel) {
+    size_t view = geo->View(channel);
+    for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
+      if (!fSignalShapingVec[channel].DeconvolutionResponseExists(itResp->first)) {
+        allResponsesExist = false;
+	break;
+      }
+    }
+    if (!allResponsesExist) break;
+  }
+  
+  //do nothing if all responses are there and FFTSize is appropriate
+  if (allResponsesExist && !changedFFTSize) return;
    
   //reset deconvolution responses in fSignalShapingVec
   for (unsigned int channel=0; channel!=geo->Nchannels(); ++channel) {
     size_t view = geo->View(channel);
     for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
       std::string resp_name = itResp->first;
+      
+      //If there isn't a response there, copy over the convolution response so that there is something to work with
+      if (!fSignalShapingVec[channel].DeconvolutionResponseExists(resp_name)) {
+        fSignalShapingVec[channel].CopyConvolutionMap();
+      }
+      
       fSignalShapingVec[channel].DeconvolutionResponse(resp_name).Reset();
     }  
-  }   
+  }
+  
 
   unsigned int ktype = 1;
   SetResponseSampling(ktype);
@@ -559,10 +588,9 @@ void util::SignalShapingServiceMicroBooNE::SetElectResponse()
 
   std::string nominal_resp_name = "nominal";
   for (unsigned int channel=0; channel!=geo->Nchannels(); ++channel) {
-    
     size_t view = geo->View(channel);
     unsigned int NFieldBins = fFieldResponseHistVec[view][nominal_resp_name]->GetXaxis()->GetNbins(); 
-    fElectResponse[channel].resize((int)NFieldBins*4,0.0);
+    fElectResponse[channel].resize( 4*NFieldBins,0.0);
     
     unsigned int FieldBinWidth = fFieldResponseHistVec[view][nominal_resp_name]->GetBinWidth(1);   
     double To = elec_provider.ShapingTime(channel);    
@@ -711,9 +739,8 @@ void util::SignalShapingServiceMicroBooNE::SetResponseSampling(unsigned int ktyp
       else {
         throw cet::exception(__FUNCTION__) << "Invalid ktype ... " << ktype << std::endl;
       }
-        
-      
-      if (fHistDoneF[view] && resp_name == nominal_resp_name) {
+              
+      if (!fHistDoneF[view] && resp_name == nominal_resp_name) {
         TH1F* raw_resp = fFieldResponseHistVec[view][resp_name];
       
         double xLowF = (raw_resp->GetBinCenter(1) - 0.5*raw_resp->GetBinWidth(1))*plotTimeFactor;
@@ -766,7 +793,7 @@ void util::SignalShapingServiceMicroBooNE::SetResponseSampling(unsigned int ktyp
 	}
 	fHistDoneF[view] = true;
       }     
-
+      
       if (ktype==0)      fSignalShapingVec[ch].ConvolutionResponse(resp_name).AddResponseFunction( SamplingResp, true);
       else if (ktype==1) fSignalShapingVec[ch].DeconvolutionResponse(resp_name).AddResponseFunction( SamplingResp, true);
       else {

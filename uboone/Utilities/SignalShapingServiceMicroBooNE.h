@@ -125,6 +125,11 @@ namespace util {
         return fDeconvResponseMap.at(response_name);
       }
       
+      bool DeconvolutionResponseExists(const std::string& response_name) const {
+        if (fDeconvResponseMap.find(response_name) != fDeconvResponseMap.end()) return true;
+	else return false;
+      }
+      
       void ResetAll() {
         for (auto& resp : fConvResponseMap) {
 	  resp.second.Reset();
@@ -167,8 +172,8 @@ namespace util {
       template <class T> void Convolute(size_t channel, std::vector<T>& func, const std::string& response_name) const;
 
       // Do deconvolution calculation (for reconstruction).
-      template <class T> void Deconvolute(size_t channel, std::vector<T>& func, double y, double z) const;
-      template <class T> void Deconvolute(size_t channel, std::vector<T>& func, const std::string& response_name) const;
+      template <class T> void Deconvolute(size_t channel, std::vector<T>& func, double y, double z);
+      template <class T> void Deconvolute(size_t channel, std::vector<T>& func, const std::string& response_name);
 
 
       //------------------------------------------------------------
@@ -225,7 +230,8 @@ namespace util {
       // Private Attributes.
       //------------------------------------------------------------     
 
-      bool fInit;               ///< Initialization flag
+      bool fInit;                     ///< Initialization flag
+      bool fSetDeconKernelsUponInit;  ///< If true, deconvolution kernels are calculated and set in init().  Otherwise, must use SetDecon()
 
 
       //Convolution and Deconvolution
@@ -338,12 +344,13 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(s
     func.erase(func.end()-time_offset,func.end());
     func.insert(func.begin(),temp.begin(),temp.end());
   }
+  
 }
 
 
 //----------------------------------------------------------------------
 // Do deconvolution.
-template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute(size_t channel, std::vector<T>& func, double y, double z) const
+template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute(size_t channel, std::vector<T>& func, double y, double z)
 {
   
   double charge_fraction = 1.0;
@@ -360,10 +367,13 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute
 
 //----------------------------------------------------------------------
 // Do deconvolution.
-template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute(size_t channel, std::vector<T>& func, const std::string& response_name) const
+template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute(size_t channel, std::vector<T>& func, const std::string& response_name)
 {
 
   init();
+  if (!fSignalShapingVec[channel].DeconvolutionResponseExists(response_name)) {
+    this->SetDecon(func.size());
+  }
   fSignalShapingVec[channel].DeconvolutionResponse(response_name).Deconvolute(func);
 
   int time_offset = FieldResponseTOffset(channel);
