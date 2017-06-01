@@ -4,7 +4,7 @@
 ////////////////////////////////////////////////////////////////////////
 
 #include <cmath>
-#include "uboone/CalData/DeconTools/IBaseline.h"
+#include "uboone/CalData/DeconTools/NoBaseline.h"
 #include "art/Framework/Services/Optional/TFileService.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "cetlib/exception.h"
@@ -14,21 +14,6 @@
 namespace uboone_tool
 {
 
-class NoBaseline : IBaseline
-{
-public:
-    explicit NoBaseline(const fhicl::ParameterSet& pset);
-    
-    ~NoBaseline();
-    
-    void configure(const fhicl::ParameterSet& pset)                                override;
-    void outputHistograms(art::TFileDirectory&)                              const override;
-    
-    float GetBaseline(std::vector<float>&, raw::ChannelID_t, size_t, size_t) const override;
-    
-private:
-};
-    
 //----------------------------------------------------------------------
 // Constructor.
 NoBaseline::NoBaseline(const fhicl::ParameterSet& pset)
