@@ -19,7 +19,7 @@
 namespace uboone_tool
 {
 
-class BaselineStandard : IBaseline
+class BaselineStandard : public IBaseline
 {
 public:
     explicit BaselineStandard(const fhicl::ParameterSet& pset);

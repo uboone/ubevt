@@ -15,7 +15,7 @@
 namespace uboone_tool
 {
 
-class NoBaseline : IBaseline
+class NoBaseline : public IBaseline
 {
 public:
     explicit NoBaseline(const fhicl::ParameterSet& pset);

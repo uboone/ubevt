@@ -24,7 +24,7 @@
 namespace uboone_tool
 {
 
-class ROIDeconvolution : IDeconvolution
+class ROIDeconvolution : public IDeconvolution
 {
 public:
     explicit ROIDeconvolution(const fhicl::ParameterSet& pset);

@@ -19,7 +19,7 @@
 namespace uboone_tool
 {
 
-class BaselineWaveformProperties : IBaseline
+class BaselineWaveformProperties : public IBaseline
 {
 public:
     explicit BaselineWaveformProperties(const fhicl::ParameterSet& pset);

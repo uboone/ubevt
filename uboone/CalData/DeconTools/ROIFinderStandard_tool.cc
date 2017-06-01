@@ -18,7 +18,7 @@
 namespace uboone_tool
 {
 
-class ROIFinderStandard : IROIFinder
+class ROIFinderStandard : public IROIFinder
 {
 public:
     explicit ROIFinderStandard(const fhicl::ParameterSet& pset);
