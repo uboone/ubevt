@@ -224,6 +224,22 @@ namespace util {
       // Get the name of the (possibly YZ-dependent) response to use, 
       // as well as a charge_fraction for scaling before convolution/deconvolution
       std::string DetermineResponseName(unsigned int chan, double y, double z, double& charge_fraction) const;
+      
+      // Determine if YZ coordinate overlaps with the U-shorted YZ region
+      bool IsUShortedYZRegion(double y, double z) const;
+      
+      // Determine if Z coordinate overlaps with the Y-shorted Z region
+      bool IsYShortedZRegion(double z) const;
+      
+      // Determine if channel's wire overlaps with the U-shorted wires
+      bool IsUShortedOverlapChannel(unsigned int channel) const;
+      
+      // Determine if channel's wire overlaps with the Y-shorted wires
+      bool IsYShortedOverlapChannel(unsigned int channel) const;
+      
+      // Determine whether the response specified by response_name should be stored for channel
+      bool StoreThisResponse(const std::string& response_name, unsigned int channel) const;
+      
 
 
       //------------------------------------------------------------
@@ -330,6 +346,11 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(s
 {
 
   init();
+  
+  if ( !StoreThisResponse(response_name, channel) ) {
+    throw cet::exception(__FUNCTION__) << "You requested to use an invalid response "<<response_name<<" for channel "<<channel<<std::endl;
+  }
+  
   fSignalShapingVec[channel].ConvolutionResponse(response_name).Convolute(func);
   
   int time_offset = FieldResponseTOffset(channel);
@@ -371,6 +392,11 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute
 {
 
   init();
+  
+  if ( !StoreThisResponse(response_name, channel) ) {
+    throw cet::exception(__FUNCTION__) << "You requested to use an invalid response "<<response_name<<" for channel "<<channel<<std::endl;
+  }
+  
   if (!fSignalShapingVec[channel].DeconvolutionResponseExists(response_name)) {
     this->SetDecon(func.size());
   }

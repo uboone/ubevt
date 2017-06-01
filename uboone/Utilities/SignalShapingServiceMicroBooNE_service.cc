@@ -338,10 +338,12 @@ void util::SignalShapingServiceMicroBooNE::init()
     
     for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
       std::string resp_name = itResp->first;
-      fSignalShapingVec[channel].ConvolutionResponse(resp_name).AddResponseFunction(itResp->second);
-      fSignalShapingVec[channel].ConvolutionResponse(resp_name).AddResponseFunction(fElectResponse[channel]);
-      fSignalShapingVec[channel].ConvolutionResponse(resp_name).save_response();
-      fSignalShapingVec[channel].ConvolutionResponse(resp_name).set_normflag(false); 
+      if ( StoreThisResponse(resp_name,channel) ) {
+	fSignalShapingVec[channel].ConvolutionResponse(resp_name).AddResponseFunction(itResp->second);
+	fSignalShapingVec[channel].ConvolutionResponse(resp_name).AddResponseFunction(fElectResponse[channel]);
+	fSignalShapingVec[channel].ConvolutionResponse(resp_name).save_response();
+	fSignalShapingVec[channel].ConvolutionResponse(resp_name).set_normflag(false); 
+      }
     }
   }
   
@@ -369,9 +371,11 @@ void util::SignalShapingServiceMicroBooNE::init()
       size_t view = geo->View(channel);
       for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
 	std::string resp_name = itResp->first;
-	fSignalShapingVec[channel].ConvolutionResponse(resp_name).AddFilterFunction(fFilterVec[view]);
-	fSignalShapingVec[channel].ConvolutionResponse(resp_name).SetDeconvKernelPolarity( fDeconvPol.at(view) );
-	fSignalShapingVec[channel].ConvolutionResponse(resp_name).CalculateDeconvKernel();
+	if ( StoreThisResponse(resp_name,channel) ) {
+	  fSignalShapingVec[channel].ConvolutionResponse(resp_name).AddFilterFunction(fFilterVec[view]);
+	  fSignalShapingVec[channel].ConvolutionResponse(resp_name).SetDeconvKernelPolarity( fDeconvPol.at(view) );
+	  fSignalShapingVec[channel].ConvolutionResponse(resp_name).CalculateDeconvKernel();
+	}
       }
 
       //copy kernels to DeconvolutionResponse so that they can be separately modified later
@@ -456,13 +460,15 @@ void util::SignalShapingServiceMicroBooNE::SetDecon(size_t datasize)
     size_t view = geo->View(channel);
     for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
       std::string resp_name = itResp->first;
+      if ( StoreThisResponse(resp_name,channel) ) {
       
-      //If there isn't a response there, copy over the convolution response so that there is something to work with
-      if (!fSignalShapingVec[channel].DeconvolutionResponseExists(resp_name)) {
-        fSignalShapingVec[channel].CopyConvolutionMap();
+	//If there isn't a response there, copy over the convolution response so that there is something to work with
+	if (!fSignalShapingVec[channel].DeconvolutionResponseExists(resp_name)) {
+          fSignalShapingVec[channel].CopyConvolutionMap();
+	}
+
+	fSignalShapingVec[channel].DeconvolutionResponse(resp_name).Reset();
       }
-      
-      fSignalShapingVec[channel].DeconvolutionResponse(resp_name).Reset();
     }  
   }
   
@@ -477,9 +483,11 @@ void util::SignalShapingServiceMicroBooNE::SetDecon(size_t datasize)
     size_t view = geo->View(channel);
     for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
       std::string resp_name = itResp->first;
-       fSignalShapingVec[channel].DeconvolutionResponse(resp_name).AddFilterFunction(fFilterVec[view]);
-       fSignalShapingVec[channel].DeconvolutionResponse(resp_name).SetDeconvKernelPolarity( fDeconvPol.at(view));
-       fSignalShapingVec[channel].DeconvolutionResponse(resp_name).CalculateDeconvKernel();
+      if ( StoreThisResponse(resp_name,channel) ) {
+	fSignalShapingVec[channel].DeconvolutionResponse(resp_name).AddFilterFunction(fFilterVec[view]);
+	fSignalShapingVec[channel].DeconvolutionResponse(resp_name).SetDeconvKernelPolarity( fDeconvPol.at(view));
+	fSignalShapingVec[channel].DeconvolutionResponse(resp_name).CalculateDeconvKernel();
+      }
     }
   }
 }
@@ -733,6 +741,8 @@ void util::SignalShapingServiceMicroBooNE::SetResponseSampling(unsigned int ktyp
     
     for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
       std::string resp_name = itResp->first;
+      if ( !StoreThisResponse(resp_name,ch) ) continue;
+      
       const DoubleVec* pResp;
       if (ktype==0)      pResp = &(fSignalShapingVec[ch].ConvolutionResponse(resp_name).Response_save());
       else if (ktype==1) pResp = &(fSignalShapingVec[ch].DeconvolutionResponse(resp_name).Response_save());
@@ -972,6 +982,8 @@ double util::SignalShapingServiceMicroBooNE::Get2DFilterNorm(size_t planeNum) co
 // Get name of the response to use, as well as any scaling to be applied to the input signal (B. Eberly)
 std::string util::SignalShapingServiceMicroBooNE::DetermineResponseName(unsigned int chan, double z, double y, double& charge_fraction) const
 {
+  
+  //defaults
   std::string resp_name = "nominal";
   charge_fraction = 1.0;
   
@@ -982,76 +994,50 @@ std::string util::SignalShapingServiceMicroBooNE::DetermineResponseName(unsigned
 
   if (view==0) { //U-plane
     //Wires overlap with Y-plane shorted wires
-    if ( (int)chan >= 1168 && (int)chan <= 1903 ) { 
+    if ( IsYShortedOverlapChannel(chan) ) { 
 
       // YZ region overlaps with Y-plane shorted wires
-      if ( (z > 700.9 && z < 720.1) ||
-          (z > 720.4 && z < 724.6) ||
-          (z > 724.9 && z < 739.3) ){ 
-	    if (fdatadrivenResponse) resp_name = "shortedY";
-	    else if (fYZdependentResponse) charge_fraction = 0.98;
-      }
-      else {
-        if (fdatadrivenResponse) resp_name = "nominal";
-	else if (fYZdependentResponse) charge_fraction = 1.0;      
+      if ( IsYShortedZRegion(z) ){ 
+	if (fdatadrivenResponse) resp_name = "shortedY";
+	else if (fYZdependentResponse) charge_fraction = 0.98;
+      }  
     }
   }
 
 
   if (view==1) { //V-plane
     //Wires overlap with U-plane shorted wires
-    if ( (int)chan >= 2400 && (int)chan < 3568 ) {
+    if (  IsUShortedOverlapChannel(chan) &&
+         !IsYShortedOverlapChannel(chan) ) {
 
       //YZ region overlaps with U-plane shorted wires
-      if ( ( (y < (z*0.577)+14.769)  && (y > (z*0.577)+14.422) )  || 
-	   ( (y < (z*0.577)+14.076)  && (y > (z*0.577)+7.840) )   || 
-	   ( (y < (z*0.577)+7.494)   && (y > (z*0.577)+7.148) )   || 
-	   ( (y < (z*0.577)+6.801)   && (y > (z*0.577)+3.683) )   || 
-	   ( (y < (z*0.577)+0.912)   && (y > (z*0.577)+0.219) )   || 
-	   ( (y < (z*0.577)-1.513)   && (y > (z*0.577)-2.552) )   || 
-	   ( (y < (z*0.577)-3.245)   && (y > (z*0.577)-4.630) )   || 
-	   ( (y < (z*0.577)-12.944)  && (y > (z*0.577)-21.604) )  || 
-	   ( (y < (z*0.577)-24.722)  && (y > (z*0.577)-37.193) )  || 
-	   ( (y < (z*0.577)-37.539)  && (y > (z*0.577)-50.703) )  || 
-	   ( (y < (z*0.577)-56.245)  && (y > (z*0.577)-57.284) )  || 
-	   ( (y < (z*0.577)-57.631)  && (y > (z*0.577)-63.174) )  || 
-	   ( (y < (z*0.577)-63.520)  && (y > (z*0.577)-64.559) )  || 
-	   ( (y < (z*0.577)-68.370)  && (y > (z*0.577)-76.684) )  || 
-	   ( (y < (z*0.577)-77.030)  && (y > (z*0.577)-88.115) )  || 
-	   ( (y < (z*0.577)-88.808)  && (y > (z*0.577)-90.194) )  || 
-	   ( (y < (z*0.577)-90.540)  && (y > (z*0.577)-101.971) ) || 
-	   ( (y < (z*0.577)-102.318) && (y > (z*0.577)-108.900) ) || 
-	   ( (y < (z*0.577)-109.246) && (y > (z*0.577)-109.592) ) || 
-	   ( (y < (z*0.577)-109.934) && (y > (z*0.577)-115.417) ) ) {
-	     if (fdatadrivenResponse) resp_name = "shortedU";
-	     else if (fYZdependentResponse) {
-	       charge_fraction = 0.685;
-	       resp_name = "nominal";
-	     }
+      if ( IsUShortedYZRegion(y,z) ) {
+	if (fdatadrivenResponse) resp_name = "shortedU";
+	else if (fYZdependentResponse) {
+	  charge_fraction = 0.685;
+	}
       }   
       else {
-        if (fdatadrivenResponse) resp_name = "nominal";
         if (fYZdependentResponse) {
 	  charge_fraction =  0.7;
-	  resp_name = "nominal";
 	}
       }
     }
 
     //Wires overlap with U-plane AND Y-plane shorted wires
-    else if ( (int)chan >= 3568 && (int)chan <= 3743 ) {
+    else if ( IsUShortedOverlapChannel(chan) && 
+              IsYShortedOverlapChannel(chan) ) {
 
       //YZ region overlaps with U-plane shorted wires
-      if ( (y < (z*0.577)+14.595) && (y > (z*0.577)-115.308) ) { 
+      if ( IsUShortedYZRegion(y,z) ) { 
         if (fdatadrivenResponse) resp_name = "shortedU";
 	else if (fYZdependentResponse) {
 	  charge_fraction = 0.685;
-	  resp_name = "nominal";
 	}
       }
 
       //YZ region overlaps with Y-plane shorted wires
-      else if (z >= 701 && z <= 738) { 
+      else if ( IsYShortedZRegion(z) ) {
         if (fdatadrivenResponse) resp_name = "shortedY";
 	else if (fYZdependentResponse) {
 	  charge_fraction = 0.7; 
@@ -1061,45 +1047,37 @@ std::string util::SignalShapingServiceMicroBooNE::DetermineResponseName(unsigned
 
       //nominal
       else {
-        if (fdatadrivenResponse) resp_name = "nominal";
-	else if (fYZdependentResponse) {
+        if (fYZdependentResponse) {
 	  charge_fraction = 0.7;
-	  resp_name = "nominal";
 	}
       }
     }
 
     //Wires overlap with Y-plane shorted wires
-    else if ( (int)chan > 3743 && (int)chan <= 4303 ) {
+    else if ( !IsUShortedOverlapChannel(chan) &&
+               IsYShortedOverlapChannel(chan) ) {
 
       //YZ region overlaps with Y-plane shorted wires
-      if( (z > 700.9 && z < 720.1) ||
-	  (z > 720.4 && z < 724.6) ||
-	  (z > 724.9 && z < 739.3) ) {
-	    if (fdatadrivenResponse) resp_name = "shortedY";
-	    else if (fYZdependentResponse) {
-	      charge_fraction = 0.7; 
-	      resp_name = "alt_1";
-	    }
+      if ( IsYShortedZRegion(z) ) {
+	if (fdatadrivenResponse) resp_name = "shortedY";
+	else if (fYZdependentResponse) {
+	  charge_fraction = 0.7; 
+	  resp_name = "alt_1";
+	}
       }
 
       //nominal
       else {
-        if (fdatadrivenResponse) resp_name = "nominal";
-	else if (fYZdependentResponse) {
+        if (fYZdependentResponse) {
 	  charge_fraction = 0.7;
-	  resp_name = "nominal";
 	}
       }
     }
 
     //No overlap with shorted wires
     else {
-      if (fdatadrivenResponse) resp_name = "nominal";
-	else if (fYZdependentResponse) {
-	  charge_fraction = 0.7;
-	  resp_name = "nominal";
-	}
+      if (fYZdependentResponse) {
+	charge_fraction = 0.7;
       }
     }
   }//if view == 1
@@ -1107,37 +1085,80 @@ std::string util::SignalShapingServiceMicroBooNE::DetermineResponseName(unsigned
 
   if (view==2) { //Y-plane 
     //Wires overlap with U-plane shorted wires
-    if ( (int)chan >= 4800 && (int)chan <= 6143 ) {
+    if ( IsUShortedOverlapChannel(chan) ) {
 
       //YZ region overlaps with U-plane shorted wires
-      if ( ( (y < (z*0.577)+14.769)  && (y > (z*0.577)+14.422) )  || 
-	   ( (y < (z*0.577)+14.076)  && (y > (z*0.577)+7.840) )   || 
-	   ( (y < (z*0.577)+7.494)   && (y > (z*0.577)+7.148) )   || 
-	   ( (y < (z*0.577)+6.801)   && (y > (z*0.577)+3.683) )   || 
-	   ( (y < (z*0.577)+0.912)   && (y > (z*0.577)+0.219) )   || 
-	   ( (y < (z*0.577)-1.513)   && (y > (z*0.577)-2.552) )   || 
-	   ( (y < (z*0.577)-3.245)   && (y > (z*0.577)-4.630) )   || 
-	   ( (y < (z*0.577)-12.944)  && (y > (z*0.577)-21.604) )  || 
-	   ( (y < (z*0.577)-24.722)  && (y > (z*0.577)-37.193) )  || 
-	   ( (y < (z*0.577)-37.539)  && (y > (z*0.577)-50.703) )  || 
-	   ( (y < (z*0.577)-56.245)  && (y > (z*0.577)-57.284) )  || 
-	   ( (y < (z*0.577)-57.631)  && (y > (z*0.577)-63.174) )  || 
-	   ( (y < (z*0.577)-63.520)  && (y > (z*0.577)-64.559) )  || 
-	   ( (y < (z*0.577)-68.370)  && (y > (z*0.577)-76.684) )  || 
-	   ( (y < (z*0.577)-77.030)  && (y > (z*0.577)-88.115) )  || 
-	   ( (y < (z*0.577)-88.808)  && (y > (z*0.577)-90.194) )  || 
-	   ( (y < (z*0.577)-90.540)  && (y > (z*0.577)-101.971) ) || 
-	   ( (y < (z*0.577)-102.318) && (y > (z*0.577)-108.900) ) || 
-	   ( (y < (z*0.577)-109.246) && (y > (z*0.577)-109.592) ) || 
-	   ( (y < (z*0.577)-109.934) && (y > (z*0.577)-115.417) ) ) {
-	     if (fdatadrivenResponse) resp_name = "shortedU";
-	     else if (fYZdependentResponse) charge_fraction = 0.8;
+      if ( IsUShortedYZRegion(y,z) ) {
+	if (fdatadrivenResponse) resp_name = "shortedU";
+	else if (fYZdependentResponse) charge_fraction = 0.8;
       }
     }
   }//if view == 2
 
   return resp_name;
 }//end DDRName
+
+bool util::SignalShapingServiceMicroBooNE::IsUShortedYZRegion(double y, double z) const {
+  if ( ( (y < (z*0.577)+14.769)  && (y > (z*0.577)+14.422) )  || 
+       ( (y < (z*0.577)+14.076)  && (y > (z*0.577)+7.840) )   || 
+       ( (y < (z*0.577)+7.494)   && (y > (z*0.577)+7.148) )   || 
+       ( (y < (z*0.577)+6.801)   && (y > (z*0.577)+3.683) )   || 
+       ( (y < (z*0.577)+0.912)   && (y > (z*0.577)+0.219) )   || 
+       ( (y < (z*0.577)-1.513)   && (y > (z*0.577)-2.552) )   || 
+       ( (y < (z*0.577)-3.245)   && (y > (z*0.577)-4.630) )   || 
+       ( (y < (z*0.577)-12.944)  && (y > (z*0.577)-21.604) )  || 
+       ( (y < (z*0.577)-24.722)  && (y > (z*0.577)-37.193) )  || 
+       ( (y < (z*0.577)-37.539)  && (y > (z*0.577)-50.703) )  || 
+       ( (y < (z*0.577)-56.245)  && (y > (z*0.577)-57.284) )  || 
+       ( (y < (z*0.577)-57.631)  && (y > (z*0.577)-63.174) )  || 
+       ( (y < (z*0.577)-63.520)  && (y > (z*0.577)-64.559) )  || 
+       ( (y < (z*0.577)-68.370)  && (y > (z*0.577)-76.684) )  || 
+       ( (y < (z*0.577)-77.030)  && (y > (z*0.577)-88.115) )  || 
+       ( (y < (z*0.577)-88.808)  && (y > (z*0.577)-90.194) )  || 
+       ( (y < (z*0.577)-90.540)  && (y > (z*0.577)-101.971) ) || 
+       ( (y < (z*0.577)-102.318) && (y > (z*0.577)-108.900) ) || 
+       ( (y < (z*0.577)-109.246) && (y > (z*0.577)-109.592) ) || 
+       ( (y < (z*0.577)-109.934) && (y > (z*0.577)-115.417) ) ) return true;
+  else return false;
+}
+
+bool util::SignalShapingServiceMicroBooNE::IsYShortedZRegion(double z) const {
+  if ( (z > 700.9 && z < 720.1) ||
+       (z > 720.4 && z < 724.6) ||
+       (z > 724.9 && z < 739.3) ) return true;
+  else return false;
+} 
+
+bool util::SignalShapingServiceMicroBooNE::IsUShortedOverlapChannel(unsigned int channel) const {
+  if ( (channel >= 2400 && channel <= 3743) ||
+       (channel >= 4800 && channel <= 6143) ) return true;
+  else return false;
+}
+
+bool util::SignalShapingServiceMicroBooNE::IsYShortedOverlapChannel(unsigned int channel) const {
+  if ( (channel >= 1168 && channel <= 1903) ||
+       (channel >= 3568 && channel <= 4303) ) return true;
+  else return false;
+}
+
+bool util::SignalShapingServiceMicroBooNE::StoreThisResponse(const std::string& response_name, unsigned int channel) const {
+  if (fdatadrivenResponse && fYZdependentResponse) {
+    if (response_name=="shortedU") {
+      if ( IsUShortedOverlapChannel(channel) ) return true;
+      else return false;
+    }
+    else if (response_name=="shortedY") {
+      if ( IsYShortedOverlapChannel(channel) ) return true;
+      else return false;
+    }
+    else return true;
+  }
+  else if (fdatadrivenResponse && !fYZdependentResponse) {
+    if (response_name !="nominal") return false;
+    else return true;
+  }
+  else return true;
+}
 
 namespace util {
   
