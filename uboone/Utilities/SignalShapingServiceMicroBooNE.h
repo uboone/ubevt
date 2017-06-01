@@ -109,45 +109,23 @@ namespace util {
       
       ~SignalShapingContainer() {}
       
-      SignalShaping& ConvolutionResponse(const std::string& response_name) {
-        return fConvResponseMap[response_name];
+      SignalShaping& Response(const std::string& response_name) {
+        return fResponseMap[response_name];
       }
       
-      const SignalShaping& ConvolutionResponse(const std::string& response_name) const {
-        return fConvResponseMap.at(response_name);
-      }
-      
-      SignalShaping& DeconvolutionResponse(const std::string& response_name) {
-        return fDeconvResponseMap[response_name];
-      }
-      
-      const SignalShaping& DeconvolutionResponse(const std::string& response_name) const {
-        return fDeconvResponseMap.at(response_name);
-      }
-      
-      bool DeconvolutionResponseExists(const std::string& response_name) const {
-        if (fDeconvResponseMap.find(response_name) != fDeconvResponseMap.end()) return true;
-	else return false;
+      const SignalShaping& Response(const std::string& response_name) const {
+        return fResponseMap.at(response_name);
       }
       
       void ResetAll() {
-        for (auto& resp : fConvResponseMap) {
+        for (auto& resp : fResponseMap) {
 	  resp.second.Reset();
 	}
-	for (auto& resp : fDeconvResponseMap) {
-	  resp.second.Reset();
-	}
-      }
-      
-      void CopyConvolutionMap() {
-        fDeconvResponseMap.clear();
-	fDeconvResponseMap = fConvResponseMap;
       }
       
     private:
       
-      std::map<std::string, SignalShaping> fConvResponseMap;
-      std::map<std::string, SignalShaping> fDeconvResponseMap;
+      std::map<std::string, SignalShaping> fResponseMap;
   };
 
   class SignalShapingServiceMicroBooNE {
@@ -181,7 +159,7 @@ namespace util {
       //------------------------------------------------------------
 
       // Responses and Kernels
-      const util::SignalShaping&   SignalShaping(size_t channel, unsigned int ktype, const std::string& response_name="") const;
+      const util::SignalShaping&   SignalShaping(size_t channel, const std::string& response_name="") const;
       const std::vector<TComplex>& GetConvKernel(unsigned int channel, const std::string& response_name ) const;  // M. Mooney 
       void  SetDecon(size_t datasize);
       const std::vector<unsigned int>&   GetNResponses() const { return fNResponses; } 
@@ -219,7 +197,7 @@ namespace util {
 
       // Sample the response function, including a configurable
       // drift velocity of electrons
-      void SetResponseSampling(unsigned int ktype);
+      void SetResponseSampling();
 
       // Get the name of the (possibly YZ-dependent) response to use, 
       // as well as a charge_fraction for scaling before convolution/deconvolution
@@ -246,7 +224,8 @@ namespace util {
       // Private Attributes.
       //------------------------------------------------------------     
 
-      bool fInit;                     ///< Initialization flag
+      bool fInitForConvolution;       ///< True if initialized for convolution
+      bool fInitForDeconvolution;     ///< True if initialized for deconvolution
       bool fSetDeconKernelsUponInit;  ///< If true, deconvolution kernels are calculated and set in init().  Otherwise, must use SetDecon()
 
 
@@ -351,7 +330,7 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(s
     throw cet::exception(__FUNCTION__) << "You requested to use an invalid response "<<response_name<<" for channel "<<channel<<std::endl;
   }
   
-  fSignalShapingVec[channel].ConvolutionResponse(response_name).Convolute(func);
+  fSignalShapingVec[channel].Response(response_name).Convolute(func);
   
   int time_offset = FieldResponseTOffset(channel);
   
@@ -397,10 +376,12 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute
     throw cet::exception(__FUNCTION__) << "You requested to use an invalid response "<<response_name<<" for channel "<<channel<<std::endl;
   }
   
-  if (!fSignalShapingVec[channel].DeconvolutionResponseExists(response_name)) {
+  //Initialize deconvolution kernels (necessary if this wasn't done in init())
+  if (!fInitForDeconvolution) {
     this->SetDecon(func.size());
   }
-  fSignalShapingVec[channel].DeconvolutionResponse(response_name).Deconvolute(func);
+  
+  fSignalShapingVec[channel].Response(response_name).Deconvolute(func);
 
   int time_offset = FieldResponseTOffset(channel);
   
