@@ -69,7 +69,15 @@ void ROIDeconvolution::configure(const fhicl::ParameterSet& pset)
     }
     
     // Recover the baseline tool
-    fBaseline  = std::unique_ptr<uboone_tool::IBaseline>(new uboone_tool::BaselineStandard(pset.get<fhicl::ParameterSet>("Baseline")));
+
+    fhicl::ParameterSet pb = pset.get<fhicl::ParameterSet>("Baseline");
+    std::string pb_type = pb.get<std::string>("tool_type");
+    if(pb_type == std::string("BaselineStandard")) {
+      fBaseline  = std::unique_ptr<uboone_tool::IBaseline>(new uboone_tool::BaselineStandard(pb));
+    }
+    else {
+      throw art::Exception(art::errors::Configuration) << "Unknown baseline tool type" << pb_type;
+    }
     
     // Get signal shaping service.
     fSignalShaping = art::ServiceHandle<util::SignalShapingServiceMicroBooNE>();

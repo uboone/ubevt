@@ -50,6 +50,7 @@
 
 #include "uboone/CalData/DeconTools/ROIFinderStandard.h"
 #include "uboone/CalData/DeconTools/ROIDeconvolution.h"
+#include "uboone/CalData/DeconTools/MCC7Deconvolution.h"
 #include "uboone/CalData/DeconTools/IBaseline.h"
 
 ///creation of calibrated signals on wires
@@ -133,9 +134,31 @@ void CalWireROI::reconfigure(fhicl::ParameterSet const& p)
         throw art::Exception(art::errors::Configuration)
             << "CalWireROI can not yet handle deconvolution with dynamic induced charge effects turned on.  Please use CalWireMicroBooNE instead.";
     }
+
+    // Get ROI finder tool.
     
-    fROIFinder = std::unique_ptr<uboone_tool::IROIFinder>(new uboone_tool::ROIFinderStandard(p.get<fhicl::ParameterSet>("ROIFinder")));
-    fDeconvolution = std::unique_ptr<uboone_tool::IDeconvolution>(new uboone_tool::ROIDeconvolution(p.get<fhicl::ParameterSet>("Deconvolution")));
+    fhicl::ParameterSet pf = p.get<fhicl::ParameterSet>("ROIFinder");
+    std::string pf_type = pf.get<std::string>("tool_type");
+    if(pf_type == std::string("ROIFinderStandard")) {
+      fROIFinder = std::unique_ptr<uboone_tool::IROIFinder>(new uboone_tool::ROIFinderStandard(pf));
+    }
+    else {
+      throw art::Exception(art::errors::Configuration) << "Unknown ROI finder tool type" << pf_type;
+    }
+
+    // Get deconvolution tool.
+
+    fhicl::ParameterSet pd = p.get<fhicl::ParameterSet>("Deconvolution");
+    std::string pd_type = pd.get<std::string>("tool_type");
+    if(pd_type == std::string("ROIDeconvolution")) {
+      fDeconvolution = std::unique_ptr<uboone_tool::IDeconvolution>(new uboone_tool::ROIDeconvolution(pd));
+    }
+    else if(pd_type == std::string("MCC7Deconvolution")) {
+      fDeconvolution = std::unique_ptr<uboone_tool::IDeconvolution>(new uboone_tool::MCC7Deconvolution(pd));
+    }
+    else {
+      throw art::Exception(art::errors::Configuration) << "Unknown deconvolution tool type" << pd_type;
+    }
     
     fDigitModuleLabel           = p.get< std::string >   ("DigitModuleLabel", "daq");
     fNoiseSource                = p.get< unsigned short >("NoiseSource",          3);
