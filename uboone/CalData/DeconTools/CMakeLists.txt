@@ -53,6 +53,11 @@ simple_plugin( BaselineStandard  "tool"
                BASENAME_ONLY
              )
 
+simple_plugin( BaselineMostProbAve  "tool"
+               ${uboone_tool_lib_list}
+               BASENAME_ONLY
+             )
+
 simple_plugin( BaselineWaveformProperties "tool"
                ${uboone_tool_lib_list}
                BASENAME_ONLY
