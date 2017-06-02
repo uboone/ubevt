@@ -19,6 +19,11 @@ microboone_baselinestandard:
     NumBinsToAverage: 20
 }
 
+microboone_baselinemostprobave:
+{
+    tool_type: BaselineMostProbAve
+}
+
 microboone_baselinewaveformproperties:
 {
     tool_type:        BaselineWaveformProperties
@@ -37,7 +42,7 @@ microboone_roideconvolution:
     SaveWireWF:                 0
     DodQdxCalib:                false  # apply wire-by-wire calibration?
     dQdxCalibFileName:          "dQdxCalibrationPlanev1.txt"
-    Baseline:                   @local::microboone_baselinestandard
+    Baseline:                   @local::microboone_baselinemostprobave
     MinROIAverageTickThreshold: -0.5
 }
 
