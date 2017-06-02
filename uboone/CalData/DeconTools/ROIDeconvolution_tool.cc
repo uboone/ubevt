@@ -11,6 +11,7 @@
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
 
 #include "uboone/CalData/DeconTools/BaselineStandard.h"
+#include "uboone/CalData/DeconTools/BaselineMostProbAve.h"
 
 #include "TH1D.h"
 
@@ -74,6 +75,9 @@ void ROIDeconvolution::configure(const fhicl::ParameterSet& pset)
     std::string pb_type = pb.get<std::string>("tool_type");
     if(pb_type == std::string("BaselineStandard")) {
       fBaseline  = std::unique_ptr<uboone_tool::IBaseline>(new uboone_tool::BaselineStandard(pb));
+    }
+    if(pb_type == std::string("BaselineMostProbAve")) {
+      fBaseline  = std::unique_ptr<uboone_tool::IBaseline>(new uboone_tool::BaselineMostProbAve(pb));
     }
     else {
       throw art::Exception(art::errors::Configuration) << "Unknown baseline tool type" << pb_type;
