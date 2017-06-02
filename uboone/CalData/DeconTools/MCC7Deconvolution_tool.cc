@@ -25,7 +25,7 @@
 namespace uboone_tool
 {
 
-class MCC7Deconvolution : IDeconvolution
+class MCC7Deconvolution : public IDeconvolution
 {
 public:
     explicit MCC7Deconvolution(const fhicl::ParameterSet& pset);
