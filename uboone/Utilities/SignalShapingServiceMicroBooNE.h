@@ -296,6 +296,14 @@ namespace util {
       TH1D* fHStretchedResponse[3];
       TH1D* fHFullResponse[3];
       TH1D* fHSampledResponse[3];
+      
+      TH1D* fHist_FieldResponseHist;
+      TH1D* fHist_FieldResponseVec;
+      TH1D* fHist_ElectResponse;
+      TH1D* fHist_InitConvKernelRe;
+      TH1D* fHist_InitConvKernelIm;
+      TH1D* fHist_ResampledConvKernelRe;
+      TH1D* fHist_ResampledConvKernelIm;
     
   };
 } //namespace util

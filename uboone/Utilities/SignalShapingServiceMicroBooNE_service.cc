@@ -38,6 +38,14 @@ util::SignalShapingServiceMicroBooNE::SignalShapingServiceMicroBooNE(const fhicl
     fHistDoneF[i] = false;
   }
     
+    
+  art::ServiceHandle<art::TFileService> tfs;
+  fHist_FieldResponseHist = tfs->make<TH1D>("FRH","FRH", 1000, 0.0, 1000.0);
+  fHist_FieldResponseVec  = tfs->make<TH1D>("FRV","FRV", 1000, 0.0, 1000.0);
+  fHist_ElectResponse     = tfs->make<TH1D>("ER","ER", 4000, 0.0, 4000.0);
+  fHist_InitConvKernelRe  = tfs->make<TH1D>("ICKR","ICKR", 16384, 0.0, 8193.0);
+  fHist_InitConvKernelIm  = tfs->make<TH1D>("ICKI","ICKI", 16384, 0.0, 8193.0);
+  
   reconfigure(pset);
 }
 
@@ -258,6 +266,12 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
       fFieldResponseHistVec[vw][response_name] = (TH1F*)fin->Get(histName);
       TH1F* resp = fFieldResponseHistVec[vw][response_name];
       fin->Close();
+      
+      if (response_name=="nominal" && vw==2) {
+        for (unsigned int bin=1; bin<=1000; ++bin) {
+	  fHist_FieldResponseHist->SetBinContent(bin, resp->GetBinContent(bin));
+	}
+      }
 
       // get the offsets for each plane... use wire 0 and either peak or zero-crossing
       double tOffset = 0.0;	
@@ -350,6 +364,22 @@ void util::SignalShapingServiceMicroBooNE::init()
 	  fSignalShapingVec[channel].Response(resp_name).AddResponseFunction(fElectResponse[channel]);
 	  fSignalShapingVec[channel].Response(resp_name).save_response();
 	  fSignalShapingVec[channel].Response(resp_name).set_normflag(false); 
+	  
+	  if (channel==7466 && resp_name=="nominal") {
+	    for (unsigned int bin=0; bin!=1000; ++bin) {
+	      fHist_FieldResponseVec->SetBinContent(bin+1, fFieldResponseVec[view][resp_name][bin]);
+	    }
+	    for (unsigned int bin=0; bin!=4000; ++bin) {
+	      fHist_ElectResponse->SetBinContent(bin+1, fElectResponse[channel][bin]);
+	    }
+	    
+	    const std::vector<TComplex>& conv_kernel = fSignalShapingVec[channel].Response(resp_name).ConvKernel();
+	    for (unsigned int bin=0; bin!=8193; ++bin) {
+	      fHist_InitConvKernelRe->SetBinContent(bin+1, conv_kernel.at(bin).Re());
+	      fHist_InitConvKernelIm->SetBinContent(bin+1, conv_kernel.at(bin).Im());
+	    }
+	  }
+	  
 	}
       }
     }
