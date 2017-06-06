@@ -359,7 +359,7 @@ void util::SignalShapingServiceMicroBooNE::init()
 
     // Return to original fftsize
     //
-    // Note: Currently we only have fine binning "fFieldBinWidth"
+    // Note: Currently we only have fine binning
     // for the field and electronic responses.
     // Now we are sampling the convoluted field-electronic response
     // with the nominal sampling.
@@ -598,7 +598,7 @@ void util::SignalShapingServiceMicroBooNE::SetElectResponse()
     unsigned int NFieldBins = fFieldResponseHistVec[view][nominal_resp_name]->GetXaxis()->GetNbins(); 
     fElectResponse[channel].resize( 4*NFieldBins,0.0);
     
-    unsigned int FieldBinWidth = fFieldResponseHistVec[view][nominal_resp_name]->GetBinWidth(1);   
+    double FieldBinWidth = fFieldResponseHistVec[view][nominal_resp_name]->GetBinWidth(1);   
     double To = elec_provider.ShapingTime(channel);    
     double Ao = 1.0;
     double max = 0;
