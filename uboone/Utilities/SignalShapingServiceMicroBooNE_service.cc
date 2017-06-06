@@ -280,7 +280,7 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
 
       // get the offsets for each plane... use wire 0 and either peak or zero-crossing
       double tOffset = 0.0;	
-      if(rp==0 && vw==fViewForNormalization) { // this is for the standard response
+      if( (fdatadrivenResponse || rp==0) && vw==fViewForNormalization) { // this is for the standard response
 	// for the collection plane, find the peak
 	int binMax = resp->GetMaximumBin();
 	tOffset = (resp->GetXaxis()->GetBinCenter(binMax) - resp->GetXaxis()->GetBinCenter(1));
@@ -318,14 +318,14 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
       }
 
       tOffset *= f3DCorrectionVec[vw]*fTimeScaleFactor;
-      fFieldResponseTOffset.at(vw) = (-tOffset + fCalibResponseTOffset[vw])*1000.;
+      fFieldResponseTOffset[vw][response_name] = (-tOffset + fCalibResponseTOffset[vw])*1000.;
       if (vw==2) {
         std::cout<<"For response "<<response_name<<" toffset parameters are: "<<std::endl;
 	std::cout<<"  tOffset: "<<tOffset/(f3DCorrectionVec[vw]*fTimeScaleFactor)<<std::endl;
 	std::cout<<"  3DCorr:  "<<f3DCorrectionVec[vw]<<std::endl;
 	std::cout<<"  fTSF:    "<<fTimeScaleFactor<<std::endl;
 	std::cout<<"  fCalib:  "<<fCalibResponseTOffset[vw]<<std::endl;
-	std::cout<<"  total:   "<<fFieldResponseTOffset[vw]<<std::endl;
+	std::cout<<"  total:   "<<fFieldResponseTOffset[vw][response_name]<<std::endl;
       }
 
     }//end loop over responses
@@ -915,7 +915,7 @@ double util::SignalShapingServiceMicroBooNE::GetDeconNoise(unsigned int const ch
 }
 
 
-int util::SignalShapingServiceMicroBooNE::FieldResponseTOffset(unsigned int const channel) const
+int util::SignalShapingServiceMicroBooNE::FieldResponseTOffset(unsigned int const channel, const std::string& response_name) const
 {
   //no init needed - fFieldResponseTOffset is initialized in reconfigure()
   
@@ -925,13 +925,13 @@ int util::SignalShapingServiceMicroBooNE::FieldResponseTOffset(unsigned int cons
   double time_offset = 0;
   switch(view){
     case geo::kU:
-      time_offset = fFieldResponseTOffset.at(0);
+      time_offset = fFieldResponseTOffset.at(0).at(response_name);
       break;
     case geo::kV:
-      time_offset = fFieldResponseTOffset.at(1);
+      time_offset = fFieldResponseTOffset.at(1).at(response_name);
       break;
     case geo::kZ: 
-      time_offset = fFieldResponseTOffset.at(2); 
+      time_offset = fFieldResponseTOffset.at(2).at(response_name); 
       break;
     default:
       throw cet::exception(__FUNCTION__) << "Invalid geo::View_t ... " << view << std::endl;

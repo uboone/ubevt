@@ -164,7 +164,7 @@ namespace util {
       void  SetDecon(size_t datasize);
       const std::vector<unsigned int>&   GetNResponses() const { return fNResponses; } 
       
-      int FieldResponseTOffset(unsigned int const channel) const;
+      int FieldResponseTOffset(unsigned int const channel, const std::string& response_name) const;
 
 
       // Filter-related    
@@ -250,14 +250,14 @@ namespace util {
 
 
       // Time offset and scaling of field responses
-      DoubleVec  fFieldResponseTOffset;  ///< Time offset for field response in ns
-      DoubleVec  f3DCorrectionVec;       ///< correction factor to account for 3D path of electrons, 1 for each plane (default = 1.0)
-      DoubleVec  fCalibResponseTOffset;  ///< calibrated time offset to align U/V/Y Signals
-      bool       fStretchFullResponse;
-      double     fTimeScaleFactor;
-      DoubleVec  fTimeScaleParams;
-      double     fDefaultEField;
-      double     fDefaultTemperature;
+      std::vector< std::map<std::string, double> > fFieldResponseTOffset;  ///< Time offset for field response in ns. Vector elements correspond to plane, map key is a response name
+      DoubleVec  	      	      	           f3DCorrectionVec;	   ///< correction factor to account for 3D path of electrons, 1 for each plane (default = 1.0)  
+      DoubleVec  	      	      	           fCalibResponseTOffset;  ///< calibrated time offset to align U/V/Y Signals						 
+      bool       	      	      	           fStretchFullResponse;												 
+      double     	      	      	           fTimeScaleFactor;													 
+      DoubleVec  	      	      	           fTimeScaleParams;													 
+      double     	      	      	           fDefaultEField;													 
+      double     	      	      	           fDefaultTemperature; 												 
 
 
       // Filter Parameters
@@ -354,7 +354,7 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(s
     }
   }
   
-  int time_offset = FieldResponseTOffset(channel);
+  int time_offset = FieldResponseTOffset(channel,response_name);
   
   std::vector<T> temp;
   if (time_offset <=0){
@@ -411,7 +411,7 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute
   
   fSignalShapingVec[channel].Response(response_name).Deconvolute(func);
 
-  int time_offset = FieldResponseTOffset(channel);
+  int time_offset = FieldResponseTOffset(channel,response_name);
   
   std::vector<T> temp;
   if (time_offset <=0){

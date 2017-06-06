@@ -896,7 +896,7 @@ template <class T> void caldata::CalWireMicroBooNE::DeconvoluteInducedCharge(siz
   fft->ReinitializeFFT(numBins,fft->FFTOptions(),fft->FFTFitBins());
 
   // do time-domain inverse-FFT for results vectors and store final result of 2D deconvolution
-  int time_offset = sss->FieldResponseTOffset(firstChannel);
+  int time_offset = sss->FieldResponseTOffset(firstChannel,"nominal");
   for(size_t k = 0; k < (size_t)numWires; k++) {
     fft->DoInvFFT(signalFreqVecs[k],signal[k]);
 
