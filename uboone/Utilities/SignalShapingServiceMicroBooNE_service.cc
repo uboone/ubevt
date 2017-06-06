@@ -43,9 +43,14 @@ util::SignalShapingServiceMicroBooNE::SignalShapingServiceMicroBooNE(const fhicl
   fHist_FieldResponseHist = tfs->make<TH1D>("FRH","FRH", 1000, 0.0, 1000.0);
   fHist_FieldResponseVec  = tfs->make<TH1D>("FRV","FRV", 1000, 0.0, 1000.0);
   fHist_ElectResponse     = tfs->make<TH1D>("ER","ER", 4000, 0.0, 4000.0);
-  fHist_InitConvKernelRe  = tfs->make<TH1D>("ICKR","ICKR", 16384, 0.0, 8193.0);
-  fHist_InitConvKernelIm  = tfs->make<TH1D>("ICKI","ICKI", 16384, 0.0, 8193.0);
+  fHist_InitConvKernelRe  = tfs->make<TH1D>("ICKR","ICKR", 8193, 0.0, 8193.0);
+  fHist_InitConvKernelIm  = tfs->make<TH1D>("ICKI","ICKI", 8193, 0.0, 8193.0);
+  fHist_ResampledConvKernelRe = tfs->make<TH1D>("rICKR","rICKR", 8193, 0.0, 8193.0);
+  fHist_ResampledConvKernelIm = tfs->make<TH1D>("rICKI","rICKI", 8193, 0.0, 8193.0);
   
+  fHist_PreConv = tfs->make<TH1D>("PreC","PreC",16384, 0.0, 16384.0);
+  fHist_PostConv = tfs->make<TH1D>("PostC","PostC",16384, 0.0, 16384.0); 
+  fHist_PostOffset = tfs->make<TH1D>("PostO","PostO",16384, 0.0, 16384.0); 
   reconfigure(pset);
 }
 
@@ -314,6 +319,14 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
 
       tOffset *= f3DCorrectionVec[vw]*fTimeScaleFactor;
       fFieldResponseTOffset.at(vw) = (-tOffset + fCalibResponseTOffset[vw])*1000.;
+      if (vw==2) {
+        std::cout<<"For response "<<response_name<<" toffset parameters are: "<<std::endl;
+	std::cout<<"  tOffset: "<<tOffset/(f3DCorrectionVec[vw]*fTimeScaleFactor)<<std::endl;
+	std::cout<<"  3DCorr:  "<<f3DCorrectionVec[vw]<<std::endl;
+	std::cout<<"  fTSF:    "<<fTimeScaleFactor<<std::endl;
+	std::cout<<"  fCalib:  "<<fCalibResponseTOffset[vw]<<std::endl;
+	std::cout<<"  total:   "<<fFieldResponseTOffset[vw]<<std::endl;
+      }
 
     }//end loop over responses
   }//end loop over plane, done filling field response histograms
@@ -386,6 +399,12 @@ void util::SignalShapingServiceMicroBooNE::init()
 
     // see if we get the same toffsets
     SetResponseSampling();
+    const std::vector<TComplex>& conv_kernel = fSignalShapingVec[7466].Response("nominal").ConvKernel();
+    for (unsigned int bin=0; bin!=8193; ++bin) {
+      fHist_ResampledConvKernelRe->SetBinContent(bin+1, conv_kernel.at(bin).Re());
+      fHist_ResampledConvKernelIm->SetBinContent(bin+1, conv_kernel.at(bin).Im());
+    }
+    
 
     // Return to original fftsize
     //
