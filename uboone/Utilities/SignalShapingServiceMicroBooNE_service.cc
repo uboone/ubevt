@@ -50,7 +50,10 @@ util::SignalShapingServiceMicroBooNE::SignalShapingServiceMicroBooNE(const fhicl
   
   fHist_PreConv = tfs->make<TH1D>("PreC","PreC",16384, 0.0, 16384.0);
   fHist_PostConv = tfs->make<TH1D>("PostC","PostC",16384, 0.0, 16384.0); 
-  fHist_PostOffset = tfs->make<TH1D>("PostO","PostO",16384, 0.0, 16384.0); 
+  fHist_PostOffset = tfs->make<TH1D>("PostO","PostO",16384, 0.0, 16384.0);
+  
+  fHist_PreDeconv = tfs->make<TH1D>("PreD","PreD",16384,0.0,16384.0);
+  fHist_PostDeconvOffset = tfs->make<TH1D>("PostDO","PostDO",16384,0.0,16384.0); 
   reconfigure(pset);
 }
 
@@ -272,7 +275,7 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
       TH1F* resp = fFieldResponseHistVec[vw][response_name];
       fin->Close();
       
-      if (response_name=="nominal" && vw==2) {
+      if (response_name=="nominal" && vw==1) {
         for (unsigned int bin=1; bin<=1000; ++bin) {
 	  fHist_FieldResponseHist->SetBinContent(bin, resp->GetBinContent(bin));
 	}
@@ -319,7 +322,7 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
 
       tOffset *= f3DCorrectionVec[vw]*fTimeScaleFactor;
       fFieldResponseTOffset[vw][response_name] = (-tOffset + fCalibResponseTOffset[vw])*1000.;
-      if (vw==2) {
+      if (vw==1) {
         std::cout<<"For response "<<response_name<<" toffset parameters are: "<<std::endl;
 	std::cout<<"  tOffset: "<<tOffset/(f3DCorrectionVec[vw]*fTimeScaleFactor)<<std::endl;
 	std::cout<<"  3DCorr:  "<<f3DCorrectionVec[vw]<<std::endl;
@@ -378,7 +381,7 @@ void util::SignalShapingServiceMicroBooNE::init()
 	  fSignalShapingVec[channel].Response(resp_name).save_response();
 	  fSignalShapingVec[channel].Response(resp_name).set_normflag(false); 
 	  
-	  if (channel==7466 && resp_name=="nominal") {
+	  if (channel==4066 && resp_name=="nominal") {
 	    for (unsigned int bin=0; bin!=1000; ++bin) {
 	      fHist_FieldResponseVec->SetBinContent(bin+1, fFieldResponseVec[view][resp_name][bin]);
 	    }
@@ -399,7 +402,7 @@ void util::SignalShapingServiceMicroBooNE::init()
 
     // see if we get the same toffsets
     SetResponseSampling();
-    const std::vector<TComplex>& conv_kernel = fSignalShapingVec[7466].Response("nominal").ConvKernel();
+    const std::vector<TComplex>& conv_kernel = fSignalShapingVec[4066].Response("nominal").ConvKernel();
     for (unsigned int bin=0; bin!=8193; ++bin) {
       fHist_ResampledConvKernelRe->SetBinContent(bin+1, conv_kernel.at(bin).Re());
       fHist_ResampledConvKernelIm->SetBinContent(bin+1, conv_kernel.at(bin).Im());
@@ -1048,7 +1051,7 @@ std::string util::SignalShapingServiceMicroBooNE::DetermineResponseName(unsigned
 	}
       }   
       else {
-        if (fYZdependentResponse) {
+        if (!fdatadrivenResponse && fYZdependentResponse) {
 	  charge_fraction =  0.7;
 	}
       }
@@ -1077,7 +1080,7 @@ std::string util::SignalShapingServiceMicroBooNE::DetermineResponseName(unsigned
 
       //nominal
       else {
-        if (fYZdependentResponse) {
+        if (!fdatadrivenResponse && fYZdependentResponse) {
 	  charge_fraction = 0.7;
 	}
       }
@@ -1098,7 +1101,7 @@ std::string util::SignalShapingServiceMicroBooNE::DetermineResponseName(unsigned
 
       //nominal
       else {
-        if (fYZdependentResponse) {
+        if (!fdatadrivenResponse && fYZdependentResponse) {
 	  charge_fraction = 0.7;
 	}
       }
@@ -1106,7 +1109,7 @@ std::string util::SignalShapingServiceMicroBooNE::DetermineResponseName(unsigned
 
     //No overlap with shorted wires
     else {
-      if (fYZdependentResponse) {
+      if (!fdatadrivenResponse && fYZdependentResponse) {
 	charge_fraction = 0.7;
       }
     }

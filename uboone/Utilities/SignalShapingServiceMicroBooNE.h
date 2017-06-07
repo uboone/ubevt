@@ -308,6 +308,8 @@ namespace util {
       TH1D* fHist_PreConv;
       TH1D* fHist_PostConv;
       TH1D* fHist_PostOffset;
+      TH1D* fHist_PreDeconv;
+      TH1D* fHist_PostDeconvOffset;
     
   };
 } //namespace util
@@ -342,19 +344,22 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(s
     throw cet::exception(__FUNCTION__) << "You requested to use an invalid response "<<response_name<<" for channel "<<channel<<std::endl;
   }
   
-  if (channel==7466 && response_name=="nominal") {
+  if (channel==4066 && response_name=="nominal") {
     for (unsigned int bin=0; bin!=func.size(); ++bin) {
       fHist_PreConv->SetBinContent(bin+1, func.at(bin));
     }
   }
   fSignalShapingVec[channel].Response(response_name).Convolute(func);
-  if (channel==7466 && response_name=="nominal") {
+  if (channel==4066 && response_name=="nominal") {
     for (unsigned int bin=0; bin!=func.size(); ++bin) {
       fHist_PostConv->SetBinContent(bin+1, func.at(bin));
     }
   }
   
   int time_offset = FieldResponseTOffset(channel,response_name);
+  if (channel==4066 && response_name=="nominal") {
+    std::cout<<"Using TOffset: "<<time_offset<<" ("<<fFieldResponseTOffset.at(1).at(response_name)<<")"<<std::endl;
+  }
   
   std::vector<T> temp;
   if (time_offset <=0){
@@ -367,7 +372,7 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(s
     func.insert(func.begin(),temp.begin(),temp.end());
   }
   
-  if (channel==7466 && response_name=="nominal") {
+  if (channel==4066 && response_name=="nominal") {
     for (unsigned int bin=0; bin!=func.size(); ++bin) {
       fHist_PostOffset->SetBinContent(bin+1, func.at(bin));
     }
@@ -409,9 +414,18 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute
     this->SetDecon(func.size());
   }
   
+  if (channel==4066 && response_name=="nominal") {
+    for (unsigned int bin=0; bin!=func.size(); ++bin) {
+      fHist_PreDeconv->SetBinContent(bin+1, func.at(bin));
+    }
+  }
+  
   fSignalShapingVec[channel].Response(response_name).Deconvolute(func);
 
   int time_offset = FieldResponseTOffset(channel,response_name);
+  if (channel==4066 && response_name=="nominal") {
+    std::cout<<"Using Deconv TOffset: "<<time_offset<<" ("<<fFieldResponseTOffset.at(1).at(response_name)<<")"<<std::endl;
+  }
   
   std::vector<T> temp;
   if (time_offset <=0){
@@ -422,6 +436,12 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute
     temp.assign(func.begin(),func.begin()+time_offset);
     func.erase(func.begin(),func.begin()+time_offset);
     func.insert(func.end(),temp.begin(),temp.end());   
+  }
+  
+  if (channel==4066 && response_name=="nominal") {
+    for (unsigned int bin=0; bin!=func.size(); ++bin) {
+      fHist_PostDeconvOffset->SetBinContent(bin+1, func.at(bin));
+    }
   }
 
 }
