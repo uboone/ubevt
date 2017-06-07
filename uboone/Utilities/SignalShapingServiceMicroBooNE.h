@@ -114,6 +114,7 @@ namespace util {
       }
       
       const SignalShaping& Response(const std::string& response_name) const {
+        std::cout<<"Trying to retrieve response "<<response_name<<std::endl;
         return fResponseMap.at(response_name);
       }
       
@@ -344,12 +345,16 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(s
     throw cet::exception(__FUNCTION__) << "You requested to use an invalid response "<<response_name<<" for channel "<<channel<<std::endl;
   }
   
-  if (channel==4066 && response_name=="nominal") {
+  if (channel==4966) {
+    std::cout<<"response 4966: "<<response_name<<std::endl;
     for (unsigned int bin=0; bin!=func.size(); ++bin) {
       fHist_PreConv->SetBinContent(bin+1, func.at(bin));
     }
   }
+  
+  std::cout<<"About to get response "<<response_name<<" for channel "<<channel<<std::endl;
   fSignalShapingVec[channel].Response(response_name).Convolute(func);
+  std::cout<<"Got it!"<<std::endl;
   if (channel==4066 && response_name=="nominal") {
     for (unsigned int bin=0; bin!=func.size(); ++bin) {
       fHist_PostConv->SetBinContent(bin+1, func.at(bin));

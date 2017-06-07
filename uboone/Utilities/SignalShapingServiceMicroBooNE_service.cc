@@ -240,7 +240,7 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
   std::string fileNameBase = pset.get<std::string>("FieldResponseFNameBase"); 
   std::string version      = pset.get<std::string>("FieldResponseFVersion");
   std::string histNameBase = pset.get<std::string>("FieldResponseHNameBase");
-  std::vector<std::string> ddr_resp_names = {"nominal", "shortedY", "shortedU"};
+  std::vector<std::string> ddr_resp_names = {"nominal", "shortedU", "shortedY"};
   cet::search_path sp("FW_SEARCH_PATH");
   
   // get the field responses
@@ -921,6 +921,7 @@ double util::SignalShapingServiceMicroBooNE::GetDeconNoise(unsigned int const ch
 int util::SignalShapingServiceMicroBooNE::FieldResponseTOffset(unsigned int const channel, const std::string& response_name) const
 {
   //no init needed - fFieldResponseTOffset is initialized in reconfigure()
+  std::cout<<"Entered FRTO"<<std::endl;
   
   art::ServiceHandle<geo::Geometry> geom;
   geo::View_t view = geom->View(channel);
@@ -940,6 +941,8 @@ int util::SignalShapingServiceMicroBooNE::FieldResponseTOffset(unsigned int cons
       throw cet::exception(__FUNCTION__) << "Invalid geo::View_t ... " << view << std::endl;
   }
   auto tpc_clock = lar::providerFrom<detinfo::DetectorClocksService>()->TPCClock();
+  
+  std::cout<<"About to exit FRTO"<<std::endl;
   return tpc_clock.Ticks(time_offset/1.e3);
 }
 
@@ -1013,7 +1016,7 @@ double util::SignalShapingServiceMicroBooNE::Get2DFilterNorm(size_t planeNum) co
 
 //----------------------------------------------------------------------
 // Get name of the response to use, as well as any scaling to be applied to the input signal (B. Eberly)
-std::string util::SignalShapingServiceMicroBooNE::DetermineResponseName(unsigned int chan, double z, double y, double& charge_fraction) const
+std::string util::SignalShapingServiceMicroBooNE::DetermineResponseName(unsigned int chan, double y, double z, double& charge_fraction) const
 {
   
   //defaults
@@ -1118,6 +1121,9 @@ std::string util::SignalShapingServiceMicroBooNE::DetermineResponseName(unsigned
 
   if (view==2) { //Y-plane 
     //Wires overlap with U-plane shorted wires
+    if (chan==4966) {
+      std::cout<<"Channel 4966 "<<IsUShortedOverlapChannel(chan)<<" "<<IsUShortedYZRegion(y,z)<<std::endl;
+    }
     if ( IsUShortedOverlapChannel(chan) ) {
 
       //YZ region overlaps with U-plane shorted wires
@@ -1132,6 +1138,8 @@ std::string util::SignalShapingServiceMicroBooNE::DetermineResponseName(unsigned
 }//end DDRName
 
 bool util::SignalShapingServiceMicroBooNE::IsUShortedYZRegion(double y, double z) const {
+  
+  std::cout<<"Calling with y="<<y<<" and z="<<z<<std::endl;
   if ( ( (y < (z*0.577)+14.769)  && (y > (z*0.577)+14.422) )  || 
        ( (y < (z*0.577)+14.076)  && (y > (z*0.577)+7.840) )   || 
        ( (y < (z*0.577)+7.494)   && (y > (z*0.577)+7.148) )   || 
