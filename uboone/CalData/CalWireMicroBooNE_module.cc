@@ -786,7 +786,12 @@ template <class T> void caldata::CalWireMicroBooNE::DeconvoluteInducedCharge(siz
   // do response function time-domain FFT
   for(size_t k = 0; k < (size_t)numResp; k++) {
     std::string response_name = ( k==0 ) ? "nominal" : "alt_"+std::to_string(k);
-    respFreqVecs[numResp-1-k] = sss->GetConvKernel(firstChannel, response_name);
+    const std::vector<util::ComplexF>& tmp = sss->GetConvKernel(firstChannel, response_name);
+    respFreqVecs[numResp-1-k].resize(tmp.size());
+    for (unsigned int vi=0; vi!=tmp.size(); ++vi) {
+      respFreqVecs[numResp-1-k][vi] = TComplex(tmp[vi].Re,tmp[vi].Im);
+    }
+
     respFreqVecs[numResp-1-k].resize(numBins);
     respFreqVecs[numResp-1+k].resize(numBins);
     for(size_t j = 1; j < (size_t)((numBins/2)+1); j++) {

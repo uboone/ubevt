@@ -83,7 +83,7 @@
 #include "fhiclcpp/ParameterSet.h"
 #include "art/Framework/Services/Registry/ActivityRegistry.h"
 #include "art/Framework/Services/Registry/ServiceMacros.h"
-#include "lardata/Utilities/SignalShaping.h"
+#include "SignalShapingLite.h"
 #include "TF1.h"
 #include "TH1D.h"
 
@@ -93,6 +93,7 @@
 #include "larcore/Geometry/PlaneGeo.h"
 
 using DoubleVec  = std::vector<double>;
+using FloatVec   = std::vector<float>;
 using DoubleVec2 = std::vector< DoubleVec >;
 
 
@@ -109,11 +110,11 @@ namespace util {
       
       ~SignalShapingContainer() {}
       
-      SignalShaping& Response(const std::string& response_name) {
+      SignalShapingLite& Response(const std::string& response_name) {
         return fResponseMap[response_name];
       }
       
-      const SignalShaping& Response(const std::string& response_name) const {
+      const SignalShapingLite& Response(const std::string& response_name) const {
         std::cout<<"Trying to retrieve response "<<response_name<<std::endl;
         return fResponseMap.at(response_name);
       }
@@ -126,7 +127,7 @@ namespace util {
       
     private:
       
-      std::map<std::string, SignalShaping> fResponseMap;
+      std::map<std::string, SignalShapingLite> fResponseMap;
   };
 
   class SignalShapingServiceMicroBooNE {
@@ -160,8 +161,8 @@ namespace util {
       //------------------------------------------------------------
 
       // Responses and Kernels
-      const util::SignalShaping&   SignalShaping(size_t channel, const std::string& response_name="") const;
-      const std::vector<TComplex>& GetConvKernel(unsigned int channel, const std::string& response_name ) const;  // M. Mooney 
+      const util::SignalShapingLite&   SignalShaping(size_t channel, const std::string& response_name="") const;
+      const std::vector<ComplexF>& GetConvKernel(unsigned int channel, const std::string& response_name ) const;  // M. Mooney 
       void  SetDecon(size_t datasize);
       const std::vector<unsigned int>&   GetNResponses() const { return fNResponses; } 
       
@@ -236,12 +237,12 @@ namespace util {
 
 
       // Electronics Response    
-      std::vector<DoubleVec> fElectResponse;            ///< Stores electronics response. Vector elements correspond to channel, then response bins
+      std::vector<FloatVec>  fElectResponse;            ///< Stores electronics response. Vector elements correspond to channel, then response bins
       double                 fADCPerPCAtLowestASICGain; ///< Pulse amplitude gain for a 1 pc charge impulse after convoluting it the with field and electronics response with the lowest ASIC gain setting of 4.7 mV/fC
 
 
       // Field Response
-      std::vector< std::map<std::string, DoubleVec> > fFieldResponseVec;      ///< Stores adjusted field response. Vector elements corespond to plane, map key is a response name
+      std::vector< std::map<std::string, FloatVec> >  fFieldResponseVec;      ///< Stores adjusted field response. Vector elements corespond to plane, map key is a response name
       std::vector< std::map<std::string, TH1F*> >     fFieldResponseHistVec;  ///< Stores input field response.  Vector elements correspond to planes, map key is a response name
       std::vector<unsigned int>                       fNResponses;            ///< Number of input field responses per view
       DoubleVec                                       fFieldRespAmpVec;       ///< Amplitudes applied to adjusted field response   
@@ -301,8 +302,6 @@ namespace util {
       TH1D* fHist_FieldResponseHist;
       TH1D* fHist_FieldResponseVec;
       TH1D* fHist_ElectResponse;
-      TH1D* fHist_InitConvKernelRe;
-      TH1D* fHist_InitConvKernelIm;
       TH1D* fHist_ResampledConvKernelRe;
       TH1D* fHist_ResampledConvKernelIm;
       
