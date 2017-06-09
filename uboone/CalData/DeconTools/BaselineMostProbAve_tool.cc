@@ -68,7 +68,7 @@ float BaselineMostProbAve::GetBaseline(std::vector<float>& holder,
     // return that as the ROI baselin.
     float min  = *std::min_element(holder.begin()+roiStart,holder.begin()+roiStart+roiLen);
     float max  = *std::max_element(holder.begin()+roiStart,holder.begin()+roiStart+roiLen);
-    int   nbin = 2 * std::ceil(max - min);
+    int   nbin = 2 * std::ceil(max - min) + 1;
     
     if (nbin > 0)
     {
