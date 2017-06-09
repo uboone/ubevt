@@ -40,6 +40,8 @@ float BaselineMostProbAve::GetBaseline(std::vector<float> const& holder,
                                     size_t              roiStart,
                                     size_t              roiLen) const
 {
+    if (roiLen < 2) return 0.0; // not enough information
+
     float base=0;
     
     // Recover the expected electronics noise on this channel
@@ -50,13 +52,13 @@ float BaselineMostProbAve::GetBaseline(std::vector<float> const& holder,
     // return that as the ROI baselin.
     float min  = *std::min_element(holder.begin()+roiStart,holder.begin()+roiStart+roiLen);
     float max  = *std::max_element(holder.begin()+roiStart,holder.begin()+roiStart+roiLen);
-    int   nbin = 2 * std::ceil(max - min);
+
+    if (max > min) {
+        // we are being generous and allow for one bin more,
+        // which is actually needed in the rare case where (max-min) is an integer
+        size_t const nbin = 2 * std::ceil(max - min) + 1;
     
-    if (nbin > 0)
-    {
-        std::vector<int> roiHistVec;
-        
-        roiHistVec.resize(nbin, 0);
+        std::vector<int> roiHistVec(nbin, 0);
         
         for(size_t binIdx = roiStart; binIdx < roiStart+roiLen; binIdx++)
             roiHistVec[std::floor(2. * (holder[binIdx] - min))]++;
