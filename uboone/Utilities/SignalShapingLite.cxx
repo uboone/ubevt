@@ -33,8 +33,11 @@ util::SignalShapingLite::~SignalShapingLite()
 void util::SignalShapingLite::Reset()
 {
   fResponse.clear();
+  fResponse.shrink_to_fit();
   fConvKernel.clear();
+  fConvKernel.shrink_to_fit();
   fDeconvKernel.clear();
+  fDeconvKernel.shrink_to_fit();
   
   //Set deconvolution polarity to + as default
   fDeconvKernelPolarity = +1;
@@ -168,7 +171,9 @@ void util::SignalShapingLite::CalculateConvKernel()
       fConvKernel[i].Im = tmp[i].Im();
     }
     
-    fResponse.clear(); //no longer need this info, so lets save some memory
+    //try to save some memory, since the response is no longer needed
+    fResponse.clear(); 
+    fResponse.shrink_to_fit(); //implementation-dependent: may not actually do a reallocation (tested and works on the gpvms)
   }
 }
 
