@@ -42,7 +42,6 @@ public:
 private:
     // Member variables from the fhicl file
     size_t                                                   fFFTSize;                    ///< FFT size for ROI deconvolution
-    float                                                    fMinROIAverageTickThreshold; ///< try to remove bad ROIs
     bool                                                     fDodQdxCalib;                ///< Do we apply wire-by-wire calibration?
     std::string                                              fdQdxCalibFileName;          ///< Text file for constants to do wire-by-wire calibration
     std::map<unsigned int, float>                            fdQdxCalib;                  ///< Map to do wire-by-wire calibration, key is channel
@@ -69,8 +68,7 @@ ROIDeconvolution::~ROIDeconvolution()
 void ROIDeconvolution::configure(const fhicl::ParameterSet& pset)
 {
     // Start by recovering the parameters
-    fFFTSize                    = pset.get< size_t >("FFTSize"                );
-    fMinROIAverageTickThreshold = pset.get<float>   ("MinROIAverageTickThreshold",-0.5);
+    fFFTSize    = pset.get< size_t >("FFTSize"                );
     
     //wire-by-wire calibration
     fDodQdxCalib = pset.get< bool >("DodQdxCalib", false);
@@ -114,9 +112,9 @@ void ROIDeconvolution::configure(const fhicl::ParameterSet& pset)
     return;
 }
 void ROIDeconvolution::Deconvolve(IROIFinder::Waveform&             waveform,
-                                          raw::ChannelID_t                  channel,
-                                          IROIFinder::CandidateROIVec&      roiVec,
-                                          recob::Wire::RegionsOfInterest_t& ROIVec) const
+                                  raw::ChannelID_t                  channel,
+                                  IROIFinder::CandidateROIVec&      roiVec,
+                                  recob::Wire::RegionsOfInterest_t& ROIVec) const
 {
     double                   deconNorm = fSignalShaping->GetDeconNorm();
     std::vector<geo::WireID> wids      = fGeometry->ChannelToWire(channel);
@@ -177,26 +175,6 @@ void ROIDeconvolution::Deconvolve(IROIFinder::Waveform&             waveform,
         // Fill the buffer and do the deconvolution
         std::copy(waveform.begin()+firstOffset, waveform.begin()+secondOffset, holder.begin());
         
-        // Leon's algorithm for identifying charge collection on the afflicted v plane wires
-//        if (thePlane == 1 && wids[0].Wire > 1180 && wids[0].Wire < 1890)
-//        {
-//            std::vector<float>::iterator maxItr = std::max_element(holder.begin() + roiStart, holder.begin() + roiStop);
-//            std::vector<float>::iterator minItr = std::min_element(maxItr,                    holder.begin() + roiStop);
-//
-//            if (std::distance(maxItr,minItr) <= 30)
-//            {
-//                float maxPulseHeight = *maxItr;
-//                float minPulseHeight = *minItr;
-//
-//                if (maxPulseHeight >= 40. && std::fabs(minPulseHeight/maxPulseHeight) < 0.5)
-//                {
-//                    std::cout << "********> plane: " << thePlane << ", wire: " << wids[0].Wire << ", start: " << firstOffset << ", stop: " << secondOffset << std::endl;
-//                    std::cout << "          max to min distance: " << std::distance(maxItr,minItr) << ", max/min: " << maxPulseHeight << "/" << minPulseHeight << std::endl;
-//                    //                            deconChannel = 6000;
-//                }
-//            }
-//        }
-        
         // Deconvolute the raw signal
         fSignalShaping->Deconvolute(channel,holder);
         
@@ -223,21 +201,9 @@ void ROIDeconvolution::Deconvolve(IROIFinder::Waveform&             waveform,
                 for (size_t iholder = 0; iholder < holder.size(); ++iholder) holder[iholder] *= constant;
             }
         }
-        
-        //wes 23.12.2016 --- sum up the roi, and if it's very negative get rid of it
-        float average_val = std::accumulate(holder.begin(),holder.end(),0.0) / holder.size();
-        float min         = *std::min_element(holder.begin(),holder.end());
-        float max         = *std::max_element(holder.begin(),holder.end());
-        
-        if ((max + average_val) > 1. && (average_val > fMinROIAverageTickThreshold ||  std::abs(min)<std::abs(max)))
-        {
-            // add the range into ROIVec
-            ROIVec.add_range(roi.first, std::move(holder));
-        }
-//        else
-//        {
-//            std::cout << "=======> Rejecting ROI due to average_val, plane: " << thePlane << ", wire: " << wids[0].Wire << ", val: " << average_val << ", min/max " << min << "/" << max << ", firstOffset: " << firstOffset << ", len: " << roiLen << std::endl;
-//        }
+
+        // add the range into ROIVec
+        ROIVec.add_range(roi.first, std::move(holder));
     } // loop over candidate roi's
     
     return;
