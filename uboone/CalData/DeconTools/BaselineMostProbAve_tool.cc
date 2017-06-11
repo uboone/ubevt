@@ -65,35 +65,51 @@ float BaselineMostProbAve::GetBaseline(std::vector<float>& holder,
     
     // Basic idea is to find the most probable value in the ROI presented to us
     // From that, get the average value within range of the expected noise and
-    // return that as the ROI baselin.
-    float min  = *std::min_element(holder.begin()+roiStart,holder.begin()+roiStart+roiLen);
-    float max  = *std::max_element(holder.begin()+roiStart,holder.begin()+roiStart+roiLen);
-    int   nbin = 2 * std::ceil(max - min) + 1;
+    // return that as the ROI baseline.
+    auto const minmax = std::minmax_element(holder.begin()+roiStart,holder.begin()+roiStart+roiLen);
     
-    if (nbin > 0)
+    float min = *(minmax.first);
+    float max = *(minmax.second);
+    
+    if (max > min)
     {
-        std::vector<int> roiHistVec;
+        // we are being generous and allow for one bin more,
+        // which is actually needed in the rare case where (max-min) is an integer
+        size_t nbin = 2 * std::ceil(max - min) + 1;
         
-        roiHistVec.resize(nbin, 0);
+        // In principle this can't happen...
+        if (nbin == 0) return base;
         
-        for(size_t binIdx = roiStart; binIdx < roiStart+roiLen; binIdx++)
-            roiHistVec[std::floor(2. * (holder[binIdx] - min))]++;
-        
-        std::vector<int>::iterator mpValItr = std::max_element(roiHistVec.begin(),roiHistVec.end());
-        
-        float mpVal   = min + 0.5 * std::distance(roiHistVec.begin(),mpValItr);
-        int   baseCnt = 0;
+        std::vector<int> roiHistVec(nbin, 0);
         
         for(size_t binIdx = roiStart; binIdx < roiStart+roiLen; binIdx++)
         {
-            if (std::fabs(holder[binIdx] - mpVal) < deconNoise)
-            {
-                base += holder[binIdx];
-                baseCnt++;
-            }
+            // Provide overkill protection against possibility of a bad index...
+            int    intIdx = std::floor(2. * (holder.at(binIdx) - min));
+            size_t idx    = std::max(std::min(intIdx,int(nbin-1)),0);
+            
+            roiHistVec.at(idx)++;
         }
         
-        if (baseCnt > 0) base /= baseCnt;
+        std::vector<int>::const_iterator mpValItr = std::max_element(roiHistVec.cbegin(),roiHistVec.cend());
+        
+        // Really can't see how this can happen... but check just to be sure
+        if (mpValItr != roiHistVec.end())
+        {
+            float mpVal   = min + 0.5 * std::distance(roiHistVec.cbegin(),mpValItr);
+            int   baseCnt = 0;
+            
+            for(size_t binIdx = roiStart; binIdx < roiStart+roiLen; binIdx++)
+            {
+                if (std::fabs(holder.at(binIdx) - mpVal) < deconNoise)
+                {
+                    base += holder.at(binIdx);
+                    baseCnt++;
+                }
+            }
+            
+            if (baseCnt > 0) base /= baseCnt;
+        }
     }
     
     return base;
