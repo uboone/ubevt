@@ -43,7 +43,6 @@ public:
 private:
     
     // Member variables from the fhicl file
-    bool                                                     fDoBaselineSub;              ///< Are we doing baseline correction?
     bool                                                     fDodQdxCalib;                ///< Do we apply wire-by-wire calibration?
     std::string                                              fdQdxCalibFileName;          ///< Text file for constants to do wire-by-wire calibration
     std::map<unsigned int, float>                            fdQdxCalib;                  ///< Map to do wire-by-wire calibration, key is channel
@@ -69,8 +68,6 @@ MCC7Deconvolution::~MCC7Deconvolution()
 void MCC7Deconvolution::configure(const fhicl::ParameterSet& pset)
 {
     // Start by recovering the parameters
-    fDoBaselineSub = pset.get< bool >("DoBaselineSub"                      );
-    
     //wire-by-wire calibration
     fDodQdxCalib   = pset.get< bool >("DodQdxCalib", false);
     
