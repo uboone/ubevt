@@ -13,6 +13,17 @@ microboone_roifinderstandard:
     zPlaneROIPad: [ 50, 50 ] # number of bins to pad both ends of the ROIs
 }
 
+microboone_roifinderdifferential:
+{
+    tool_type:      ROIFinderDifferential
+    NumSigma:       [ 3, 3, 3 ]
+    ZeroPoint:      [ 2., 2., 2.]
+   Max2MinDistance: [ 60, 60, 60]
+    uPlaneROIPad:   [ 50, 50 ] # number of bins to pad both ends of the ROIs
+    vPlaneROIPad:   [ 50, 50 ] # number of bins to pad both ends of the ROIs
+    zPlaneROIPad:   [ 50, 50 ] # number of bins to pad both ends of the ROIs
+}
+
 microboone_baselinestandard:
 {
     tool_type: BaselineStandard
