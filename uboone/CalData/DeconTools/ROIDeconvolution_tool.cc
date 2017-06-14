@@ -116,10 +116,8 @@ void ROIDeconvolution::Deconvolve(IROIFinder::Waveform&             waveform,
                                   IROIFinder::CandidateROIVec&      roiVec,
                                   recob::Wire::RegionsOfInterest_t& ROIVec) const
 {
-    double                   deconNorm = fSignalShaping->GetDeconNorm();
-    std::vector<geo::WireID> wids      = fGeometry->ChannelToWire(channel);
-//    size_t                   thePlane  = wids[0].Plane;
-    
+    double deconNorm = fSignalShaping->GetDeconNorm();
+
     // And now process them
     for(auto& roi : roiVec)
     {
