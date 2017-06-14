@@ -115,7 +115,6 @@ namespace util {
       }
       
       const SignalShapingLite& Response(const std::string& response_name) const {
-        std::cout<<"Trying to retrieve response "<<response_name<<std::endl;
         return fResponseMap.at(response_name);
       }
       
@@ -161,8 +160,8 @@ namespace util {
       //------------------------------------------------------------
 
       // Responses and Kernels
-      const util::SignalShapingLite&   SignalShaping(size_t channel, const std::string& response_name="") const;
-      const std::vector<ComplexF>& GetConvKernel(unsigned int channel, const std::string& response_name ) const;  // M. Mooney 
+      const util::SignalShapingLite& SignalShaping(size_t channel, const std::string& response_name="") const;
+      const std::vector<ComplexF>&   GetConvKernel(unsigned int channel, const std::string& response_name ) const;  // M. Mooney 
       void  SetDecon(size_t datasize);
       const std::vector<unsigned int>&   GetNResponses() const { return fNResponses; } 
       
@@ -179,7 +178,20 @@ namespace util {
       double     GetDeconNorm() const { return fDeconNorm; }
       double     GetRawNoise(unsigned int const channel) const;
       double     GetDeconNoise(unsigned int const channel) const; 
-
+      
+      
+      //U- and Y-Shorted Channels and YZ-Regions
+      // Determine if YZ coordinate overlaps with the U-shorted YZ region
+      static bool IsUShortedYZRegion(double y, double z);
+      
+      // Determine if Z coordinate overlaps with the Y-shorted Z region
+      static bool IsYShortedZRegion(double z);
+      
+      // Determine if channel's wire overlaps with the U-shorted wires
+      static bool IsUShortedOverlapChannel(unsigned int channel);
+      
+      // Determine if channel's wire overlaps with the Y-shorted wires
+      static bool IsYShortedOverlapChannel(unsigned int channel);
 
     private:
 
@@ -205,19 +217,7 @@ namespace util {
       // as well as a charge_fraction for scaling before convolution/deconvolution
       std::string DetermineResponseName(unsigned int chan, double y, double z, double& charge_fraction) const;
       
-      // Determine if YZ coordinate overlaps with the U-shorted YZ region
-      bool IsUShortedYZRegion(double y, double z) const;
-      
-      // Determine if Z coordinate overlaps with the Y-shorted Z region
-      bool IsYShortedZRegion(double z) const;
-      
-      // Determine if channel's wire overlaps with the U-shorted wires
-      bool IsUShortedOverlapChannel(unsigned int channel) const;
-      
-      // Determine if channel's wire overlaps with the Y-shorted wires
-      bool IsYShortedOverlapChannel(unsigned int channel) const;
-      
-      // Determine whether the response specified by response_name should be stored for channel
+      // Determine whether the response indicated by response_name should be stored for channel
       bool StoreThisResponse(const std::string& response_name, unsigned int channel) const;
       
 
@@ -291,6 +291,9 @@ namespace util {
 
 
       // Diagnostics
+      int fDiagnosticChannel;
+      std::string fDiagnosticResponse;
+      
       bool fPrintResponses;
       bool fHistDone[3];
       bool fHistDoneF[3];   
@@ -344,39 +347,39 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(s
     throw cet::exception(__FUNCTION__) << "You requested to use an invalid response "<<response_name<<" for channel "<<channel<<std::endl;
   }
   
-  if (channel==4966) {
-    std::cout<<"response 4966: "<<response_name<<std::endl;
+  //make diagnostic histogram
+  if ((int)channel==fDiagnosticChannel && response_name==fDiagnosticResponse) {
     for (unsigned int bin=0; bin!=func.size(); ++bin) {
       fHist_PreConv->SetBinContent(bin+1, func.at(bin));
     }
   }
   
-  std::cout<<"About to get response "<<response_name<<" for channel "<<channel<<std::endl;
+  //convolute
   fSignalShapingVec[channel].Response(response_name).Convolute(func);
-  std::cout<<"Got it!"<<std::endl;
-  if (channel==4066 && response_name=="nominal") {
+
+  //make diagnostic histogram
+  if ((int)channel==fDiagnosticChannel && response_name==fDiagnosticResponse) {
     for (unsigned int bin=0; bin!=func.size(); ++bin) {
       fHist_PostConv->SetBinContent(bin+1, func.at(bin));
     }
   }
   
-  int time_offset = FieldResponseTOffset(channel,response_name);
-  if (channel==4066 && response_name=="nominal") {
-    std::cout<<"Using TOffset: "<<time_offset<<" ("<<fFieldResponseTOffset.at(1).at(response_name)<<")"<<std::endl;
-  }
-  
+  //Add time offset
+  int time_offset = FieldResponseTOffset(channel,response_name);  
   std::vector<T> temp;
   if (time_offset <=0){
     temp.assign(func.begin(),func.begin()-time_offset);
     func.erase(func.begin(),func.begin()-time_offset);
     func.insert(func.end(),temp.begin(),temp.end());
-  }else{
+  }
+  else{
     temp.assign(func.end()-time_offset,func.end());
     func.erase(func.end()-time_offset,func.end());
     func.insert(func.begin(),temp.begin(),temp.end());
   }
   
-  if (channel==4066 && response_name=="nominal") {
+  //make diagnostic histogram
+  if ((int)channel==fDiagnosticChannel && response_name==fDiagnosticResponse) {
     for (unsigned int bin=0; bin!=func.size(); ++bin) {
       fHist_PostOffset->SetBinContent(bin+1, func.at(bin));
     }
@@ -418,31 +421,32 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute
     this->SetDecon(func.size());
   }
   
-  if (channel==4066 && response_name=="nominal") {
+  //make diagnostic histogram
+  if ((int)channel==fDiagnosticChannel && response_name==fDiagnosticResponse) {
     for (unsigned int bin=0; bin!=func.size(); ++bin) {
       fHist_PreDeconv->SetBinContent(bin+1, func.at(bin));
     }
   }
   
+  //Do deconvolution
   fSignalShapingVec[channel].Response(response_name).Deconvolute(func);
 
-  int time_offset = FieldResponseTOffset(channel,response_name);
-  if (channel==4066 && response_name=="nominal") {
-    std::cout<<"Using Deconv TOffset: "<<time_offset<<" ("<<fFieldResponseTOffset.at(1).at(response_name)<<")"<<std::endl;
-  }
-  
+  //Add Time Offset
+  int time_offset = FieldResponseTOffset(channel,response_name); 
   std::vector<T> temp;
   if (time_offset <=0){
     temp.assign(func.end()+time_offset,func.end());
     func.erase(func.end()+time_offset,func.end());
     func.insert(func.begin(),temp.begin(),temp.end());
-  }else{
+  }
+  else{
     temp.assign(func.begin(),func.begin()+time_offset);
     func.erase(func.begin(),func.begin()+time_offset);
     func.insert(func.end(),temp.begin(),temp.end());   
   }
   
-  if (channel==4066 && response_name=="nominal") {
+  //make diagnostic histogram
+  if ((int)channel==fDiagnosticChannel && response_name==fDiagnosticResponse) {
     for (unsigned int bin=0; bin!=func.size(); ++bin) {
       fHist_PostDeconvOffset->SetBinContent(bin+1, func.at(bin));
     }

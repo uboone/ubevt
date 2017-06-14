@@ -30,6 +30,8 @@ util::SignalShapingServiceMicroBooNE::SignalShapingServiceMicroBooNE(const fhicl
 : fInitForConvolution(false),
   fInitForDeconvolution(false)
 {
+  
+  //Before calling reconfigure(), initialize some of the diagnostic variables and histograms
   for(size_t i=0; i<3; ++i) {
     fHRawResponse[i] = 0;
     fHStretchedResponse[i] = 0;
@@ -37,8 +39,7 @@ util::SignalShapingServiceMicroBooNE::SignalShapingServiceMicroBooNE(const fhicl
     fHistDone[i] = false;
     fHistDoneF[i] = false;
   }
-    
-    
+        
   art::ServiceHandle<art::TFileService> tfs;
   fHist_FieldResponseHist = tfs->make<TH1D>("FRH","FRH", 1000, 0.0, 1000.0);
   fHist_FieldResponseVec  = tfs->make<TH1D>("FRV","FRV", 1000, 0.0, 1000.0);
@@ -52,6 +53,9 @@ util::SignalShapingServiceMicroBooNE::SignalShapingServiceMicroBooNE(const fhicl
   
   fHist_PreDeconv = tfs->make<TH1D>("PreD","PreD",16384,0.0,16384.0);
   fHist_PostDeconvOffset = tfs->make<TH1D>("PostDO","PostDO",16384,0.0,16384.0); 
+  
+  
+  //Do the remaining constuctor-level initialization
   reconfigure(pset);
 }
 
@@ -118,11 +122,13 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
 
   //Noise
   fNoiseFactVec       = pset.get<DoubleVec2>("NoiseFactVec");
-  fDeconNorm = pset.get<double>("DeconNorm");
+  fDeconNorm          = pset.get<double>("DeconNorm");
   
   
   //Diagnostics
-  fPrintResponses   = pset.get<bool>("PrintResponses");
+  fPrintResponses     = pset.get<bool>("PrintResponses",false);
+  fDiagnosticChannel  = pset.get<int>("DiagnosticChannel",-1);
+  fDiagnosticResponse = pset.get<std::string>("DiagnosticResponse","nominal");
   
  
   
@@ -230,7 +236,7 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
 
 
   //------------------------------------------------------------
-  //Fill field response histograms and determine time offsets
+  //Store field response histograms and determine time offsets
   //------------------------------------------------------------
   
   // constructor decides if initialized value is a path or an environment variable
@@ -241,7 +247,7 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
   std::vector<std::string> ddr_resp_names = {"nominal", "shortedU", "shortedY"};
   cet::search_path sp("FW_SEARCH_PATH");
   
-  // get the field responses
+  // get the field response histograms
   fFieldResponseHistVec.resize(NViews);
   fFieldResponseTOffset.resize(NViews);
   for(unsigned int vw=0; vw!=NViews; ++vw) {
@@ -262,7 +268,7 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
       std::unique_ptr<TFile> fin(new TFile(fname.c_str(), "READ"));
 
       // store response histogram
-      TString histName;
+      TString histName("");
       if (fdatadrivenResponse) {
 	histName = Form("%s_vw%02i_wr00", histNameBase.c_str(), vw);
       }
@@ -273,9 +279,13 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
       TH1F* resp = fFieldResponseHistVec[vw][response_name];
       fin->Close();
       
-      if (response_name=="nominal" && vw==1) {
-        for (unsigned int bin=1; bin<=1000; ++bin) {
-	  fHist_FieldResponseHist->SetBinContent(bin, resp->GetBinContent(bin));
+      //make a diagnostic histogram
+      if (fDiagnosticChannel!=-1 && response_name==fDiagnosticResponse) {
+        unsigned int diagnostic_view = geo->View(fDiagnosticChannel);
+        if (vw==diagnostic_view) {
+          for (unsigned int bin=1; bin<=1000; ++bin) {
+	    fHist_FieldResponseHist->SetBinContent(bin, resp->GetBinContent(bin));
+	  }
 	}
       }
 
@@ -293,7 +303,8 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
 	//            denom += content;
 	//          }
 	//          tOffset[_vw] = numer/denom*delta - resp->GetXaxis()->GetBinCenter(1);
-      } else {
+      } 
+      else {
 	// for the other planes, find the zero-crossing
 	// lets find the minimum, and work backwards!
 
@@ -320,14 +331,6 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
 
       tOffset *= f3DCorrectionVec[vw]*fTimeScaleFactor;
       fFieldResponseTOffset[vw][response_name] = (-tOffset + fCalibResponseTOffset[vw])*1000.;
-      if (vw==1) {
-        std::cout<<"For response "<<response_name<<" toffset parameters are: "<<std::endl;
-	std::cout<<"  tOffset: "<<tOffset/(f3DCorrectionVec[vw]*fTimeScaleFactor)<<std::endl;
-	std::cout<<"  3DCorr:  "<<f3DCorrectionVec[vw]<<std::endl;
-	std::cout<<"  fTSF:    "<<fTimeScaleFactor<<std::endl;
-	std::cout<<"  fCalib:  "<<fCalibResponseTOffset[vw]<<std::endl;
-	std::cout<<"  total:   "<<fFieldResponseTOffset[vw][response_name]<<std::endl;
-      }
 
     }//end loop over responses
   }//end loop over plane, done filling field response histograms
@@ -367,6 +370,7 @@ void util::SignalShapingServiceMicroBooNE::init()
     for(unsigned int channel=0; channel!=geo->Nchannels(); ++channel) {
       size_t view = geo->View(channel);
 
+      //check the fft sampling for when we calculate convolution kernels later
       if ( (size_t)fFFT->FFTSize() < fElectResponse[channel].size()) {
 	fFFT->ReinitializeFFT( fElectResponse.size(), fFFT->FFTOptions(), fFFT->FFTFitBins());
       }
@@ -376,31 +380,25 @@ void util::SignalShapingServiceMicroBooNE::init()
 	if ( StoreThisResponse(resp_name,channel) ) {
 	  fSignalShapingVec[channel].Response(resp_name).AddResponseFunction(itResp->second);
 	  fSignalShapingVec[channel].Response(resp_name).AddResponseFunction(fElectResponse[channel]);
-	  fSignalShapingVec[channel].Response(resp_name).set_normflag(false); 
-	  
-	  if (channel==4066 && resp_name=="nominal") {
-	    for (unsigned int bin=0; bin!=1000; ++bin) {
-	      fHist_FieldResponseVec->SetBinContent(bin+1, fFieldResponseVec[view][resp_name][bin]);
-	    }
-	    for (unsigned int bin=0; bin!=4000; ++bin) {
-	      fHist_ElectResponse->SetBinContent(bin+1, fElectResponse[channel][bin]);
-	    }
-	    
-	  }
-	  
+	  fSignalShapingVec[channel].Response(resp_name).set_normflag(false); 	  
 	}
       }
     }
 
-    // resample the response, which also calculates the convolution kernel
+    // Resample the response
     SetResponseSampling();
-    const std::vector<ComplexF>& conv_kernel = fSignalShapingVec[4066].Response("nominal").ConvKernel();
-    for (unsigned int bin=0; bin!=8193; ++bin) {
-      fHist_ResampledConvKernelRe->SetBinContent(bin+1, conv_kernel.at(bin).Re);
-      fHist_ResampledConvKernelIm->SetBinContent(bin+1, conv_kernel.at(bin).Im);
+    
+    // Calculate convolution kernels
+    for (unsigned int channel=0; channel!=geo->Nchannels(); ++channel) {
+      size_t view = geo->View(channel);
+      for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
+	std::string resp_name = itResp->first;
+	if ( StoreThisResponse(resp_name,channel) ) {
+          fSignalShapingVec[channel].Response(resp_name).CalculateConvKernel();
+	}
+      }
     }
     
-
     // Return to original fftsize
     //
     // Note: Currently we only have fine binning
@@ -412,9 +410,28 @@ void util::SignalShapingServiceMicroBooNE::init()
       fFFT->ReinitializeFFT( (size_t)fftsize, fFFT->FFTOptions(), fFFT->FFTFitBins());
     }
     
+    //Set initialization flag
+    fInitForConvolution = true;
+    
+    // Make some histograms
+    if ( fDiagnosticChannel!=-1 && StoreThisResponse(fDiagnosticResponse, fDiagnosticChannel) ) {
+      size_t diagnostic_view = geo->View(fDiagnosticChannel);
+      for (unsigned int bin=0; bin!=1000; ++bin) {
+	fHist_FieldResponseVec->SetBinContent(bin+1, fFieldResponseVec[diagnostic_view][fDiagnosticResponse][bin]);
+      }
+      for (unsigned int bin=0; bin!=4000; ++bin) {
+	fHist_ElectResponse->SetBinContent(bin+1, fElectResponse[fDiagnosticChannel][bin]);
+      }    
+      const std::vector<ComplexF>& plot_conv_kernel = fSignalShapingVec[fDiagnosticChannel].Response(fDiagnosticResponse).ConvKernel();
+      for (unsigned int bin=0; bin!=8193; ++bin) {
+	fHist_ResampledConvKernelRe->SetBinContent(bin+1, plot_conv_kernel.at(bin).Re);
+	fHist_ResampledConvKernelIm->SetBinContent(bin+1, plot_conv_kernel.at(bin).Im);
+      }
+    }
+    
     //Print responses if desired
     if(fPrintResponses) {
-      unsigned int print_channel = 0;
+      unsigned int print_channel = fDiagnosticChannel;
       size_t print_view = geo->View(print_channel);
       for(size_t i = 0; i<100; ++i) {
 	std::cout << "Electronic Response for channel "<<print_channel <<": "<< fElectResponse[print_channel][i] << " " ;
@@ -433,8 +450,7 @@ void util::SignalShapingServiceMicroBooNE::init()
 	std::cout << std::endl;    
       }
     } 
-
-    fInitForConvolution = true;
+    
   } //end if !fInitForConvolution
   
   
@@ -450,19 +466,18 @@ void util::SignalShapingServiceMicroBooNE::init()
     SetFilters();
 
     // Configure deconvolution kernels.
-    if (fSetDeconKernelsUponInit) {
-      for (unsigned int channel=0; channel!=geo->Nchannels(); ++channel) {
-	size_t view = geo->View(channel);
-	for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
-	  std::string resp_name = itResp->first;
-	  if ( StoreThisResponse(resp_name,channel) ) {
-	    fSignalShapingVec[channel].Response(resp_name).SetDeconvKernelPolarity( fDeconvPol.at(view) );
-	    fSignalShapingVec[channel].Response(resp_name).CalculateDeconvKernel(fFilterVec[view]);
-	  }
+    for (unsigned int channel=0; channel!=geo->Nchannels(); ++channel) {
+      size_t view = geo->View(channel);
+      for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
+	std::string resp_name = itResp->first;
+	if ( StoreThisResponse(resp_name,channel) ) {
+	  fSignalShapingVec[channel].Response(resp_name).SetDeconvKernelPolarity( fDeconvPol.at(view) );
+	  fSignalShapingVec[channel].Response(resp_name).CalculateDeconvKernel(fFilterVec[view]);
 	}
       }
     }
     
+    //Set initialization flag
     fInitForDeconvolution = true;
   } //end if !fInitForDeconvolution
    
@@ -520,8 +535,19 @@ void util::SignalShapingServiceMicroBooNE::SetDecon(size_t datasize)
   }
     
   //Resample convolution responses and kernels in fSignalShapingVec, using the saved response
-  //and the FFT Size.  This also calculates the convolution kernel
+  //and the FFT Size.
   SetResponseSampling();
+  
+  //Calculate convolution kernels
+  for (unsigned int channel=0; channel!=geo->Nchannels(); ++channel) {
+    size_t view = geo->View(channel);
+    for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
+      std::string resp_name = itResp->first;
+      if ( StoreThisResponse(resp_name,channel) ) {
+        fSignalShapingVec[channel].Response(resp_name).CalculateConvKernel();
+      }
+    }
+  }
 
   //Set Filter Function
   SetFilters();
@@ -538,6 +564,7 @@ void util::SignalShapingServiceMicroBooNE::SetDecon(size_t datasize)
     }
   }
   
+  //make sure to record that the deconvolution kernels are initialized
   fInitForDeconvolution = true;
 }
 
@@ -657,18 +684,18 @@ void util::SignalShapingServiceMicroBooNE::SetElectResponse()
       double timebin = (1.*i) * FieldBinWidth / To; 
 
       fElectResponse[channel][i] = 4.31054*exp(-2.94809*timebin) 
-      -2.6202*exp(-2.82833*timebin)*cos(1.19361*timebin)
-      -2.6202*exp(-2.82833*timebin)*cos(1.19361*timebin)*cos(2.38722*timebin)
-      +0.464924*exp(-2.40318*timebin)*cos(2.5928*timebin)
-      +0.464924*exp(-2.40318*timebin)*cos(2.5928*timebin)*cos(5.18561*timebin)
+      -2.620200*exp(-2.82833*timebin)*cos(1.19361*timebin)
+      -2.620200*exp(-2.82833*timebin)*cos(1.19361*timebin)*cos(2.38722*timebin)
+      +0.464924*exp(-2.40318*timebin)*cos(2.59280*timebin)
+      +0.464924*exp(-2.40318*timebin)*cos(2.59280*timebin)*cos(5.18561*timebin)
       +0.762456*exp(-2.82833*timebin)*sin(1.19361*timebin)
       -0.762456*exp(-2.82833*timebin)*cos(2.38722*timebin)*sin(1.19361*timebin)
       +0.762456*exp(-2.82833*timebin)*cos(1.19361*timebin)*sin(2.38722*timebin)
-      -2.6202*exp(-2.82833*timebin)*sin(1.19361*timebin)*sin(2.38722*timebin)
-      -0.327684*exp(-2.40318*timebin)*sin(2.5928*timebin)
+      -2.620200*exp(-2.82833*timebin)*sin(1.19361*timebin)*sin(2.38722*timebin)
+      -0.327684*exp(-2.40318*timebin)*sin(2.59280*timebin)
       +0.327684*exp(-2.40318*timebin)*cos(5.18561*timebin)*sin(2.5928*timebin)
-      -0.327684*exp(-2.40318*timebin)*cos(2.5928*timebin)*sin(5.18561*timebin)
-      +0.464924*exp(-2.40318*timebin)*sin(2.5928*timebin)*sin(5.18561*timebin);
+      -0.327684*exp(-2.40318*timebin)*cos(2.59280*timebin)*sin(5.18561*timebin)
+      +0.464924*exp(-2.40318*timebin)*sin(2.59280*timebin)*sin(5.18561*timebin);
       
       fElectResponse[channel][i] *= Ao;
 
@@ -768,46 +795,34 @@ void util::SignalShapingServiceMicroBooNE::SetResponseSampling()
   art::ServiceHandle<util::LArFFT> fft;
   art::ServiceHandle<art::TFileService> tfs; 
   
-  char buff0[80], buff1[80];
-
-
-  // we want to implement new scheme (fStretchFullResponse==false) while retaining the old
-  std::string nominal_resp_name = "nominal";
+  //determine sampling times
   size_t nticks = fft->FFTSize();
+  DoubleVec SamplingTime( nticks, 0. );
+  for ( size_t itime = 0; itime < nticks; ++itime ) {
+    SamplingTime[itime] = (1.*itime) * detprop->SamplingRate();
+  }
+  
+  //Loop over channels and responses, resampling each one
+  std::string nominal_resp_name = "nominal"; 
   for(size_t ch=0; ch<geo->Nchannels(); ++ch) {
   
-    size_t view = geo->View(ch); 
-    DoubleVec SamplingTime( nticks, 0. );
+    size_t view = geo->View(ch);     
     double deltaInputTime = fFieldResponseHistVec[view][nominal_resp_name]->GetBinWidth(1)*1000.0;
-    for ( size_t itime = 0; itime < nticks; ++itime ) {
-      SamplingTime[itime] = (1.*itime) * detprop->SamplingRate();
-    }
-    
+       
     double timeFactor = f3DCorrectionVec[view];
-    double plotTimeFactor = 1.0;
-    if(fStretchFullResponse) timeFactor *= fTimeScaleFactor;
-    else plotTimeFactor = f3DCorrectionVec[view]*fTimeScaleFactor;
+    if (fStretchFullResponse) timeFactor *= fTimeScaleFactor;
     
     for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
+      
+      //Do not continue if we're not using this response for this channel
       std::string resp_name = itResp->first;
       if ( !StoreThisResponse(resp_name,ch) ) continue;
       
+      //Get the current response
       const FloatVec* pResp = &(fSignalShapingVec[ch].Response(resp_name).Response());
       if (pResp->empty()) continue;
               
-      if (!fHistDoneF[view] && resp_name == nominal_resp_name) {
-        TH1F* raw_resp = fFieldResponseHistVec[view][resp_name];
-      
-        double xLowF = (raw_resp->GetBinCenter(1) - 0.5*raw_resp->GetBinWidth(1))*plotTimeFactor;
-	double xHighF = xLowF + 0.001*(raw_resp->GetXaxis()->GetNbins()+1)*(raw_resp->GetBinWidth(1)*1000.0)*plotTimeFactor;
-	double nBins = (raw_resp->GetXaxis()->GetNbins())*plotTimeFactor;
-	sprintf(buff0, "FullResponse%i", (int)view);
-	fHFullResponse[view] = tfs->make<TH1D>(buff0, buff0, nBins, xLowF, xHighF);                
-	for (size_t i=0; i<nBins; ++i) {
-	  fHFullResponse[view]->SetBinContent(i+1, pResp->at(i));
-	}
-      }
-      
+      //Resample the response
       size_t nticks_input = pResp->size();
       DoubleVec InputTime(nticks_input, 0. );
       for (size_t itime = 0; itime < nticks_input; itime++ ) {
@@ -832,25 +847,40 @@ void util::SignalShapingServiceMicroBooNE::SetResponseSampling()
 	  }
 	} // for (  jtime = 0; jtime < nticks; jtime++ )
       } // for (  itime = 0; itime < nticks; itime++ )
-           
+                
+      //make some histograms  
       if(!fHistDoneF[view] && resp_name == nominal_resp_name) {
         TH1F* raw_resp = fFieldResponseHistVec[view][resp_name];
-      
-	double plotTimeFactor = f3DCorrectionVec[view]*fTimeScaleFactor;
+     
+        char buff0[80];
+        double plotTimeFactor = fStretchFullResponse ? 1.0 : f3DCorrectionVec[view]*fTimeScaleFactor;
 	double xLowF = (raw_resp->GetBinCenter(1) - 0.5*raw_resp->GetBinWidth(1))*plotTimeFactor;
 	double xHighF = xLowF + 0.001*(raw_resp->GetXaxis()->GetNbins()+1)*(raw_resp->GetBinWidth(1)*1000.0)*plotTimeFactor;
+		
+	//previous sampling	 
+	size_t nBins = (raw_resp->GetXaxis()->GetNbins())*plotTimeFactor;
+	sprintf(buff0, "FullResponse%i", (int)view);
+	fHFullResponse[view] = tfs->make<TH1D>(buff0, buff0, nBins, xLowF, xHighF);                
+	for (size_t i=0; i<nBins; ++i) {
+	  fHFullResponse[view]->SetBinContent(i+1, pResp->at(i));
+	}
+	
+	//new sampling
+        plotTimeFactor = f3DCorrectionVec[view]*fTimeScaleFactor;
+	xLowF = (raw_resp->GetBinCenter(1) - 0.5*raw_resp->GetBinWidth(1))*plotTimeFactor;
+	xHighF = xLowF + 0.001*(raw_resp->GetXaxis()->GetNbins()+1)*(raw_resp->GetBinWidth(1)*1000.0)*plotTimeFactor;
 	double binWidth = 0.5;
-	size_t nBins = (xHighF-xLowF+1)/binWidth;
-	sprintf(buff1, "SampledResponse%i", (int)view);
-	fHSampledResponse[view] = tfs->make<TH1D>(buff1, buff1, nBins, xLowF, xHighF);                
+	nBins = (xHighF-xLowF+1)/binWidth;
+	sprintf(buff0, "SampledResponse%i", (int)view);
+	fHSampledResponse[view] = tfs->make<TH1D>(buff0, buff0, nBins, xLowF, xHighF);                
 	for (size_t i=0; i<nBins; ++i) {
 	  fHSampledResponse[view]->SetBinContent(i+1, SamplingResp[i]);
 	}
 	fHistDoneF[view] = true;
       }     
       
+      //store the resampled response, overriding the previous response
       fSignalShapingVec[ch].Response(resp_name).AddResponseFunction( SamplingResp, true);
-      fSignalShapingVec[ch].Response(resp_name).CalculateConvKernel();
 
     }  //  loop over responses
   } // loop over channels
@@ -861,7 +891,7 @@ void util::SignalShapingServiceMicroBooNE::SetResponseSampling()
 
 double util::SignalShapingServiceMicroBooNE::GetRawNoise(unsigned int const channel) const
 {
-  init();
+  //no init needed - fFieldResponseTOffset is initialized in reconfigure()
 
   art::ServiceHandle<geo::Geometry> geom;
   geo::View_t view = geom->View(channel);
@@ -922,7 +952,6 @@ double util::SignalShapingServiceMicroBooNE::GetDeconNoise(unsigned int const ch
 int util::SignalShapingServiceMicroBooNE::FieldResponseTOffset(unsigned int const channel, const std::string& response_name) const
 {
   //no init needed - fFieldResponseTOffset is initialized in reconfigure()
-  std::cout<<"Entered FRTO"<<std::endl;
   
   art::ServiceHandle<geo::Geometry> geom;
   geo::View_t view = geom->View(channel);
@@ -943,7 +972,6 @@ int util::SignalShapingServiceMicroBooNE::FieldResponseTOffset(unsigned int cons
   }
   auto tpc_clock = lar::providerFrom<detinfo::DetectorClocksService>()->TPCClock();
   
-  std::cout<<"About to exit FRTO"<<std::endl;
   return tpc_clock.Ticks(time_offset/1.e3);
 }
 
@@ -1030,23 +1058,27 @@ std::string util::SignalShapingServiceMicroBooNE::DetermineResponseName(unsigned
   size_t view = (size_t)geo->View(chan);
 
   if (view==0) { //U-plane
+    
     //Wires overlap with Y-plane shorted wires
     if ( IsYShortedOverlapChannel(chan) ) { 
-
       // YZ region overlaps with Y-plane shorted wires
       if ( IsYShortedZRegion(z) ){ 
 	if (fdatadrivenResponse) resp_name = "shortedY";
 	else if (fYZdependentResponse) charge_fraction = 0.98;
       }  
     }
-  }
+  }//end if view==0
 
 
   if (view==1) { //V-plane
+    
+    //set the nominal charge fraction for this particular case
+    if (!fdatadrivenResponse && fYZdependentResponse) {
+      charge_fraction = 0.7;
+    }
+    
     //Wires overlap with U-plane shorted wires
-    if (  IsUShortedOverlapChannel(chan) &&
-         !IsYShortedOverlapChannel(chan) ) {
-
+    if (  IsUShortedOverlapChannel(chan) ) {
       //YZ region overlaps with U-plane shorted wires
       if ( IsUShortedYZRegion(y,z) ) {
 	if (fdatadrivenResponse) resp_name = "shortedU";
@@ -1054,46 +1086,12 @@ std::string util::SignalShapingServiceMicroBooNE::DetermineResponseName(unsigned
 	  charge_fraction = 0.685;
 	}
       }   
-      else {
-        if (!fdatadrivenResponse && fYZdependentResponse) {
-	  charge_fraction =  0.7;
-	}
-      }
-    }
-
-    //Wires overlap with U-plane AND Y-plane shorted wires
-    else if ( IsUShortedOverlapChannel(chan) && 
-              IsYShortedOverlapChannel(chan) ) {
-
-      //YZ region overlaps with U-plane shorted wires
-      if ( IsUShortedYZRegion(y,z) ) { 
-        if (fdatadrivenResponse) resp_name = "shortedU";
-	else if (fYZdependentResponse) {
-	  charge_fraction = 0.685;
-	}
-      }
-
-      //YZ region overlaps with Y-plane shorted wires
-      else if ( IsYShortedZRegion(z) ) {
-        if (fdatadrivenResponse) resp_name = "shortedY";
-	else if (fYZdependentResponse) {
-	  charge_fraction = 0.7; 
-	  resp_name = "alt_1";
-	}
-      }
-
-      //nominal
-      else {
-        if (!fdatadrivenResponse && fYZdependentResponse) {
-	  charge_fraction = 0.7;
-	}
-      }
     }
 
     //Wires overlap with Y-plane shorted wires
-    else if ( !IsUShortedOverlapChannel(chan) &&
-               IsYShortedOverlapChannel(chan) ) {
-
+    //Note that U-Shorted YZ regions do not overlap with Y-Shorted Z Region, so
+    //we do not have to handle the case of overlap with both
+    else if ( IsYShortedOverlapChannel(chan) ) {
       //YZ region overlaps with Y-plane shorted wires
       if ( IsYShortedZRegion(z) ) {
 	if (fdatadrivenResponse) resp_name = "shortedY";
@@ -1102,45 +1100,50 @@ std::string util::SignalShapingServiceMicroBooNE::DetermineResponseName(unsigned
 	  resp_name = "alt_1";
 	}
       }
-
-      //nominal
-      else {
-        if (!fdatadrivenResponse && fYZdependentResponse) {
-	  charge_fraction = 0.7;
-	}
-      }
     }
-
-    //No overlap with shorted wires
-    else {
-      if (!fdatadrivenResponse && fYZdependentResponse) {
-	charge_fraction = 0.7;
-      }
-    }
-  }//if view == 1
+  }//end if view == 1
 
 
   if (view==2) { //Y-plane 
+    
     //Wires overlap with U-plane shorted wires
-    if (chan==4966) {
-      std::cout<<"Channel 4966 "<<IsUShortedOverlapChannel(chan)<<" "<<IsUShortedYZRegion(y,z)<<std::endl;
-    }
     if ( IsUShortedOverlapChannel(chan) ) {
-
       //YZ region overlaps with U-plane shorted wires
       if ( IsUShortedYZRegion(y,z) ) {
 	if (fdatadrivenResponse) resp_name = "shortedU";
 	else if (fYZdependentResponse) charge_fraction = 0.8;
       }
     }
-  }//if view == 2
+  }//end if view == 2
 
   return resp_name;
 }//end DDRName
 
-bool util::SignalShapingServiceMicroBooNE::IsUShortedYZRegion(double y, double z) const {
-  
-  std::cout<<"Calling with y="<<y<<" and z="<<z<<std::endl;
+
+//----------------------------------------------------------------------
+// Determine if this particular response should be stored for this channel (B. Eberly)
+bool util::SignalShapingServiceMicroBooNE::StoreThisResponse(const std::string& response_name, unsigned int channel) const {
+  if (fdatadrivenResponse && fYZdependentResponse) {
+    if (response_name=="shortedU") {
+      if ( IsUShortedOverlapChannel(channel) ) return true;
+      else return false;
+    }
+    else if (response_name=="shortedY") {
+      if ( IsYShortedOverlapChannel(channel) ) return true;
+      else return false;
+    }
+    else return true;
+  }
+  else if (fdatadrivenResponse && !fYZdependentResponse) {
+    if (response_name !="nominal") return false;
+    else return true;
+  }
+  else return true;
+}
+
+
+
+bool util::SignalShapingServiceMicroBooNE::IsUShortedYZRegion(double y, double z) {
   if ( ( (y < (z*0.577)+14.769)  && (y > (z*0.577)+14.422) )  || 
        ( (y < (z*0.577)+14.076)  && (y > (z*0.577)+7.840) )   || 
        ( (y < (z*0.577)+7.494)   && (y > (z*0.577)+7.148) )   || 
@@ -1164,43 +1167,28 @@ bool util::SignalShapingServiceMicroBooNE::IsUShortedYZRegion(double y, double z
   else return false;
 }
 
-bool util::SignalShapingServiceMicroBooNE::IsYShortedZRegion(double z) const {
+
+bool util::SignalShapingServiceMicroBooNE::IsYShortedZRegion(double z) {
   if ( (z > 700.9 && z < 720.1) ||
        (z > 720.4 && z < 724.6) ||
        (z > 724.9 && z < 739.3) ) return true;
   else return false;
 } 
 
-bool util::SignalShapingServiceMicroBooNE::IsUShortedOverlapChannel(unsigned int channel) const {
+
+bool util::SignalShapingServiceMicroBooNE::IsUShortedOverlapChannel(unsigned int channel) {
   if ( (channel >= 2400 && channel <= 3743) ||
        (channel >= 4800 && channel <= 6143) ) return true;
   else return false;
 }
 
-bool util::SignalShapingServiceMicroBooNE::IsYShortedOverlapChannel(unsigned int channel) const {
+
+bool util::SignalShapingServiceMicroBooNE::IsYShortedOverlapChannel(unsigned int channel) {
   if ( (channel >= 1168 && channel <= 1903) ||
        (channel >= 3568 && channel <= 4303) ) return true;
   else return false;
 }
 
-bool util::SignalShapingServiceMicroBooNE::StoreThisResponse(const std::string& response_name, unsigned int channel) const {
-  if (fdatadrivenResponse && fYZdependentResponse) {
-    if (response_name=="shortedU") {
-      if ( IsUShortedOverlapChannel(channel) ) return true;
-      else return false;
-    }
-    else if (response_name=="shortedY") {
-      if ( IsYShortedOverlapChannel(channel) ) return true;
-      else return false;
-    }
-    else return true;
-  }
-  else if (fdatadrivenResponse && !fYZdependentResponse) {
-    if (response_name !="nominal") return false;
-    else return true;
-  }
-  else return true;
-}
 
 namespace util {
   
