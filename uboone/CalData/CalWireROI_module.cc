@@ -228,9 +228,6 @@ void CalWireROI::produce(art::Event& evt)
             // vector holding uncompressed adc values
             std::vector<short> rawadc(dataSize);
             
-            std::vector<geo::WireID> wids     = fGeometry->ChannelToWire(channel);
-            size_t                   thePlane = wids[0].Plane;
-            
             // uncompress the data
             raw::Uncompress(digitVec->ADCs(), rawadc, digitVec->Compression());
             
@@ -244,17 +241,13 @@ void CalWireROI::produce(art::Event& evt)
             std::transform(rawadc.begin(),rawadc.end(),rawAdcLessPedVec.begin(),[pedestal](const short& adc){return std::round(float(adc) - pedestal);});
             
             // Recover a measure of the noise on the channel for use in the ROI finder
-            float  rms_noise = digitVec->GetSigma();
-            float  raw_noise = fSignalShaping->GetRawNoise(channel);
-            
-            if      (fNoiseSource == 1) raw_noise = rms_noise;
-            else if (fNoiseSource != 2) raw_noise = std::max(raw_noise,rms_noise);
+            float raw_noise = digitVec->GetSigma();
             
             // vector of candidate ROI begin and end bins
             uboone_tool::IROIFinder::CandidateROIVec candRoiVec;
 
             // Now find the candidate ROI's
-            fROIFinder->FindROIs(rawAdcLessPedVec, thePlane, raw_noise, candRoiVec);
+            fROIFinder->FindROIs(rawAdcLessPedVec, channel, raw_noise, candRoiVec);
             
             fDeconvolution->Deconvolve(rawAdcLessPedVec, channel, candRoiVec, ROIVec);
        } // end if not a bad channel
