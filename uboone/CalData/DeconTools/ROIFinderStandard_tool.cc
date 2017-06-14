@@ -9,7 +9,9 @@
 #include "art/Framework/Services/Optional/TFileService.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "cetlib/exception.h"
+#include "uboone/Utilities/SignalShapingServiceMicroBooNE.h"
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
+#include "larcore/Geometry/Geometry.h"
 
 #include "TH1D.h"
 
@@ -28,7 +30,7 @@ public:
     void configure(const fhicl::ParameterSet& pset)                          override;
     void outputHistograms(art::TFileDirectory&)                        const override;
     
-    void FindROIs(Waveform&, size_t, double, CandidateROIVec&)         const override;
+    void FindROIs(const Waveform&, size_t, double, CandidateROIVec&)   const override;
     
 private:
     // Member variables from the fhicl file
@@ -37,6 +39,10 @@ private:
     std::vector<int>              fNumSigma;                   ///< "# sigma" rms noise for ROI threshold
     std::vector<unsigned short>   fPreROIPad;                  ///< ROI padding
     std::vector<unsigned short>   fPostROIPad;                 ///< ROI padding
+    
+    // Services
+    const geo::GeometryCore*                                 fGeometry = lar::providerFrom<geo::Geometry>();
+    art::ServiceHandle<util::SignalShapingServiceMicroBooNE> fSignalShaping;
 };
     
 //----------------------------------------------------------------------
@@ -80,16 +86,25 @@ void ROIFinderStandard::configure(const fhicl::ParameterSet& pset)
     fPreROIPad[2]  = zin[0];
     fPostROIPad[2] = zin[1];
     
+    // Get signal shaping service.
+    fSignalShaping = art::ServiceHandle<util::SignalShapingServiceMicroBooNE>();
+    
     return;
 }
     
-void ROIFinderStandard::FindROIs(Waveform& waveform, size_t plane, double rawNoise, CandidateROIVec& roiVec) const
+void ROIFinderStandard::FindROIs(const Waveform& waveform, size_t channel, double rmsNoise, CandidateROIVec& roiVec) const
 {
+    // First up, translate the channel to plane
+    std::vector<geo::WireID> wids    = fGeometry->ChannelToWire(channel);
+    const geo::PlaneID&      planeID = wids[0].planeID();
+    
     size_t numBins(2 * fNumBinsHalf + 1);
     size_t startBin(0);
     size_t stopBin(numBins);
+    float  elecNoise = fSignalShaping->GetRawNoise(channel);
+    float  rawNoise  = std::max(rmsNoise, double(elecNoise));
     
-    float startThreshold = sqrt(float(numBins)) * (fNumSigma[plane] * rawNoise + fThreshold[plane]);
+    float startThreshold = sqrt(float(numBins)) * (fNumSigma[planeID.Plane] * rawNoise + fThreshold[planeID.Plane]);
     float stopThreshold  = startThreshold;
     
     // Setup
@@ -138,9 +153,9 @@ void ROIFinderStandard::FindROIs(Waveform& waveform, size_t plane, double rawNoi
     for(auto& roi : roiVec)
     {
         // low ROI end
-        roi.first  = std::max(int(roi.first - fPreROIPad[plane]),0);
+        roi.first  = std::max(int(roi.first - fPreROIPad[planeID.Plane]),0);
         // high ROI end
-        roi.second = std::min(roi.second + fPostROIPad[plane], waveform.size() - 1);
+        roi.second = std::min(roi.second + fPostROIPad[planeID.Plane], waveform.size() - 1);
     }
     
     // merge overlapping (or touching) ROI's
