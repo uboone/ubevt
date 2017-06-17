@@ -39,6 +39,7 @@ art_make( BASENAME_ONLY
         )
 
 add_subdirectory(NoiseFilterAlgs)
+add_subdirectory(DeconTools)
 
 install_headers()
 install_fhicl()
