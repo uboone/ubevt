@@ -8,4 +8,4 @@
  * This algorithm is intended to provide tools for investigating a waveform.
  */
 
-#include "WaveformPropertiesAlg.h"
+#include "uboone/CalData/DeconTools/WaveformPropertiesAlg.h"
