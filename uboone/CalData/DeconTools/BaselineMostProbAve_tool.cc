@@ -13,6 +13,7 @@
 #include "uboone/Utilities/SignalShapingServiceMicroBooNE.h"
 
 #include <fstream>
+#include <algorithm> // std::minmax_element()
 
 namespace uboone_tool
 {
@@ -27,7 +28,7 @@ public:
     void configure(const fhicl::ParameterSet& pset)                                override;
     void outputHistograms(art::TFileDirectory&)                              const override;
     
-    float GetBaseline(std::vector<float>&, raw::ChannelID_t, size_t, size_t) const override;
+    float GetBaseline(const std::vector<float>&, raw::ChannelID_t, size_t, size_t) const override;
     
 private:
     art::ServiceHandle<util::SignalShapingServiceMicroBooNE> fSignalShaping;
@@ -53,11 +54,13 @@ void BaselineMostProbAve::configure(const fhicl::ParameterSet& pset)
 }
 
     
-float BaselineMostProbAve::GetBaseline(std::vector<float>& holder,
-                                    raw::ChannelID_t    channel,
-                                    size_t              roiStart,
-                                    size_t              roiLen) const
+float BaselineMostProbAve::GetBaseline(const std::vector<float>& holder,
+                                       raw::ChannelID_t          channel,
+                                       size_t                    roiStart,
+                                       size_t                    roiLen) const
 {
+    if (roiLen < 2) return 0.0; // not enough information
+
     float base=0;
     
     // Recover the expected electronics noise on this channel
