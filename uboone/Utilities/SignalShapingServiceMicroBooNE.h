@@ -128,6 +128,21 @@ namespace util {
       
       std::map<std::string, SignalShapingLite> fResponseMap;
   };
+  
+  // little helper class to hold the parameters for charge deposition
+  class ResponseParams {
+    public:
+      ResponseParams(double charge, double y, double z, size_t index) : m_charge(charge), m_y(y), m_z(z), m_index(index) {}
+      double getCharge() { return m_charge; }
+      double getY() { return m_y; }
+      double getZ() { return m_z; }
+      size_t getIndex()   { return m_index; }
+    private:
+      double m_charge;
+      double m_y;
+      double m_z;
+      size_t m_index;
+  };
 
   class SignalShapingServiceMicroBooNE {
  
@@ -148,6 +163,7 @@ namespace util {
 
       // Do convolution calculation (for simulation).
       template <class T> void Convolute(size_t channel, std::vector<T>& func, double y, double z) const;
+      template <class T> void Convolute(size_t channel, std::vector<T>& func, const std::vector<std::unique_ptr<ResponseParams> >& params) const;
       template <class T> void Convolute(size_t channel, std::vector<T>& func, const std::string& response_name) const;
 
       // Do deconvolution calculation (for reconstruction).
@@ -238,6 +254,7 @@ namespace util {
 
       // Electronics Response    
       std::vector<FloatVec>  fElectResponse;            ///< Stores electronics response. Vector elements correspond to channel, then response bins
+      unsigned int           fMaxElectResponseBins;     ///< Maximum number of bins to use to store the electronics response
       double                 fADCPerPCAtLowestASICGain; ///< Pulse amplitude gain for a 1 pc charge impulse after convoluting it the with field and electronics response with the lowest ASIC gain setting of 4.7 mV/fC
 
 
@@ -319,7 +336,40 @@ namespace util {
 
 
 
+//----------------------------------------------------------------------
+// Do convolution.
+template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(size_t channel, 
+									       std::vector<T>& func, 
+									       const std::vector<std::unique_ptr<util::ResponseParams> >& params) const
+{
 
+  //loop over params and construct input functions for each of the channel's responses
+  std::map<std::string, std::vector<T> > input_map;
+  for (const auto& item : params) {
+    double charge_fraction = 1.0;
+    std::string response_name = this->DetermineResponseName(channel, item->getY(), item->getZ(), charge_fraction);
+    
+    if (input_map.find(response_name)==input_map.end()) {
+      input_map[response_name].resize(func.size(), 0.0);
+    }
+    
+    if (item->getIndex() < 0 || item->getIndex() >= func.size()) continue;
+    input_map[response_name].at(item->getIndex()) += item->getCharge()*charge_fraction;
+  }
+  
+  //convolute each input function, and add to output
+  std::vector<T> output;
+  output.resize(func.size(), 0.0);
+  for (auto input : input_map) {
+    this->Convolute(channel, input.second, input.first);
+    std::transform(input.second.begin(), input.second.end(), output.begin(), output.begin(), std::plus<T>()); 
+  }
+  
+  //copy to func
+  func = output;
+}
+    
+      
 //----------------------------------------------------------------------
 // Do convolution.
 template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(size_t channel, std::vector<T>& func, double y, double z) const

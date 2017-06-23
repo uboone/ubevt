@@ -40,10 +40,10 @@ util::SignalShapingServiceMicroBooNE::SignalShapingServiceMicroBooNE(const fhicl
     fHistDoneF[i] = false;
   }
         
-  art::ServiceHandle<art::TFileService> tfs;
+  art::ServiceHandle<art::TFileService> tfs;	
+	
   fHist_FieldResponseHist = tfs->make<TH1D>("FRH","FRH", 1000, 0.0, 1000.0);
   fHist_FieldResponseVec  = tfs->make<TH1D>("FRV","FRV", 1000, 0.0, 1000.0);
-  fHist_ElectResponse     = tfs->make<TH1D>("ER","ER", 4000, 0.0, 4000.0);
   fHist_ResampledConvKernelRe = tfs->make<TH1D>("rICKR","rICKR", 8193, 0.0, 8193.0);
   fHist_ResampledConvKernelIm = tfs->make<TH1D>("rICKI","rICKI", 8193, 0.0, 8193.0);
   
@@ -74,6 +74,8 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
   art::ServiceHandle<geo::Geometry> geo;
   size_t NViews = geo->Nplanes();
   
+  art::ServiceHandle<art::TFileService> tfs;
+  
   auto const* detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
  
   // Reset initialization flags.
@@ -97,8 +99,10 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
   
   //Electronics Response-related parameters
   fADCPerPCAtLowestASICGain = pset.get<double>("ADCPerPCAtLowestASICGain");
+  fMaxElectResponseBins     = pset.get<unsigned int>("MaxElectResponseBins");
   
   fElectResponse.resize(geo->Nchannels());
+  fHist_ElectResponse       = tfs->make<TH1D>("ER","ER", fMaxElectResponseBins, 0.0, (float)fMaxElectResponseBins);
   
   
   //Field Response-related parameters
@@ -589,7 +593,7 @@ void util::SignalShapingServiceMicroBooNE::SetFieldResponse()
   double integral = fFieldResponseHistVec[fViewForNormalization][nominal_resp_name]->Integral();
   double weight = 1./integral;
 
-  // we adjust the size of the fieldresponse vector to account for the stretch
+  // we adjust the size of the field response vector to account for the stretch
   // and interpolate the histogram to fill the vector with the stretched response        
   for(unsigned int _vw=0; _vw<NViews; ++_vw) {
     
@@ -673,8 +677,12 @@ void util::SignalShapingServiceMicroBooNE::SetElectResponse()
   std::string nominal_resp_name = "nominal";
   for (unsigned int channel=0; channel!=geo->Nchannels(); ++channel) {
     size_t view = geo->View(channel);
-    unsigned int NFieldBins = fFieldResponseHistVec[view][nominal_resp_name]->GetXaxis()->GetNbins(); 
-    fElectResponse[channel].resize( 4*NFieldBins,0.0);
+    unsigned int NFieldBins = fFieldResponseHistVec[view][nominal_resp_name]->GetXaxis()->GetNbins();
+    
+    if (4*NFieldBins < fMaxElectResponseBins) { 
+      fElectResponse[channel].resize( 4*NFieldBins,0.0);
+    }
+    else fElectResponse[channel].resize(fMaxElectResponseBins, 0.0);
     
     double FieldBinWidth = fFieldResponseHistVec[view][nominal_resp_name]->GetBinWidth(1);   
     double To = elec_provider.ShapingTime(channel);    
@@ -682,20 +690,22 @@ void util::SignalShapingServiceMicroBooNE::SetElectResponse()
     double max = 0;
     for (unsigned int i=0; i < fElectResponse[channel].size(); ++i) {
       double timebin = (1.*i) * FieldBinWidth / To; 
-
-      fElectResponse[channel][i] = 4.31054*exp(-2.94809*timebin) 
-      -2.620200*exp(-2.82833*timebin)*cos(1.19361*timebin)
-      -2.620200*exp(-2.82833*timebin)*cos(1.19361*timebin)*cos(2.38722*timebin)
-      +0.464924*exp(-2.40318*timebin)*cos(2.59280*timebin)
-      +0.464924*exp(-2.40318*timebin)*cos(2.59280*timebin)*cos(5.18561*timebin)
-      +0.762456*exp(-2.82833*timebin)*sin(1.19361*timebin)
-      -0.762456*exp(-2.82833*timebin)*cos(2.38722*timebin)*sin(1.19361*timebin)
-      +0.762456*exp(-2.82833*timebin)*cos(1.19361*timebin)*sin(2.38722*timebin)
-      -2.620200*exp(-2.82833*timebin)*sin(1.19361*timebin)*sin(2.38722*timebin)
-      -0.327684*exp(-2.40318*timebin)*sin(2.59280*timebin)
-      +0.327684*exp(-2.40318*timebin)*cos(5.18561*timebin)*sin(2.5928*timebin)
-      -0.327684*exp(-2.40318*timebin)*cos(2.59280*timebin)*sin(5.18561*timebin)
-      +0.464924*exp(-2.40318*timebin)*sin(2.59280*timebin)*sin(5.18561*timebin);
+      
+      //store values to make response formula readable
+      double cos11 = cos(1.19361*timebin);
+      double sin11 = sin(1.19361*timebin);
+      double cos25 = cos(2.59280*timebin);
+      double sin25 = sin(2.59280*timebin);
+            
+      double sin2311 = sin( (2.38722 - 1.19361)*timebin );
+      double cos2311 = cos( (2.38722 - 1.19361)*timebin );
+      double sin5125 = sin( (5.18561 - 2.59280)*timebin );
+      double cos5125 = cos( (5.18561 - 2.59280)*timebin );
+      
+      //calculate response in bin i
+      fElectResponse[channel][i] = 4.31054*exp(-2.94809*timebin)
+      +exp(-2.82833*timebin)*(  0.762456*(sin11 + sin2311) - 2.620200*(cos11 + cos2311) )
+      +exp(-2.40318*timebin)*( -0.327684*(sin25 + sin5125) + 0.464924*(cos25 + cos5125) );
       
       fElectResponse[channel][i] *= Ao;
 

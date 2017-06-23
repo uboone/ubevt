@@ -16,6 +16,7 @@ microboone_signalshapingservice:
   #Electronics response-related parameters
   #------------------------------------------------------
   ADCPerPCAtLowestASICGain: 9390 #ADC/pC
+  MaxElectResponseBins: 200
   
   
   
