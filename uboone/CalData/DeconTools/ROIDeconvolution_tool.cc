@@ -34,9 +34,9 @@ public:
     void configure(const fhicl::ParameterSet& pset)              override;
     void outputHistograms(art::TFileDirectory&)            const override;
     
-    void Deconvolve(IROIFinder::Waveform&,
+    void Deconvolve(const IROIFinder::Waveform&,
                     raw::ChannelID_t,
-                    IROIFinder::CandidateROIVec&,
+                    IROIFinder::CandidateROIVec const&,
                     recob::Wire::RegionsOfInterest_t& )    const override;
     
 private:
@@ -111,15 +111,15 @@ void ROIDeconvolution::configure(const fhicl::ParameterSet& pset)
     
     return;
 }
-void ROIDeconvolution::Deconvolve(IROIFinder::Waveform&             waveform,
-                                  raw::ChannelID_t                  channel,
-                                  IROIFinder::CandidateROIVec&      roiVec,
-                                  recob::Wire::RegionsOfInterest_t& ROIVec) const
+void ROIDeconvolution::Deconvolve(const IROIFinder::Waveform&        waveform,
+                                  raw::ChannelID_t                   channel,
+                                  IROIFinder::CandidateROIVec const& roiVec,
+                                  recob::Wire::RegionsOfInterest_t&  ROIVec) const
 {
     double deconNorm = fSignalShaping->GetDeconNorm();
 
     // And now process them
-    for(auto& roi : roiVec)
+    for(auto const& roi : roiVec)
     {
         // First up: copy out the relevent ADC bins into the ROI holder
         size_t roiLen = roi.second - roi.first;
