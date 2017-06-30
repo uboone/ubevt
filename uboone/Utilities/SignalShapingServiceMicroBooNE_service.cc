@@ -1087,28 +1087,24 @@ std::string util::SignalShapingServiceMicroBooNE::DetermineResponseName(unsigned
       charge_fraction = 0.7;
     }
     
-    //Wires overlap with U-plane shorted wires
-    if (  IsUShortedOverlapChannel(chan) ) {
-      //YZ region overlaps with U-plane shorted wires
-      if ( IsUShortedYZRegion(y,z) ) {
-	if (fdatadrivenResponse) resp_name = "shortedU";
-	else if (fYZdependentResponse) {
-	  charge_fraction = 0.685;
-	}
-      }   
+    //Wires overlap with U-plane shorted wires, and 
+    //YZ region overlaps with U-plane shorted wires
+    if (  IsUShortedOverlapChannel(chan) && IsUShortedYZRegion(y,z) ) {
+      if (fdatadrivenResponse) resp_name = "shortedU";
+      else if (fYZdependentResponse) {
+	charge_fraction = 0.685;
+      }  
     }
 
-    //Wires overlap with Y-plane shorted wires
+    //Wires overlap with Y-plane shorted wires, and
+    //YZ region overlaps with Y-plane shorted wires
     //Note that U-Shorted YZ regions do not overlap with Y-Shorted Z Region, so
     //we do not have to handle the case of overlap with both
-    else if ( IsYShortedOverlapChannel(chan) ) {
-      //YZ region overlaps with Y-plane shorted wires
-      if ( IsYShortedZRegion(z) ) {
-	if (fdatadrivenResponse) resp_name = "shortedY";
-	else if (fYZdependentResponse) {
-	  charge_fraction = 0.7; 
-	  resp_name = "alt_1";
-	}
+    if ( IsYShortedOverlapChannel(chan) && IsYShortedZRegion(z) ) {
+      if (fdatadrivenResponse) resp_name = "shortedY";
+      else if (fYZdependentResponse) {
+	charge_fraction = 0.7; 
+	resp_name = "alt_1";
       }
     }
   }//end if view == 1
