@@ -122,7 +122,7 @@ void MCC7Deconvolution::Deconvolve(IROIFinder::Waveform const&       waveform,
     size_t dataSize = waveform.size();
     
     // Make sure the deconvolution size is set correctly (this will probably be a noop after first call)
-    fSignalShaping->SetDecon(dataSize, channel);
+    fSignalShaping->SetDecon(dataSize);
     
     size_t transformSize = fFFT->FFTSize();
     
@@ -138,7 +138,7 @@ void MCC7Deconvolution::Deconvolve(IROIFinder::Waveform const&       waveform,
     std::copy(waveform.begin(),waveform.end(),rawAdcLessPedVec.begin()+binOffset);
     
     // Strategy is to run deconvolution on the entire channel and then pick out the ROI's we found above
-    fSignalShaping->Deconvolute(channel,rawAdcLessPedVec);
+    fSignalShaping->Deconvolute(channel,rawAdcLessPedVec,"nominal");
     
     std::vector<float> holder;
     

@@ -113,28 +113,7 @@ CalWireROI::~CalWireROI()
 //////////////////////////////////////////////////////
 void CalWireROI::reconfigure(fhicl::ParameterSet const& p)
 {
-    // Get the handle for the FFT
-    fFFT = art::ServiceHandle<util::LArFFT>();
-    
-    // Get signal shaping service.
-    fSignalShaping = art::ServiceHandle<util::SignalShapingServiceMicroBooNE>();
-    
-    bool doInducedChargeDeconv = false;
-    std::vector<std::vector<size_t> > respNums = fSignalShaping->GetNResponses();
-    for (size_t i = 0; i < respNums.at(1).size(); i++)
-    {
-        if (respNums.at(1).at(i) > 1) {
-            doInducedChargeDeconv = true;
-        }
-    }
-
-    // Throw exception if deconvolution should include dynamic induced charge effects (not yet implemented in CalROI) - M. Mooney
-    if (doInducedChargeDeconv == true)
-    {
-        throw art::Exception(art::errors::Configuration)
-            << "CalWireROI can not yet handle deconvolution with dynamic induced charge effects turned on.  Please use CalWireMicroBooNE instead.";
-    }
-    
+   
     fROIFinder = art::make_tool<uboone_tool::IROIFinder>        (p.get<fhicl::ParameterSet>("ROIFinder"));
     fDeconvolution = art::make_tool<uboone_tool::IDeconvolution>(p.get<fhicl::ParameterSet>("Deconvolution"));
     
@@ -290,6 +269,5 @@ void CalWireROI::produce(art::Event& evt)
 
     return;
 } // produce
-
 
 } // end namespace caldata
