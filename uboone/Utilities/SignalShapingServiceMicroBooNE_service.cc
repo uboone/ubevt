@@ -514,7 +514,7 @@ void util::SignalShapingServiceMicroBooNE::SetDecon(size_t datasize)
   // But it will in general only happen once per run! 
   size_t FFTSize = fft->FFTSize();
   bool changedFFTSize = false;
-  if (datasize > FFTSize || datasize <= FFTSize/2){
+  if (datasize > FFTSize){
     fft->ReinitializeFFT( datasize, fft->FFTOptions(), fft->FFTFitBins() );
     changedFFTSize = true;
   }  
