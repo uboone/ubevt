@@ -3,7 +3,7 @@ cet_enable_asserts()
 art_make( BASENAME_ONLY
           TOOL_LIBRARIES  SignalShapingServiceMicroBooNE_service
                           lardata_Utilities_LArFFT_service
-                          larcore_Geometry
+                          larcorealg_Geometry
 			              larevt_CalibrationDBI_IOVData
 			              larevt_CalibrationDBI_Providers
 			              lardataobj_RecoBase
