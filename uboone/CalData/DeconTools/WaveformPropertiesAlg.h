@@ -17,7 +17,7 @@
 #include <algorithm>
 
 #include "fhiclcpp/ParameterSet.h"
-#include "ROIAlg.h"
+#include "uboone/CalData/ROIAlg.h"
 
 namespace util{
 
