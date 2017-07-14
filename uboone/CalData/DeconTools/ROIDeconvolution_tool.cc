@@ -135,7 +135,7 @@ void ROIDeconvolution::Deconvolve(const IROIFinder::Waveform&        waveform,
         }
         
         // In theory, most ROI's are around the same size so this should mostly be a noop
-        fSignalShaping->SetDecon(deconSize, channel);
+        fSignalShaping->SetDecon(deconSize);
         
         deconSize = fFFT->FFTSize();
         
@@ -183,8 +183,8 @@ void ROIDeconvolution::Deconvolve(const IROIFinder::Waveform&        waveform,
         // Fill the buffer and do the deconvolution
         std::copy(waveform.begin()+firstOffset, waveform.begin()+secondOffset, holder.begin());
         
-        // Deconvolute the raw signal
-        fSignalShaping->Deconvolute(channel,holder);
+        // Deconvolute the raw signal using the channel's nominal response
+        fSignalShaping->Deconvolute(channel,holder,"nominal");
         
         // "normalize" the vector
         std::transform(holder.begin(),holder.end(),holder.begin(),[deconNorm](float& deconVal){return deconVal/deconNorm;});

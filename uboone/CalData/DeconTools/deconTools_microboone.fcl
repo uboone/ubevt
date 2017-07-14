@@ -49,7 +49,7 @@ microboone_nobaseline:
 microboone_roideconvolution:
 {
     tool_type: ROIDeconvolution
-    FFTSize:                    128      # re-initialize FFT service to this size
+    FFTSize:                    1024     # re-initialize FFT service to this size
     SaveWireWF:                 0
     DodQdxCalib:                false  # apply wire-by-wire calibration?
     dQdxCalibFileName:          "dQdxCalibrationPlanev1.txt"
