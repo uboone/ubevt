@@ -352,7 +352,7 @@ void RawDigitFilterUBooNE::produce(art::Event & event)
                 
                 continue;
             }
-            
+
             // If we are not performing noise corrections then we are done with this wire
             // Store it and move on
             if (!fSmoothCorrelatedNoise)
@@ -371,11 +371,7 @@ void RawDigitFilterUBooNE::produce(art::Event & event)
             }
             
             // Add this wire to the map and try to do some classification here
-            if (!fCharacterizationAlg.classifyRawDigitVec(rawadc, view, wire, truncRmsWireVec[wireIdx], minMaxWireVec[wireIdx], meanWireVec[wireIdx],skewnessWireVec[wireIdx], neighborRatioWireVec[wireIdx], groupToDigitIdxPairMap))
-            {
-                // If the waveform was not classified then we need to baseline correct...
-                std::transform(rawadc.begin(),rawadc.end(),rawadc.begin(),std::bind2nd(std::minus<short>(),pedCorWireVec[wireIdx]));
-            }
+            fCharacterizationAlg.classifyRawDigitVec(rawadc, view, wire, truncRmsWireVec[wireIdx], minMaxWireVec[wireIdx], meanWireVec[wireIdx],skewnessWireVec[wireIdx], neighborRatioWireVec[wireIdx], groupToDigitIdxPairMap);
 
             // Are we at the correct boundary for dealing with the noise?
             if (!((wireIdx + 1) % fNumWiresToGroup[view]))
@@ -407,23 +403,29 @@ void RawDigitFilterUBooNE::produce(art::Event & event)
                     }
                     
                     // recalculate rms for the output
-                    float rmsVal   = 0.;
-                    float pedestal = truncMeanWireVec[locWireIdx];
-                    float pedCor   = pedCorWireVec[locWireIdx];
-                    float deltaPed = pedestal - pedCor;
+                    float truncMean(0.);
+                    float truncRms(0.);
+                    float pedCor(0.);
                     
                     caldata::RawDigitVector& rawDataVec = rawDataWireTimeVec[locWireIdx];
                     
-                    fCharacterizationAlg.getTruncatedRMS(rawDataVec, deltaPed, rmsVal);
+                    fCharacterizationAlg.getMeanRmsAndPedCor(rawDataVec, channelWireVec[locWireIdx], truncMean, truncRms, pedCor);
+                    
+                    if (channelWireVec[locWireIdx] > 6622 && channelWireVec[locWireIdx] < 6635)
+                    {
+                        std::cout << "--> channel: " << channelWireVec[locWireIdx] << ", truncMean: " << truncMean << ", truncRms: " << truncRms << ", pedCor: " << pedCor << std::endl;
+                    }
                     
                     // The ultra high noise channels are simply zapped
-                    if (rmsVal < fRmsRejectionCutHi[view]) // && ImAGoodWire(view,baseWireIdx + locWireIdx))
+                    if (truncRms < fRmsRejectionCutHi[view]) // && ImAGoodWire(view,baseWireIdx + locWireIdx))
                     {
-                        saveRawDigits(filteredRawDigit, channelWireVec[locWireIdx], rawDataVec, pedestal, rmsVal);
+                        std::transform(rawDataVec.begin(),rawDataVec.end(),rawDataVec.begin(),std::bind2nd(std::minus<short>(),pedCor));
+                        
+                        saveRawDigits(filteredRawDigit, channelWireVec[locWireIdx], rawDataVec, truncMean, truncRms);
                     }
                     else
                     {
-                        mf::LogInfo("RawDigitFilterUBooNE") <<  "--> Rejecting channel for large rms, channel: " << channelWireVec[locWireIdx] << ", rmsVal: " << rmsVal << ", truncMean: " << pedestal << ", pedestal: " << pedCor << std::endl;
+                        mf::LogInfo("RawDigitFilterUBooNE") <<  "--> Rejecting channel for large rms, channel: " << channelWireVec[locWireIdx] << ", rmsVal: " << truncRms << ", truncMean: " << truncMean << ", pedestal: " << pedCor << std::endl;
                     }
                 }
                 

@@ -72,6 +72,8 @@ private:
     void smoothCorrectionVec(std::vector<float>&, unsigned int&) const;
     
     template<class T> T getMedian(std::vector<T>&, T) const;
+    
+    float getMostProbable(const std::vector<float>&, float) const;
 
     // Fcl parameters.
     float                fTruncMeanFraction;     ///< Fraction for truncated mean

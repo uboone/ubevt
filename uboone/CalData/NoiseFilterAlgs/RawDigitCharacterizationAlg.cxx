@@ -134,74 +134,15 @@ void RawDigitCharacterizationAlg::getWaveformParams(const RawDigitVector& rawWav
                                                     float&                neighborRatio,
                                                     float&                pedCorVal) const
 {
-    // We start by finding the most likely baseline which is most easily done by
-    // finding the most populated bin and the average using the neighboring bins
-    // To do this we'll use a map with key the bin number and data the count in that bin
-    // Define the map first
-    std::map<short,short> binAdcMap;
-    
-    // Populate the map
-    for(const auto& adcVal : rawWaveform) binAdcMap[adcVal]++;
-    
-    // Find the max bin and the count
-    std::map<short,short>::iterator maxBinItr = std::max_element(binAdcMap.begin(),binAdcMap.end(),[](const auto& lhs,const auto& rhs){return lhs.second < rhs.second;});
-    short                           binMax(maxBinItr->first);
-    short                           binMaxCnt(maxBinItr->second);
-    
-    // fill example hists - throw away code
-    if (fHistsInitialized && fFirstEvent && wire == fTheChosenWire)
-    {
-        for(const auto& binAdcItr : binAdcMap)
-        {
-            fAverageHist[view]->Fill(binAdcItr.first, binAdcItr.second);
-        }
-    }
-    
-    // Armed with the max bin and its count, now set up to get an average
-    // about this bin. We'll want to cut off at some user defined fraction
-    // of the total bins on the wire
-    size_t maxTimeSamples(rawWaveform.size());
-    int    minNumBins = (1. - fTruncMeanFraction) * maxTimeSamples;
-    int    curBinCnt(binMaxCnt);
-    short  binOffset(1);
-    
-    truncMean = curBinCnt * binMax;
-    
-    // This loop to develop the average
-    // In theory, we could also keep the sum of the squares for the rms but I had problems doing
-    // it that way so will loop twice... (potential time savings goes here!)
-    while(curBinCnt < minNumBins)
-    {
-        if (binAdcMap[binMax-binOffset])
-        {
-            curBinCnt += binAdcMap[binMax-binOffset];
-            truncMean += double(binAdcMap[binMax-binOffset] * (binMax - binOffset));
-        }
-        
-        if (binAdcMap[binMax+binOffset])
-        {
-            curBinCnt += binAdcMap[binMax+binOffset];
-            truncMean += double(binAdcMap[binMax+binOffset] * (binMax + binOffset));
-        }
-        
-        binOffset++;
-    }
-    
-    truncMean /= float(curBinCnt);
-    
-    getTruncatedRMS(rawWaveform, truncMean, truncRms);
-    
-    // Recover the database version of the pedestal
-    float pedestal = fPedestalRetrievalAlg.PedMean(channel);
-    
-    // The pedCorVal will transform from the average of waveform calculated here to the expected value of the pedestal.
-    pedCorVal = truncMean - pedestal;
+    // Recover the truncated mean and rms, plus the ped correction
+    getMeanRmsAndPedCor(rawWaveform, channel, truncMean, truncRms, pedCorVal);
     
     // Determine the range of ADC values on this wire
-    short minVal = *std::min_element(rawWaveform.begin(), rawWaveform.end());
-    short maxVal = *std::max_element(rawWaveform.begin(), rawWaveform.end());
+    std::pair<RawDigitVector::const_iterator,RawDigitVector::const_iterator> minMaxItrPair = std::minmax_element(rawWaveform.begin(),rawWaveform.end());
+    short minVal = *minMaxItrPair.first;
+    short maxVal = *minMaxItrPair.second;
     
-    minMax = std::min(maxVal - minVal + 1, 199);  // for the purposes of histogramming
+    minMax = std::min(maxVal - minVal,199);
     
     // We also want mean, median, rms, etc., for all ticks on the waveform
     std::vector<short> localTimeVec = rawWaveform;
@@ -223,42 +164,47 @@ void RawDigitCharacterizationAlg::getWaveformParams(const RawDigitVector& rawWav
     skewness = 3. * float(mean - median) / rms;
     
     // Final task is to get the mode and neighbor ratio
-    // Fortunately, the map was already set up
+    // To do this we need to set up a vector of counts by ADC value...
+    std::vector<int> countVec(maxVal - minVal + 1);
+    
+    for(const auto& adc : rawWaveform)
+    {
+        size_t idx = std::min(minMax, short(std::max(0, adc - minVal)));
+        
+        countVec.at(idx)++;
+    }
+    
+    std::vector<int>::iterator maxBinItr = std::max_element(countVec.begin(),countVec.end());
+    
     short neighborSum(0);
-    short leftNeighbor(maxBinItr->second);
-    short rightNeighbor(maxBinItr->second);
-    short cnt(0);
+    short leftNeighbor(*maxBinItr);
+    short rightNeighbor(*maxBinItr);
     
-    mode = maxBinItr->first;
+    mode = std::distance(countVec.begin(),maxBinItr);
     
-    if (binAdcMap.find(mode-1) != binAdcMap.end())
+    if (mode > 0)
     {
-        leftNeighbor  = binAdcMap.find(mode-1)->second;
+        leftNeighbor  = countVec.at(mode-1);
         neighborSum  += leftNeighbor;
-        cnt++;
     }
     
-    if (binAdcMap.find(mode+1) != binAdcMap.end())
+    if (mode + 1 < short(countVec.size()))
     {
-        rightNeighbor  = binAdcMap.find(mode+1)->second;
+        rightNeighbor  = countVec.at(mode+1);
         neighborSum   += rightNeighbor;
-        cnt++;
     }
     
-    neighborRatio = float(neighborSum) / float(2*maxBinItr->second);
+    mode += minVal;
+    
+    neighborRatio = float(neighborSum) / float(2*(*maxBinItr));
 
-    neighborRatio = float(std::min(leftNeighbor,rightNeighbor)) / float(maxBinItr->second);
-//    float leastNeighborRatio = float(std::min(leftNeighbor,rightNeighbor)) / float(maxBinItr->second);
+    neighborRatio = float(std::min(leftNeighbor,rightNeighbor)) / float(*maxBinItr);
     
     // Fill some histograms here
     if (fHistsInitialized)
     {
-        short maxVal = *std::max_element(rawWaveform.begin(),rawWaveform.end());
-        short minVal = *std::min_element(rawWaveform.begin(),rawWaveform.end());
-        short minMax = std::min(maxVal - minVal,199);
-        
-        fAdcCntHist[view]->Fill(curBinCnt, 1.);
-        fAveValHist[view]->Fill(std::max(-29.9, std::min(29.9,double(truncMean - pedestal))), 1.);
+//        fAdcCntHist[view]->Fill(curBinCnt, 1.);
+        fAveValHist[view]->Fill(std::max(-29.9, std::min(29.9,double(pedCorVal))), 1.);
         fRmsValHist[view]->Fill(std::min(49.9, double(truncRms)), 1.);
         fRmsValProf[view]->Fill(wire, double(truncRms), 1.);
         fMinMaxValProf[view]->Fill(wire, double(minMax), 1.);
@@ -269,7 +215,7 @@ void RawDigitCharacterizationAlg::getWaveformParams(const RawDigitVector& rawWav
     
     if (wire / fNumWiresToGroup[view] == fHistsWireGroup[view])
     {
-        float  leastNeighborRatio = float(std::min(leftNeighbor,rightNeighbor)) / float(maxBinItr->second);
+        float  leastNeighborRatio = float(std::min(leftNeighbor,rightNeighbor)) / float(*maxBinItr);
         size_t wireIdx            = wire % fNumWiresToGroup[view];
         
         if (skewness > 0. && leastNeighborRatio < 0.7)
@@ -315,91 +261,12 @@ void RawDigitCharacterizationAlg::getTruncatedRMS(const RawDigitVector& rawWavef
 
 void RawDigitCharacterizationAlg::getMeanRmsAndPedCor(const RawDigitVector& rawWaveform,
                                                       unsigned int          channel,
-                                                      unsigned int          view,
-                                                      unsigned int          wire,
                                                       float&                truncMean,
                                                       float&                rmsVal,
                                                       float&                pedCorVal) const
 {
-    // The strategy for finding the average for a given wire will be to
-    // find the most populated bin and the average using the neighboring bins
-    // To do this we'll use a map with key the bin number and data the count in that bin
-    // Define the map first
-    std::map<short,short> binAdcMap;
-    
-    // Populate the map
-    for(const auto& adcVal : rawWaveform)
-    {
-        binAdcMap[adcVal]++;
-    }
-    
-    // Find the max bin and the count
-    std::map<short,short>::iterator maxBinItr = std::max_element(binAdcMap.begin(),binAdcMap.end(),[](const auto& lhs,const auto& rhs){return lhs.second < rhs.second;});
-    short                           binMax(maxBinItr->first);
-    short                           binMaxCnt(maxBinItr->second);
-    
-    // fill example hists - throw away code
-    if (fHistsInitialized && fFirstEvent && wire == fTheChosenWire)
-    {
-        for(const auto& binAdcItr : binAdcMap)
-        {
-            fAverageHist[view]->Fill(binAdcItr.first, binAdcItr.second);
-        }
-    }
-    
-    // Armed with the max bin and its count, now set up to get an average
-    // about this bin. We'll want to cut off at some user defined fraction
-    // of the total bins on the wire
-    size_t maxTimeSamples(rawWaveform.size());
-    int    minNumBins = (1. - fTruncMeanFraction) * maxTimeSamples;
-    int    curBinCnt(binMaxCnt);
-    
-    float peakValue(curBinCnt * binMax);
-    short binOffset(1);
-    
-    truncMean = peakValue;
-    
-    // This loop to develop the average
-    // In theory, we could also keep the sum of the squares for the rms but I had problems doing
-    // it that way so will loop twice... (potential time savings goes here!)
-    while(curBinCnt < minNumBins)
-    {
-        if (binAdcMap[binMax-binOffset])
-        {
-            curBinCnt += binAdcMap[binMax-binOffset];
-            truncMean += double(binAdcMap[binMax-binOffset] * (binMax - binOffset));
-        }
-        
-        if (binAdcMap[binMax+binOffset])
-        {
-            curBinCnt += binAdcMap[binMax+binOffset];
-            truncMean += double(binAdcMap[binMax+binOffset] * (binMax + binOffset));
-        }
-        
-        binOffset++;
-    }
-    
-    truncMean /= double(curBinCnt);
-    
-    // do rms calculation - the old fashioned way and over all adc values
-    std::vector<float> adcLessPedVec;
-    
-    adcLessPedVec.resize(rawWaveform.size());
-    
-    size_t adcLessPedIdx(0);
-    
-    for(const auto& adcVal : rawWaveform)
-    {
-        double adcLessPed = adcVal - truncMean;
-        adcLessPedVec[adcLessPedIdx++] = adcLessPed;
-    }
-    
-    // sort in ascending order so we can truncate the sume
-    std::sort(adcLessPedVec.begin(), adcLessPedVec.end());
-    
-    // Get the truncated sum
-    rmsVal = std::inner_product(adcLessPedVec.begin(), adcLessPedVec.begin() + minNumBins, adcLessPedVec.begin(), 0.);
-    rmsVal = std::sqrt(std::max(0.,rmsVal / double(minNumBins)));
+    // First simply get the mean and rms...
+    getMeanAndRms(rawWaveform, truncMean, rmsVal, fTruncMeanFraction);
     
     // Recover the database version of the pedestal
     float pedestal = fPedestalRetrievalAlg.PedMean(channel);
@@ -409,11 +276,19 @@ void RawDigitCharacterizationAlg::getMeanRmsAndPedCor(const RawDigitVector& rawW
     // Fill some histograms here
     if (fHistsInitialized)
     {
-        short maxVal = *std::max_element(rawWaveform.begin(),rawWaveform.end());
-        short minVal = *std::min_element(rawWaveform.begin(),rawWaveform.end());
+        std::vector<geo::WireID> wids = fGeometry->ChannelToWire(channel);
+        
+        // Recover plane and wire in the plane
+        unsigned int view = wids[0].Plane;
+        unsigned int wire = wids[0].Wire;
+        
+        std::pair<RawDigitVector::const_iterator,RawDigitVector::const_iterator> minMaxPair = std::minmax_element(rawWaveform.begin(),rawWaveform.end());
+        
+        short maxVal = *minMaxPair.second;
+        short minVal = *minMaxPair.first;
         short minMax = std::min(maxVal - minVal,199);
         
-        fAdcCntHist[view]->Fill(curBinCnt, 1.);
+//        fAdcCntHist[view]->Fill(curBinCnt, 1.);
         fAveValHist[view]->Fill(std::max(-29.9, std::min(29.9,double(truncMean - pedestal))), 1.);
         fRmsValHist[view]->Fill(std::min(49.9, double(rmsVal)), 1.);
         fRmsValProf[view]->Fill(wire, double(rmsVal), 1.);
@@ -436,90 +311,51 @@ void RawDigitCharacterizationAlg::getMeanAndRms(const RawDigitVector& rawWavefor
                                                 float&                rmsVal,
                                                 float                 fracBins) const
 {
-    // The strategy for finding the average for a given wire will be to
-    // find the most populated bin and the average using the neighboring bins
-    // To do this we'll use a map with key the bin number and data the count in that bin
-    // Define the map first
-    std::map<short,short> binAdcMap;
+    // first step is to copy the input waveform into a local work vector - convert to floats
+    std::vector<float> locWaveform(rawWaveform.size());
     
-    // Populate the map
-    for(const auto& adcVal : rawWaveform)
-    {
-        binAdcMap[adcVal]++;
-    }
+    std::copy(rawWaveform.begin(),rawWaveform.end(),locWaveform.begin());
     
-    // Find the max bin
-    short binMax(-1);
-    short binMaxCnt(0);
+    // sort in ascending order so we can truncate before counting any possible signal
+    std::sort(locWaveform.begin(), locWaveform.end(),[](const auto& left, const auto& right){return std::fabs(left) < std::fabs(right);});
     
-    for(const auto& binAdcItr : binAdcMap)
-    {
-        if (binAdcItr.second > binMaxCnt)
-        {
-            binMax    = binAdcItr.first;
-            binMaxCnt = binAdcItr.second;
-        }
-    }
+    // Get the initial mean for the first half of the waveform which will be used in the rms calculation
+    float sumWaveform  = std::accumulate(locWaveform.begin(),locWaveform.begin() + locWaveform.size()/2, 0.);
+    float meanWaveform = sumWaveform / float(locWaveform.size()/2);
     
-    // Armed with the max bin and its count, now set up to get an average
-    // about this bin. We'll want to cut off at some user defined fraction
-    // of the total bins on the wire
-    size_t maxTimeSamples(rawWaveform.size());
-    int    minNumBins = std::round((1. - fracBins) * maxTimeSamples);
-    int    curBinCnt(binMaxCnt);
+    // Now form the differences between ADC values and the mean we have calculated
+    std::vector<float> locWaveformDiff(locWaveform.size()/2);
     
-    double peakValue(curBinCnt * double(binMax+0.5));
-    double truncMean(peakValue);
+    std::transform(locWaveform.begin(),locWaveform.begin() + locWaveform.size()/2,locWaveformDiff.begin(), std::bind2nd(std::minus<float>(),meanWaveform));
     
-    short binOffset(1);
+    // And now the local rms calculation...
+    float localRMS = std::inner_product(locWaveformDiff.begin(), locWaveformDiff.end(), locWaveformDiff.begin(), 0.);
     
-    // This loop to develop the average
-    // In theory, we could also keep the sum of the squares for the rms but I had problems doing
-    // it that way so will loop twice... (potential time savings goes here!)
-    while(curBinCnt < minNumBins)
-    {
-        if (binAdcMap[binMax-binOffset])
-        {
-            curBinCnt += binAdcMap[binMax-binOffset];
-            truncMean += double(binAdcMap[binMax-binOffset] * double((binMax - binOffset)+0.5));
-        }
-        
-        if (binAdcMap[binMax+binOffset])
-        {
-            curBinCnt += binAdcMap[binMax+binOffset];
-            truncMean += double(binAdcMap[binMax+binOffset] * double((binMax + binOffset)+0.5));
-        }
-        
-        binOffset++;
-    }
+    localRMS = std::sqrt(std::max(float(0.),localRMS / float(locWaveformDiff.size())));
     
-    truncMean /= double(curBinCnt);
+    // We use this local rms calculation to try to limit the range of the waveform we use to calculate the truncated mean and rms
+    float threshold = 6. * localRMS;
     
-    // do rms calculation - the old fashioned way and over all adc values
-    std::vector<float> adcLessPedVec;
+    std::vector<float>::iterator threshItr = std::find_if(locWaveform.begin(),locWaveform.end(),[threshold](const auto& val){return std::fabs(val) > threshold;});
     
-    adcLessPedVec.resize(rawWaveform.size());
+    int minNumBins = std::max(int((1-fracBins) * locWaveform.size()),int(std::distance(locWaveform.begin(),threshItr)));
     
-    size_t adcLessPedIdx(0);
+    // Ok, now we calculate the mean for this range
+    float aveSum = std::accumulate(locWaveform.begin(), locWaveform.begin() + minNumBins, 0.);
+    aveVal       = aveSum / minNumBins;
     
-    for(const auto& adcVal : rawWaveform)
-    {
-        double adcLessPed = adcVal - truncMean;
-        adcLessPedVec[adcLessPedIdx++] = adcLessPed;
-    }
+    // recalculate the rms
+    locWaveformDiff.resize(minNumBins);
     
-    // sort in ascending order so we can truncate the sum
-    std::sort(adcLessPedVec.begin(), adcLessPedVec.end());
+    std::transform(locWaveform.begin(),locWaveform.begin() + minNumBins,locWaveformDiff.begin(), std::bind2nd(std::minus<float>(),aveVal));
     
-    // Get the truncated sum
-    rmsVal = std::inner_product(adcLessPedVec.begin(), adcLessPedVec.begin() + minNumBins, adcLessPedVec.begin(), 0.);
-    rmsVal = std::sqrt(std::max(0.,rmsVal / double(minNumBins)));
-    aveVal = truncMean;
+    rmsVal = std::inner_product(locWaveformDiff.begin(), locWaveformDiff.begin() + minNumBins, locWaveformDiff.begin(), 0.);
+    rmsVal = std::sqrt(std::max(float(0.),rmsVal / float(minNumBins)));
     
     return;
 }
 
-bool RawDigitCharacterizationAlg::classifyRawDigitVec(RawDigitVector&  rawWaveform,
+bool RawDigitCharacterizationAlg::classifyRawDigitVec(RawDigitVector&         rawWaveform,
                                                       unsigned int            viewIdx,
                                                       unsigned int            wire,
                                                       float                   truncRms,
@@ -537,6 +373,8 @@ bool RawDigitCharacterizationAlg::classifyRawDigitVec(RawDigitVector&  rawWavefo
     // Dereference the selection/rejection cut
     float selectionCut = fMinMaxSelectionCut[viewIdx];
     float rejectionCut = fRmsRejectionCutHi[viewIdx];
+    
+    if (viewIdx == 1 && wire > 2303 && wire < 2400) std::cout << "wire: " << wire << ", minMax: " << minMax << ", cut: " << selectionCut << ", truncRms: " << truncRms << ", cut: " << rejectionCut << std::endl;
     
     // Selection to process
     if (minMax > selectionCut && truncRms < rejectionCut)
@@ -558,6 +396,8 @@ bool RawDigitCharacterizationAlg::classifyRawDigitVec(RawDigitVector&  rawWavefo
 
             // Set a threshold
             short threshold(6);
+            
+            if (viewIdx == 1 && wire > 2303 && wire < 2400) std::cout << "    ==> skewness: " << skewness << ", neighborRatio: " << neighborRatio << ", minMax: " << minMax << std::endl;
                     
             // If going from quiescent to on again, then the min/max will be large
             //if (skewnessWireVec[wireIdx] > 0. && minMaxWireVec[wireIdx] > 50 && truncRmsWireVec[wireIdx] > 2.)
@@ -584,6 +424,8 @@ bool RawDigitCharacterizationAlg::classifyRawDigitVec(RawDigitVector&  rawWavefo
         
         classified = true;
     }
+    
+    else std::cout << "==> plane: " << viewIdx << ", wire: " << wire << ", minMax: " << minMax << ", truncRms: " << truncRms << std::endl;
     
     return classified;
 }

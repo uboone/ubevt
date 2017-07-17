@@ -68,8 +68,6 @@ public:
     // Basic waveform mean, rms and pedestal offset
     void getMeanRmsAndPedCor(const RawDigitVector& rawWaveform,
                              unsigned int          channel,
-                             unsigned int          view,
-                             unsigned int          wire,
                              float&                aveVal,
                              float&                rmsVal,
                              float&                pedCorVal) const;

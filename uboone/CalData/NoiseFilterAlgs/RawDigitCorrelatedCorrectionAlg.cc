@@ -271,6 +271,7 @@ void RawDigitCorrelatedCorrectionAlg::removeCorrelatedNoise(RawDigitAdcIdxPair& 
             }
             
             float medianValue = getMedian(adcValuesVec, float(-10000.));
+            //float medianValue = getMostProbable(adcValuesVec, float(-10000.));
             
             corValVec[sampleIdx] = medianValue;
         }
@@ -442,6 +443,57 @@ template<class T> T RawDigitCorrelatedCorrectionAlg::getMedian(std::vector<T>& v
     }
     
     return std::max(medianValue,defaultValue);
+}
+    
+float RawDigitCorrelatedCorrectionAlg::getMostProbable(const std::vector<float>& valuesVec, float defaultValue) const
+{
+    float mostProbableValue(defaultValue);
+    
+    if (!valuesVec.empty())
+    {
+        std::pair<std::vector<float>::const_iterator,std::vector<float>::const_iterator> minMaxItrPair = std::minmax_element(valuesVec.begin(),valuesVec.end());
+        
+        float minValue = *minMaxItrPair.first;
+        float maxValue = *minMaxItrPair.second;
+        float minMax   = maxValue - minValue;
+        int   range    = minMax + 1;
+        
+        if (range > 1)
+        {
+            std::vector<int> countVec;
+            
+            countVec.resize(range, 0);
+            
+            for(const auto& val : valuesVec)
+            {
+                int idx = std::min(minMax, float(std::max(float(0.),val-minValue)));
+                
+                countVec.at(idx)++;
+            }
+        
+            std::vector<int>::iterator mostProbableItr = std::max_element(countVec.begin(),countVec.end());
+        
+            // Should we average over largest neighboring bin?
+            int   cnt(*mostProbableItr);
+            float aveSum(*mostProbableItr * (minValue + std::distance(countVec.begin(),mostProbableItr)));
+        
+            if (mostProbableItr + 1 != countVec.end() && 2 * *(mostProbableItr + 1) > *mostProbableItr)
+            {
+                cnt    += *(mostProbableItr + 1);
+                aveSum += *(mostProbableItr + 1) * (minValue + std::distance(countVec.begin(),mostProbableItr+1));
+            }
+            else if (std::distance(countVec.begin(),mostProbableItr-1) >= 0 && 2 * *(mostProbableItr - 1) > *mostProbableItr)
+            {
+                cnt    += *(mostProbableItr - 1);
+                aveSum += *(mostProbableItr - 1) * (minValue + std::distance(countVec.begin(),mostProbableItr-1));
+            }
+        
+            mostProbableValue = aveSum / cnt;
+        }
+        else mostProbableValue = (maxValue + minValue) / 2;
+    }
+    
+    return std::max(mostProbableValue,defaultValue);
 }
     
 }
