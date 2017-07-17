@@ -35,9 +35,9 @@ public:
     void configure(const fhicl::ParameterSet& pset)              override;
     void outputHistograms(art::TFileDirectory&)            const override;
     
-    void Deconvolve(IROIFinder::Waveform&,
+    void Deconvolve(IROIFinder::Waveform const&,
                     raw::ChannelID_t,
-                    IROIFinder::CandidateROIVec&,
+                    IROIFinder::CandidateROIVec const&,
                     recob::Wire::RegionsOfInterest_t& )    const override;
     
 private:
@@ -110,9 +110,9 @@ void MCC7Deconvolution::configure(const fhicl::ParameterSet& pset)
     return;
 }
     
-void MCC7Deconvolution::Deconvolve(IROIFinder::Waveform&             waveform,
+void MCC7Deconvolution::Deconvolve(IROIFinder::Waveform const&       waveform,
                                    raw::ChannelID_t                  channel,
-                                   IROIFinder::CandidateROIVec&      roiVec,
+                                   IROIFinder::CandidateROIVec const& roiVec,
                                    recob::Wire::RegionsOfInterest_t& ROIVec) const
 {
     // The goal of this function is to reproduce "exactly" the operation of the deconvolution process in MCC7
@@ -122,7 +122,7 @@ void MCC7Deconvolution::Deconvolve(IROIFinder::Waveform&             waveform,
     size_t dataSize = waveform.size();
     
     // Make sure the deconvolution size is set correctly (this will probably be a noop after first call)
-    fSignalShaping->SetDecon(dataSize, channel);
+    fSignalShaping->SetDecon(dataSize);
     
     size_t transformSize = fFFT->FFTSize();
     
@@ -138,7 +138,7 @@ void MCC7Deconvolution::Deconvolve(IROIFinder::Waveform&             waveform,
     std::copy(waveform.begin(),waveform.end(),rawAdcLessPedVec.begin()+binOffset);
     
     // Strategy is to run deconvolution on the entire channel and then pick out the ROI's we found above
-    fSignalShaping->Deconvolute(channel,rawAdcLessPedVec);
+    fSignalShaping->Deconvolute(channel,rawAdcLessPedVec,"nominal");
     
     std::vector<float> holder;
     
