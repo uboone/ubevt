@@ -82,11 +82,19 @@ float BaselineMostProbAve::GetBaseline(std::vector<float>& holder,
         
         std::vector<int> roiHistVec(nbin, 0);
         
-        for(size_t binIdx = roiStart; binIdx < roiStart+roiLen; binIdx++)
+        size_t maxBinIdx = std::min(size_t(75), roiLen/2);
+        
+        for(size_t binIdx = 0; binIdx < maxBinIdx; binIdx++)
         {
-            // Provide overkill protection against possibility of a bad index...
-            int    intIdx = std::floor(2. * (holder.at(binIdx) - min));
+            // First get bin on low side of ROI
+            int    intIdx = std::floor(2. * (holder.at(roiStart+binIdx) - min));
             size_t idx    = std::max(std::min(intIdx,int(nbin-1)),0);
+            
+            roiHistVec.at(idx)++;
+            
+            // Now get the high side of the ROI
+            intIdx = std::floor(2. * (holder.at(roiStart+roiLen-binIdx-1) - min));
+            idx    = std::max(std::min(intIdx,int(nbin-1)),0);
             
             roiHistVec.at(idx)++;
         }
