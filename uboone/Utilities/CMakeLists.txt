@@ -20,7 +20,7 @@ art_make ( NO_PLUGINS
 	  )
 
 set( uboone_util_lib_list lardata_Utilities_LArFFT_service
-			larcore_Geometry
+			larcorealg_Geometry
 			larevt_CalibrationDBI_IOVData
 			larevt_CalibrationDBI_Providers
 			larreco_HitFinder

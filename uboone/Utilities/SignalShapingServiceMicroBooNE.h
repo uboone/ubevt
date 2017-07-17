@@ -89,8 +89,8 @@
 
 // LArSoft include
 #include "larcore/Geometry/Geometry.h"
-#include "larcore/Geometry/TPCGeo.h"
-#include "larcore/Geometry/PlaneGeo.h"
+#include "larcorealg/Geometry/TPCGeo.h"
+#include "larcorealg/Geometry/PlaneGeo.h"
 
 using DoubleVec  = std::vector<double>;
 using FloatVec   = std::vector<float>;
