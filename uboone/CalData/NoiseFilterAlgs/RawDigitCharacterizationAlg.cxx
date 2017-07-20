@@ -265,6 +265,10 @@ void RawDigitCharacterizationAlg::getMeanRmsAndPedCor(const RawDigitVector& rawW
                                                       float&                rmsVal,
                                                       float&                pedCorVal) const
 {
+    if (channel > 5681 && channel < 5689)
+    {
+        std::cout << "--> channel: " << channel << std::endl;
+    }
     // First simply get the mean and rms...
     getMeanAndRms(rawWaveform, truncMean, rmsVal, fTruncMeanFraction);
     
@@ -272,6 +276,11 @@ void RawDigitCharacterizationAlg::getMeanRmsAndPedCor(const RawDigitVector& rawW
     float pedestal = fPedestalRetrievalAlg.PedMean(channel);
     
     pedCorVal = truncMean - pedestal;
+    
+    if (channel > 5681 && channel < 5689)
+    {
+        std::cout << "   - truncMean: " << truncMean << ", truncRMS: " << rmsVal << ", ped: " << pedestal << ", pedCor: " << pedCorVal << std::endl;
+    }
     
     // Fill some histograms here
     if (fHistsInitialized)
@@ -318,8 +327,41 @@ void RawDigitCharacterizationAlg::getMeanAndRms(const RawDigitVector& rawWavefor
     
     // Note that we are not meant to assume that the incoming waveform has been zero suppressed
     // So first task is to get an initial mean and rms...
-    float sumWaveform  = std::accumulate(locWaveform.begin(),locWaveform.end(), 0.);
-    float meanWaveform = sumWaveform / float(locWaveform.size());
+    // And it can be tricky getting an initial mean, so to start let's really try to get the most probable value from
+    // the input vector
+    std::map<int,int> frequencyMap;
+    int               mpCount(0);
+    int               mpVal(0);
+    
+    for(const auto& val : rawWaveform)
+    {
+        frequencyMap[val]++;
+        
+        if (frequencyMap.at(val) > mpCount)
+        {
+            mpCount = frequencyMap.at(val);
+            mpVal   = val;
+        }
+    }
+    
+    // take a weighted average of two neighbor bins
+    int meanCnt = mpCount;
+    int meanSum = mpVal * mpCount;
+    
+    for(int idx = -3; idx < 4; idx++)
+    {
+        if (!idx) continue;
+        
+        std::map<int,int>::iterator neighborItr = frequencyMap.find(mpVal+idx);
+    
+        if (neighborItr != frequencyMap.end() && 5 * neighborItr->second > mpCount)
+        {
+            meanSum += neighborItr->first * neighborItr->second;
+            meanCnt += neighborItr->second;
+        }
+    }
+    
+    float meanWaveform = float(meanSum) / float(meanCnt);
     
     // Use this to do an initial zero suppression
     std::transform(locWaveform.begin(),locWaveform.end(),locWaveform.begin(),std::bind2nd(std::minus<float>(),meanWaveform));
@@ -333,7 +375,7 @@ void RawDigitCharacterizationAlg::getMeanAndRms(const RawDigitVector& rawWavefor
     localRMS = std::sqrt(std::max(float(0.),localRMS / float(locWaveform.size())));
     
     // We use this local rms calculation to try to limit the range of the waveform we use to calculate the truncated mean and rms
-    float threshold = 3. * localRMS;
+    float threshold = std::min(4.,1.5 * localRMS);
     
     std::vector<float>::iterator threshItr = std::find_if(locWaveform.begin(),locWaveform.end(),[threshold](const auto& val){return std::fabs(val) > threshold;});
     
