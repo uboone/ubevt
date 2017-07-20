@@ -107,19 +107,61 @@ float BaselineMostProbAve::GetBaseline(const std::vector<float>& holder,
         // Really can't see how this can happen... but check just to be sure
         if (mpValItr != roiHistVec.end())
         {
-            float mpVal   = min + 0.5 * std::distance(roiHistVec.cbegin(),mpValItr);
-            int   baseCnt = 0;
+//            float mpVal   = min + 0.5 * std::distance(roiHistVec.cbegin(),mpValItr);
+//            int   baseCnt = 0;
+//
+//            for(size_t binIdx = roiStart; binIdx < roiStart+roiLen; binIdx++)
+//            {
+//                if (std::fabs(holder.at(binIdx) - mpVal) < deconNoise)
+//                {
+//                    base += holder.at(binIdx);
+//                    baseCnt++;
+//                }
+//            }
+//
+//            if (baseCnt > 0) base /= baseCnt;
+
+            // Strategy is to get weighted average of the bins near the most probable value, taking only
+            // those within some range of the expected electronics noise of the MP value.
+            int   baseCnt  = *mpValItr;
+            float mpVal    = 0.5 * std::distance(roiHistVec.cbegin(),mpValItr);
+            int   maxSteps = std::max(std::distance(roiHistVec.cbegin(),mpValItr),std::distance(mpValItr,roiHistVec.cend()));
+            int   curStep  = 0;
             
-            for(size_t binIdx = roiStart; binIdx < roiStart+roiLen; binIdx++)
+            base = baseCnt * mpVal;
+            
+            while(curStep++ < maxSteps)
             {
-                if (std::fabs(holder.at(binIdx) - mpVal) < deconNoise)
+                if (std::distance(roiHistVec.cbegin(),mpValItr-curStep) >= 0)
                 {
-                    base += holder.at(binIdx);
-                    baseCnt++;
+                    float bin = 0.5 * std::distance(roiHistVec.cbegin(),mpValItr-curStep);
+                    
+                    if (std::fabs(bin - mpVal) < 6.*deconNoise)
+                    {
+                        int count = *(mpValItr-curStep);
+                        
+                        base    += count * bin;
+                        baseCnt += count;
+                    }
+                    else maxSteps = 0;
+                }
+                
+                if (std::distance(roiHistVec.cend(),mpValItr+curStep) < 0)
+                {
+                    float bin = 0.5 * std::distance(roiHistVec.cbegin(),mpValItr+curStep);
+                    
+                    if (std::fabs(bin - mpVal) < 6.*deconNoise)
+                    {
+                        int count = *(mpValItr+curStep);
+                        
+                        base    += count * bin;
+                        baseCnt += count;
+                    }
+                    else maxSteps = 0;
                 }
             }
             
-            if (baseCnt > 0) base /= baseCnt;
+            base = base / baseCnt + min;
         }
     }
     
