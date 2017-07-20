@@ -179,26 +179,28 @@ void ROIDeconvolution::Deconvolve(const IROIFinder::Waveform&        waveform,
         
         size_t roiStart(roiStartInt);
         size_t roiStop(roiStopInt);
+        size_t holderOffset = 0; //deconSize > waveform.size() ? (deconSize - waveform.size()) / 2 : 0;
         
         // Fill the buffer and do the deconvolution
-        std::copy(waveform.begin()+firstOffset, waveform.begin()+secondOffset, holder.begin());
+        std::copy(waveform.begin()+firstOffset, waveform.begin()+secondOffset, holder.begin() + holderOffset);
         
         // Deconvolute the raw signal using the channel's nominal response
         fSignalShaping->Deconvolute(channel,holder,"nominal");
         
+        // Get rid of the leading and trailing "extra" bins needed to keep the FFT happy
+        if (roiStart > 0 || holderOffset > 0) std::copy(holder.begin() + holderOffset + roiStart, holder.begin() + holderOffset + roiStop, holder.begin());
+        
+        // Resize the holder to the ROI length
+        holder.resize(roiLen);
+       
         // "normalize" the vector
         std::transform(holder.begin(),holder.end(),holder.begin(),[deconNorm](float& deconVal){return deconVal/deconNorm;});
         
         // Now we do the baseline determination and correct the ROI
-        float base = fBaseline->GetBaseline(holder, channel, roiStart, roiLen);
+        //float base = fBaseline->GetBaseline(holder, channel, roiStart, roiLen);
+        float base = fBaseline->GetBaseline(holder, channel, 0, roiLen);
         
         std::transform(holder.begin(),holder.end(),holder.begin(),[base](float& adcVal){return adcVal - base;});
-        
-        // Get rid of the leading and trailing "extra" bins needed to keep the FFT happy
-        if (roiStart > 0) std::copy(holder.begin() + roiStart, holder.begin() + roiStop, holder.begin());
-        
-        // Resize the holder to the ROI length
-        holder.resize(roiLen);
         
         // apply wire-by-wire calibration
         if (fDodQdxCalib)

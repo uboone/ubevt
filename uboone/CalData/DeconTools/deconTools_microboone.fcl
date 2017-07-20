@@ -16,7 +16,7 @@ microboone_roifinderstandard:
 microboone_roifinderdifferential:
 {
     tool_type:      ROIFinderDifferential
-    NumSigma:            [  4.5,  4.5,  4.25]
+    NumSigma:            [  4.0,  4.0,  4.0]
     NumBinsToAve:        [ 10,   10,   10   ]
     Max2MinDistance:     [ 60,   60,   60   ]
     TruncRMSMinFraction: 0.6

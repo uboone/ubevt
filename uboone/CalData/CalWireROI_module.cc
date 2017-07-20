@@ -90,6 +90,7 @@ class CalWireROI : public art::EDProducer
     
     float                                                    fTruncRMSThreshold;          ///< Calculate RMS up to this threshold...
     float                                                    fTruncRMSMinFraction;        ///< or at least this fraction of time bins
+    bool                                                     fOutputHistograms;           ///< Output histograms?
     
     std::unique_ptr<uboone_tool::IROIFinder>                 fROIFinder;
     std::unique_ptr<uboone_tool::IDeconvolution>             fDeconvolution;
@@ -104,8 +105,8 @@ class CalWireROI : public art::EDProducer
     std::vector<TH1D*>     fNumTruncBinsVec;
     std::vector<TProfile*> fPedByChanVec;
     std::vector<TProfile*> fTruncRMSByChanVec;
-    
-  protected: 
+    std::vector<TH1D*>     fNumROIsHistVec;
+    std::vector<TH1D*>     fROILenHistVec;
     
 }; // class CalWireROI
 
@@ -140,6 +141,7 @@ void CalWireROI::reconfigure(fhicl::ParameterSet const& p)
     
     fTruncRMSThreshold          = p.get< float >         ("TruncRMSThreshold",    6.);
     fTruncRMSMinFraction        = p.get< float >         ("TruncRMSMinFraction", 0.6);
+    fOutputHistograms           = p.get< bool  >         ("OutputHistograms",   true);
     
     fSpillName.clear();
     
@@ -150,23 +152,30 @@ void CalWireROI::reconfigure(fhicl::ParameterSet const& p)
         fDigitModuleLabel = fDigitModuleLabel.substr( 0, pos );
     }
     
-    // Access ART's TFileService, which will handle creating and writing
-    // histograms and n-tuples for us.
-    art::ServiceHandle<art::TFileService> tfs;
-    
-    fPedestalOffsetVec.resize(3);
-    fTruncRMSVec.resize(3);
-    fNumTruncBinsVec.resize(3);
-    fPedByChanVec.resize(3);
-    fTruncRMSByChanVec.resize(3);
-    
-    for(size_t planeIdx = 0; planeIdx < 3; planeIdx++)
+    if (fOutputHistograms)
     {
-        fPedestalOffsetVec[planeIdx] = tfs->make<TH1D>(    Form("PedPlane_%02zu",planeIdx),            ";Pedestal Offset (ADC);", 100, -5., 5.);
-        fTruncRMSVec[planeIdx]       = tfs->make<TH1D>(    Form("RMSPlane_%02zu",planeIdx),            ";RMS (ADC);", 100, 0., 10.);
-        fNumTruncBinsVec[planeIdx]   = tfs->make<TH1D>(    Form("NTruncBins_%02zu",planeIdx),          ";# bins",     640, 0., 6400.);
-        fPedByChanVec[planeIdx]      = tfs->make<TProfile>(Form("PedByWirePlane_%02zu",planeIdx),      ";Wire#", fGeometry->Nwires(planeIdx), 0., fGeometry->Nwires(planeIdx), -5., 5.);
-        fTruncRMSByChanVec[planeIdx] = tfs->make<TProfile>(Form("TruncRMSByWirePlane_%02zu",planeIdx), ";Wire#", fGeometry->Nwires(planeIdx), 0., fGeometry->Nwires(planeIdx),  0., 10.);
+        // Access ART's TFileService, which will handle creating and writing
+        // histograms and n-tuples for us.
+        art::ServiceHandle<art::TFileService> tfs;
+    
+        fPedestalOffsetVec.resize(3);
+        fTruncRMSVec.resize(3);
+        fNumTruncBinsVec.resize(3);
+        fPedByChanVec.resize(3);
+        fTruncRMSByChanVec.resize(3);
+        fNumROIsHistVec.resize(3);
+        fROILenHistVec.resize(3);
+    
+        for(size_t planeIdx = 0; planeIdx < 3; planeIdx++)
+        {
+            fPedestalOffsetVec[planeIdx] = tfs->make<TH1D>(    Form("PedPlane_%02zu",planeIdx),            ";Pedestal Offset (ADC);", 100, -5., 5.);
+            fTruncRMSVec[planeIdx]       = tfs->make<TH1D>(    Form("RMSPlane_%02zu",planeIdx),            ";RMS (ADC);", 100, 0., 10.);
+            fNumTruncBinsVec[planeIdx]   = tfs->make<TH1D>(    Form("NTruncBins_%02zu",planeIdx),          ";# bins",     640, 0., 6400.);
+            fPedByChanVec[planeIdx]      = tfs->make<TProfile>(Form("PedByWirePlane_%02zu",planeIdx),      ";Wire#", fGeometry->Nwires(planeIdx), 0., fGeometry->Nwires(planeIdx), -5., 5.);
+            fTruncRMSByChanVec[planeIdx] = tfs->make<TProfile>(Form("TruncRMSByWirePlane_%02zu",planeIdx), ";Wire#", fGeometry->Nwires(planeIdx), 0., fGeometry->Nwires(planeIdx),  0., 10.);
+            fNumROIsHistVec[planeIdx]    = tfs->make<TH1D>(    Form("NROISplane_%02zu",planeIdx),          ";# ROIs;",   100, 0, 100);
+            fROILenHistVec[planeIdx]     = tfs->make<TH1D>(    Form("ROISIZEplane_%02zu",planeIdx),        ";ROI size;", 500, 0, 500);
+        }
     }
     
     return;
@@ -257,25 +266,32 @@ void CalWireROI::produce(art::Event& evt)
             std::transform(rawadc.begin(),rawadc.end(),rawAdcLessPedVec.begin(),std::bind2nd(std::minus<short>(),pedestal));
             
             // It seems there are deviations from the pedestal when using wirecell for noise filtering
-            float origRMS = fixTheFreakingWaveform(rawAdcLessPedVec, channel, rawAdcLessPedVec);
+            float raw_noise = fixTheFreakingWaveform(rawAdcLessPedVec, channel, rawAdcLessPedVec);
             
             // Recover a measure of the noise on the channel for use in the ROI finder
-            float raw_noise = getTruncatedRMS(rawAdcLessPedVec);
-            
-            if (origRMS > 2. * raw_noise) std::cout << "** channel: " << channel << ", origRMS: " << origRMS << ", raw: " << raw_noise << std::endl;
+            //float raw_noise = getTruncatedRMS(rawAdcLessPedVec);
             
             // vector of candidate ROI begin and end bins
             uboone_tool::IROIFinder::CandidateROIVec candRoiVec;
-            
-            if (channel > 5682 && channel < 5690)
-            {
-                std::cout << "Channel: " << channel << std::endl;
-            }
 
             // Now find the candidate ROI's
             fROIFinder->FindROIs(rawAdcLessPedVec, channel, raw_noise, candRoiVec);
             
+            // Do the deconvolution
             fDeconvolution->Deconvolve(rawAdcLessPedVec, channel, candRoiVec, ROIVec);
+            
+            // Make some histograms?
+            if (fOutputHistograms)
+            {
+                // First up, determine what kind of wire we have
+                std::vector<geo::WireID> wids    = fGeometry->ChannelToWire(channel);
+                const geo::PlaneID&      planeID = wids[0].planeID();
+                
+                fNumROIsHistVec.at(planeID.Plane)->Fill(candRoiVec.size(), 1.);
+                
+                for(const auto& pair : candRoiVec)
+                    fROILenHistVec.at(planeID.Plane)->Fill(pair.second-pair.first, 1.);
+            }
        } // end if not a bad channel
 
         // create the new wire directly in wirecol
@@ -313,6 +329,8 @@ void CalWireROI::produce(art::Event& evt)
     evt.put(std::move(WireDigitAssn), fSpillName);
 
     fEventCount++;
+    
+    std::cout << "**>> CalWireROI finito" << std::endl;
 
     return;
 } // produce
@@ -349,7 +367,7 @@ float CalWireROI::fixTheFreakingWaveform(const std::vector<float>& waveform, raw
     
     // Get the mean of the waveform we're checking...
     float sumWaveform  = std::accumulate(locWaveform.begin(),locWaveform.begin() + locWaveform.size()/2, 0.);
-    float meanWaveform = sumWaveform / float(locWaveform.size());
+    float meanWaveform = sumWaveform / float(locWaveform.size()/2);
     
     std::vector<float> locWaveformDiff(locWaveform.size()/2);
     
@@ -381,17 +399,20 @@ float CalWireROI::fixTheFreakingWaveform(const std::vector<float>& waveform, raw
     std::transform(waveform.begin(), waveform.end(), fixedWaveform.begin(), [newPedestal](const auto& val){return val - newPedestal;});
     
     // Fill histograms
-    std::vector<geo::WireID> wids = fGeometry->ChannelToWire(channel);
+    if (fOutputHistograms)
+    {
+        std::vector<geo::WireID> wids = fGeometry->ChannelToWire(channel);
     
-    // Recover plane and wire in the plane
-    size_t plane = wids[0].Plane;
-    size_t wire  = wids[0].Wire;
+        // Recover plane and wire in the plane
+        size_t plane = wids[0].Plane;
+        size_t wire  = wids[0].Wire;
     
-    fPedestalOffsetVec[plane]->Fill(newPedestal,1.);
-    fTruncRMSVec[plane]->Fill(localRMS, 1.);
-    fNumTruncBinsVec[plane]->Fill(minNumBins, 1.);
-    fPedByChanVec[plane]->Fill(wire, newPedestal, 1.);
-    fTruncRMSByChanVec[plane]->Fill(wire, localRMS, 1.);
+        fPedestalOffsetVec[plane]->Fill(newPedestal,1.);
+        fTruncRMSVec[plane]->Fill(localRMS, 1.);
+        fNumTruncBinsVec[plane]->Fill(minNumBins, 1.);
+        fPedByChanVec[plane]->Fill(wire, newPedestal, 1.);
+        fTruncRMSByChanVec[plane]->Fill(wire, localRMS, 1.);
+    }
     
     return localRMS;
 }
