@@ -12,7 +12,7 @@
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
 #include "larcore/Geometry/Geometry.h"
 
-#include "TH1D.h"
+#include "TH1F.h"
 
 #include <fstream>
 
@@ -36,7 +36,6 @@ private:
     void findROICandidatesDiff(const Waveform&,
                                const Waveform&,
                                const Waveform&,
-                               const geo::PlaneID::PlaneID_t&,
                                int,
                                int,
                                float,
@@ -49,7 +48,7 @@ private:
     float fixTheFreakingWaveform(const Waveform&, Waveform&) const;
     
     // recover the rms
-    float getTruncatedRMS(const Waveform&) const;
+    void getTruncatedMeanRMS(const Waveform&, float&, float&) const;
     
     // Member variables from the fhicl file
     std::vector<float>              fNumSigma;                   ///< "# sigma" rms noise for ROI threshold
@@ -58,6 +57,10 @@ private:
     std::vector<unsigned short>     fPreROIPad;                  ///< ROI padding
     std::vector<unsigned short>     fPostROIPad;                 ///< ROI padding
     float                           fTruncRMSMinFraction;        ///< or at least this fraction of time bins
+    bool                            fOutputHistograms;           ///< Output histograms?
+    
+    std::vector<TH1F*>              fMeanHistVec;
+    std::vector<TH1F*>              fRmsHistVec;
     
     // Services
     const geo::GeometryCore*        fGeometry = lar::providerFrom<geo::Geometry>();
@@ -88,6 +91,7 @@ void ROIFinderMorphological::configure(const fhicl::ParameterSet& pset)
     vin                  = pset.get< std::vector<unsigned short>>("vPlaneROIPad"   );
     zin                  = pset.get< std::vector<unsigned short>>("zPlaneROIPad"   );
     fTruncRMSMinFraction = pset.get< float >                     ("TruncRMSMinFraction", 0.6);
+    fOutputHistograms    = pset.get< bool  >                     ("OutputHistograms", true);
     
     if(uin.size() != 2 || vin.size() != 2 || zin.size() != 2) {
         throw art::Exception(art::errors::Configuration)
@@ -105,6 +109,27 @@ void ROIFinderMorphological::configure(const fhicl::ParameterSet& pset)
     fPreROIPad[2]  = zin[0];
     fPostROIPad[2] = zin[1];
     
+    // If asked, define some histograms
+    if (fOutputHistograms)
+    {
+        // Access ART's TFileService, which will handle creating and writing
+        // histograms and n-tuples for us.
+        art::ServiceHandle<art::TFileService> tfs;
+        
+        // Make a directory for these histograms
+        art::TFileDirectory dir = tfs->mkdir("ROI");
+        
+        // Keep track of basic parameters
+        fMeanHistVec.resize(3);
+        fRmsHistVec.resize(3);
+        
+        for(size_t idx = 0; idx < 3; idx++)
+        {
+            fMeanHistVec[idx] = dir.make<TH1F>(Form("DiffMeanPlane_%02zu",idx), ";Diff Mean;", 200, -20., 20.);
+            fRmsHistVec[idx]  = dir.make<TH1F>(Form("DiffRmsPlane_%02zu",idx),  ";Diff RMS;",  100,   0., 10.);
+        }
+    }
+    
     return;
 }
 
@@ -118,23 +143,7 @@ void ROIFinderMorphological::FindROIs(const Waveform& waveform, size_t channel, 
     // First up, determine what kind of wire we have
     std::vector<geo::WireID> wids    = fGeometry->ChannelToWire(channel);
     const geo::PlaneID&      planeID = wids[0].planeID();
-//    geo::SigType_t           sigType = fGeometry->SignalType(planeID);
-/*
-    // Local copy of the input waveform
-    Waveform waveformDeriv(waveform.size());
-    
-    // If we have a collection plane then take the derivative
-    if (sigType == geo::kCollection)
-    {
-        waveformDeriv[0]                 = 0;
-        waveformDeriv[waveform.size()-1] = 0;
-        
-        for(size_t idx = 1; idx < waveform.size()-1; idx++)
-            waveformDeriv[idx] = 0.5 * (waveform.at(idx+1) - waveform.at(idx-1));
-    }
-    // Otherwise a straight copy since the bipolar pulses are, effectively, derivatives
-    else std::copy(waveform.begin(),waveform.end(),waveformDeriv.begin());
-*/
+
     // Do the averaging
     Waveform erosionVec;
     Waveform dilationVec;
@@ -144,19 +153,21 @@ void ROIFinderMorphological::FindROIs(const Waveform& waveform, size_t channel, 
     //getErosionDilationAverage(waveformDeriv, planeID.Plane, erosionVec, dilationVec, averageVec);
     getErosionDilationAverageDifference(waveform, planeID.Plane, erosionVec, dilationVec, averageVec, differenceVec);
     
-    // Baseline correct with the average
-//    std::transform(waveformDeriv.begin(),waveformDeriv.end(),averageVec.begin(),waveformDeriv.begin(),[](const auto& val, const auto& cor){return val - cor;});
-    
-    // Scheme for finding a suitable threshold
-//    float truncRMS = getTruncatedRMS(waveformDeriv);
-    
-    // Now find the ROI's
-//    findROICandidates(waveformDeriv.begin(),waveformDeriv.end(),planeID.Plane,0,truncRMS,roiVec);
-    
     // Use the average vector to find ROI's
-    float truncRMS = getTruncatedRMS(differenceVec);
+    float truncRMS;
+    float truncMean;
     
-    findROICandidatesDiff(differenceVec, erosionVec, dilationVec, planeID.Plane, 0, averageVec.size(), truncRMS, roiVec);
+    getTruncatedMeanRMS(differenceVec, truncMean, truncRMS);
+    
+    if (fOutputHistograms)
+    {
+        fMeanHistVec.at(planeID.Plane)->Fill(truncMean, 1.);
+        fRmsHistVec.at(planeID.Plane)->Fill(truncRMS, 1.);
+    }
+    
+    float threshold = truncMean + fNumSigma.at(planeID.Plane) * truncRMS;
+    
+    findROICandidatesDiff(differenceVec, erosionVec, dilationVec, 0, averageVec.size(), threshold, roiVec);
     
     if (roiVec.empty()) return;
     
@@ -203,10 +214,9 @@ void ROIFinderMorphological::FindROIs(const Waveform& waveform, size_t channel, 
 void ROIFinderMorphological::findROICandidatesDiff(const Waveform&                differenceVec,
                                                    const Waveform&                erosionVec,
                                                    const Waveform&                dilationVec,
-                                                   const geo::PlaneID::PlaneID_t& plane,
                                                    int                            startTick,
                                                    int                            stopTick,
-                                                   float                          truncRMS,
+                                                   float                          threshold,
                                                    CandidateROIVec&               roiCandidateVec) const
 {
     int roiLength = stopTick - startTick;
@@ -230,7 +240,7 @@ void ROIFinderMorphological::findROICandidatesDiff(const Waveform&              
             float difference = differenceVec.at(maxCandRoiTick);
             float erosion    = erosionVec.at(maxCandRoiTick);
             
-            if (difference < 1.5 * truncRMS && erosion < 1.5 * truncRMS) break;
+            if (difference < threshold && erosion < 0.5 * threshold) break;
         }
         
         maxCandRoiTick = std::min(maxCandRoiTick,stopTick);
@@ -243,24 +253,24 @@ void ROIFinderMorphological::findROICandidatesDiff(const Waveform&              
             float difference = differenceVec.at(minCandRoiTick);
             float erosion    = erosionVec.at(minCandRoiTick);
             
-            if (difference < 1.5 * truncRMS && erosion < 1.5 * truncRMS) break;
+            if (difference < threshold && erosion < 0.5 * threshold) break;
         }
         
         // make sure we have not gone under
         minCandRoiTick = std::max(minCandRoiTick, startTick);
         
         // Make sure we have a legitimate candidate
-        if (maxCandRoiTick - minCandRoiTick > 0 && maxDifference > fNumSigma.at(plane) * truncRMS)
+        if (maxCandRoiTick - minCandRoiTick > 0 && maxDifference > threshold)
         {
             // Before saving this ROI, look for candidates preceeding this one
             // Note that preceeding snippet will reference to the current roiStartTick
-            findROICandidatesDiff(differenceVec, erosionVec, dilationVec, plane, startTick, minCandRoiTick, truncRMS, roiCandidateVec);
+            findROICandidatesDiff(differenceVec, erosionVec, dilationVec, startTick, minCandRoiTick, threshold, roiCandidateVec);
             
             // Save this ROI
             roiCandidateVec.push_back(CandidateROI(minCandRoiTick, maxCandRoiTick));
             
             // Now look for candidate ROI's downstream of this one
-            findROICandidatesDiff(differenceVec, erosionVec, dilationVec, plane, maxCandRoiTick+1, stopTick, truncRMS, roiCandidateVec);
+            findROICandidatesDiff(differenceVec, erosionVec, dilationVec, maxCandRoiTick+1, stopTick, threshold, roiCandidateVec);
         }
     }
     
@@ -328,10 +338,74 @@ void ROIFinderMorphological::getErosionDilationAverageDifference(const Waveform&
     return;
 }
     
-float ROIFinderMorphological::getTruncatedRMS(const Waveform& waveform) const
+void ROIFinderMorphological::getTruncatedMeanRMS(const Waveform& waveform, float& mean, float& rms) const
 {
+    // We need to get a reliable estimate of the mean and can't assume the input waveform will be ~zero mean...
+    // So we employ a histogramming method...
+    std::pair<Waveform::const_iterator,Waveform::const_iterator> rangeItrPair = std::minmax_element(waveform.begin(),waveform.end());
+    
+    float minInputValue = *rangeItrPair.first;
+    float maxInputValue = *rangeItrPair.second;
+    float range         = maxInputValue - minInputValue;
+    int   numBins       = 2. * range;
+    float binSize       = range / float(numBins);
+    
+    std::vector<int> waveformHist;
+    
+    waveformHist.resize(numBins + 1, 0);
+    
+    for(const auto& val : waveform)
+    {
+        int bin = std::min(numBins, std::max(0, int(2. * (val - minInputValue))));
+        
+        waveformHist.at(bin)++;
+    }
+    
+    std::vector<int>::iterator maxBinItr = std::max_element(waveformHist.begin(),waveformHist.end());
+    
+    float aveSum(0.);
+    int   aveCount = *maxBinItr;
+    
+    if (aveCount > 0)
+    {
+        int   maxSteps = std::max(std::distance(waveformHist.begin(),maxBinItr),std::distance(maxBinItr,waveformHist.end()));
+        int   curStep  = 0;
+        
+        aveSum = aveCount * binSize * std::distance(waveformHist.begin(),maxBinItr);
+    
+        while(curStep++ < maxSteps)
+        {
+            if (std::distance(waveformHist.begin(),maxBinItr-curStep) >= 0)
+            {
+                if (10. * *(maxBinItr-curStep) > *maxBinItr)
+                {
+                    int count = *(maxBinItr-curStep);
+                    
+                    aveSum   += count * binSize * std::distance(waveformHist.begin(),maxBinItr-curStep);
+                    aveCount += count;
+                }
+            }
+        
+            if (std::distance(waveformHist.end(),maxBinItr+curStep) < 0)
+            {
+                if (10. * *(maxBinItr+curStep) > *maxBinItr)
+                {
+                    int count = *(maxBinItr+curStep);
+                    
+                    aveSum   += count * binSize * std::distance(waveformHist.begin(),maxBinItr+curStep);
+                    aveCount += count;
+                }
+            }
+        }
+    }
+    else aveCount = 1;
+    
+    mean = aveSum / aveCount  + minInputValue;
+    
     // do rms calculation - the old fashioned way and over all adc values
     Waveform locWaveform = waveform;
+    
+    std::transform(locWaveform.begin(), locWaveform.end(), locWaveform.begin(),std::bind2nd(std::minus<float>(),mean));
     
     // sort in ascending order so we can truncate the sume
     std::sort(locWaveform.begin(), locWaveform.end(),[](const auto& left, const auto& right){return std::fabs(left) < std::fabs(right);});
@@ -344,13 +418,13 @@ float ROIFinderMorphological::getTruncatedRMS(const Waveform& waveform) const
     
     std::vector<float>::iterator threshItr = std::find_if(locWaveform.begin(),locWaveform.end(),[threshold](const auto& val){return std::fabs(val) > threshold;});
     
-    int minNumBins = std::max(int(fTruncRMSMinFraction * locWaveform.size()),int(std::distance(locWaveform.begin(),threshItr)));
+    int minNumBins = std::max(int(0.6 * locWaveform.size()),int(std::distance(locWaveform.begin(),threshItr)));
     
-    // Get the truncated sum
+    // recalculate the rms
     localRMS = std::inner_product(locWaveform.begin(), locWaveform.begin() + minNumBins, locWaveform.begin(), 0.);
-    localRMS = std::sqrt(std::max(float(0.),localRMS / float(minNumBins)));
+    rms = std::sqrt(std::max(float(0.),localRMS / float(minNumBins)));
     
-    return localRMS;
+    return;
 }
     
 void ROIFinderMorphological::outputHistograms(art::TFileDirectory& histDir) const
