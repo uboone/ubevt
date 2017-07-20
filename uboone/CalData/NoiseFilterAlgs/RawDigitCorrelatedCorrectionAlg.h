@@ -66,6 +66,8 @@ public:
                                std::vector<float>& skewnessWireVec,
                                std::vector<float>& neighborRatioWireVec,
                                std::vector<float>& pedCorWireVec) const;
+    
+    void getTruncatedMeanRMS(const RawDigitVector& waveform, float& mean, float& rms) const;
 
 private:
     
@@ -74,6 +76,13 @@ private:
     template<class T> T getMedian(std::vector<T>&, T) const;
     
     float getMostProbable(const std::vector<float>&, float) const;
+    
+    void getErosionDilationAverageDifference(const RawDigitVector& inputWaveform,
+                                             size_t                plane,
+                                             RawDigitVector&       erosionVec,
+                                             RawDigitVector&       dilationVec,
+                                             std::vector<float>&   averageVec,
+                                             RawDigitVector&       differenceVec) const;
 
     // Fcl parameters.
     float                fTruncMeanFraction;     ///< Fraction for truncated mean

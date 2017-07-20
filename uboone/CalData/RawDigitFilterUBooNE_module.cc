@@ -372,7 +372,7 @@ void RawDigitFilterUBooNE::produce(art::Event & event)
             
             // Add this wire to the map and try to do some classification here
             fCharacterizationAlg.classifyRawDigitVec(rawadc, view, wire, truncRmsWireVec[wireIdx], minMaxWireVec[wireIdx], meanWireVec[wireIdx],skewnessWireVec[wireIdx], neighborRatioWireVec[wireIdx], groupToDigitIdxPairMap);
-
+            
             // Are we at the correct boundary for dealing with the noise?
             if (!((wireIdx + 1) % fNumWiresToGroup[view]))
             {
@@ -410,11 +410,6 @@ void RawDigitFilterUBooNE::produce(art::Event & event)
                     caldata::RawDigitVector& rawDataVec = rawDataWireTimeVec[locWireIdx];
                     
                     fCharacterizationAlg.getMeanRmsAndPedCor(rawDataVec, channelWireVec[locWireIdx], truncMean, truncRms, pedCor);
-                    
-                    if (channelWireVec[locWireIdx] > 6622 && channelWireVec[locWireIdx] < 6635)
-                    {
-                        std::cout << "--> channel: " << channelWireVec[locWireIdx] << ", truncMean: " << truncMean << ", truncRms: " << truncRms << ", pedCor: " << pedCor << std::endl;
-                    }
                     
                     // The ultra high noise channels are simply zapped
                     if (truncRms < fRmsRejectionCutHi[view]) // && ImAGoodWire(view,baseWireIdx + locWireIdx))

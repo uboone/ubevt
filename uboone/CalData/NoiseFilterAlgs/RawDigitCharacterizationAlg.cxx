@@ -316,41 +316,40 @@ void RawDigitCharacterizationAlg::getMeanAndRms(const RawDigitVector& rawWavefor
     
     std::copy(rawWaveform.begin(),rawWaveform.end(),locWaveform.begin());
     
+    // Note that we are not meant to assume that the incoming waveform has been zero suppressed
+    // So first task is to get an initial mean and rms...
+    float sumWaveform  = std::accumulate(locWaveform.begin(),locWaveform.end(), 0.);
+    float meanWaveform = sumWaveform / float(locWaveform.size());
+    
+    // Use this to do an initial zero suppression
+    std::transform(locWaveform.begin(),locWaveform.end(),locWaveform.begin(),std::bind2nd(std::minus<float>(),meanWaveform));
+    
     // sort in ascending order so we can truncate before counting any possible signal
     std::sort(locWaveform.begin(), locWaveform.end(),[](const auto& left, const auto& right){return std::fabs(left) < std::fabs(right);});
     
-    // Get the initial mean for the first half of the waveform which will be used in the rms calculation
-    float sumWaveform  = std::accumulate(locWaveform.begin(),locWaveform.begin() + locWaveform.size()/2, 0.);
-    float meanWaveform = sumWaveform / float(locWaveform.size()/2);
-    
-    // Now form the differences between ADC values and the mean we have calculated
-    std::vector<float> locWaveformDiff(locWaveform.size()/2);
-    
-    std::transform(locWaveform.begin(),locWaveform.begin() + locWaveform.size()/2,locWaveformDiff.begin(), std::bind2nd(std::minus<float>(),meanWaveform));
-    
     // And now the local rms calculation...
-    float localRMS = std::inner_product(locWaveformDiff.begin(), locWaveformDiff.end(), locWaveformDiff.begin(), 0.);
+    float localRMS = std::inner_product(locWaveform.begin(), locWaveform.end(), locWaveform.begin(), 0.);
     
-    localRMS = std::sqrt(std::max(float(0.),localRMS / float(locWaveformDiff.size())));
+    localRMS = std::sqrt(std::max(float(0.),localRMS / float(locWaveform.size())));
     
     // We use this local rms calculation to try to limit the range of the waveform we use to calculate the truncated mean and rms
-    float threshold = 6. * localRMS;
+    float threshold = 3. * localRMS;
     
     std::vector<float>::iterator threshItr = std::find_if(locWaveform.begin(),locWaveform.end(),[threshold](const auto& val){return std::fabs(val) > threshold;});
     
-    int minNumBins = std::max(int((1-fracBins) * locWaveform.size()),int(std::distance(locWaveform.begin(),threshItr)));
+    int minNumBins = std::max(int((1.-fracBins) * locWaveform.size()),int(std::distance(locWaveform.begin(),threshItr)));
     
     // Ok, now we calculate the mean for this range
     float aveSum = std::accumulate(locWaveform.begin(), locWaveform.begin() + minNumBins, 0.);
     aveVal       = aveSum / minNumBins;
     
-    // recalculate the rms
-    locWaveformDiff.resize(minNumBins);
+    std::transform(locWaveform.begin(),locWaveform.begin() + minNumBins,locWaveform.begin(), std::bind2nd(std::minus<float>(),aveVal));
     
-    std::transform(locWaveform.begin(),locWaveform.begin() + minNumBins,locWaveformDiff.begin(), std::bind2nd(std::minus<float>(),aveVal));
-    
-    rmsVal = std::inner_product(locWaveformDiff.begin(), locWaveformDiff.begin() + minNumBins, locWaveformDiff.begin(), 0.);
+    rmsVal = std::inner_product(locWaveform.begin(), locWaveform.begin() + minNumBins, locWaveform.begin(), 0.);
     rmsVal = std::sqrt(std::max(float(0.),rmsVal / float(minNumBins)));
+    
+    // Finally adjust the baseline
+    aveVal += meanWaveform;
     
     return;
 }
@@ -374,8 +373,6 @@ bool RawDigitCharacterizationAlg::classifyRawDigitVec(RawDigitVector&         ra
     float selectionCut = fMinMaxSelectionCut[viewIdx];
     float rejectionCut = fRmsRejectionCutHi[viewIdx];
     
-    if (viewIdx == 1 && wire > 2303 && wire < 2400) std::cout << "wire: " << wire << ", minMax: " << minMax << ", cut: " << selectionCut << ", truncRms: " << truncRms << ", cut: " << rejectionCut << std::endl;
-    
     // Selection to process
     if (minMax > selectionCut && truncRms < rejectionCut)
     {
@@ -397,8 +394,6 @@ bool RawDigitCharacterizationAlg::classifyRawDigitVec(RawDigitVector&         ra
             // Set a threshold
             short threshold(6);
             
-            if (viewIdx == 1 && wire > 2303 && wire < 2400) std::cout << "    ==> skewness: " << skewness << ", neighborRatio: " << neighborRatio << ", minMax: " << minMax << std::endl;
-                    
             // If going from quiescent to on again, then the min/max will be large
             //if (skewnessWireVec[wireIdx] > 0. && minMaxWireVec[wireIdx] > 50 && truncRmsWireVec[wireIdx] > 2.)
             if (skewness > 0. && neighborRatio < 0.7 && minMax > 50)
@@ -424,8 +419,6 @@ bool RawDigitCharacterizationAlg::classifyRawDigitVec(RawDigitVector&         ra
         
         classified = true;
     }
-    
-    else std::cout << "==> plane: " << viewIdx << ", wire: " << wire << ", minMax: " << minMax << ", truncRms: " << truncRms << std::endl;
     
     return classified;
 }
