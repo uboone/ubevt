@@ -229,73 +229,7 @@ void RawDigitCorrelatedCorrectionAlg::removeCorrelatedNoise(RawDigitAdcIdxPair& 
         std::vector<float> corValVec;
         
         corValVec.resize(maxTimeSamples, 0.);
-        
-        // Try working (again) with erosion/dilation vectors
-        std::vector<RawDigitVector>     erosionVecVec(fNumWiresToGroup[viewIdx]);
-        std::vector<RawDigitVector>     dilationVecVec(fNumWiresToGroup[viewIdx]);
-        std::vector<std::vector<float>> averageVecVec(fNumWiresToGroup[viewIdx]);
-        std::vector<RawDigitVector>     differenceVecVec(fNumWiresToGroup[viewIdx]);
-        
-        for(const auto& wireAdcItr : wireToAdcIdxMap)
-        {
-            size_t wireIdx = wireAdcItr.first - baseWireIdx;
-            
-            getErosionDilationAverageDifference(wireToRawDigitVecMap.at(wireAdcItr.first),
-                                                viewIdx,
-                                                erosionVecVec.at(wireIdx),
-                                                dilationVecVec.at(wireIdx),
-                                                averageVecVec.at(wireIdx),
-                                                differenceVecVec.at(wireIdx));
-            
-            // Get the mean and rms of the difference vector
-            float diffMean;
-            float diffRMS;
-            
-            getTruncatedMeanRMS(differenceVecVec.at(wireIdx), diffMean, diffRMS);
-            
-            // set a low bar...
-            float diffThreshold = diffMean + 3. * diffRMS;
-            
-            size_t aveIdx(0);
-            
-            while(++aveIdx < averageVecVec.at(wireIdx).size())
-            {
-                // Have we gone over threshold?
-                if (differenceVecVec.at(wireIdx).at(aveIdx) > diffThreshold)
-                {
-                    size_t lastIdx = aveIdx;
-                    
-                    // We are over threshold, back up to find the start point
-                    while(lastIdx > 0 && differenceVecVec.at(wireIdx).at(lastIdx) > diffMean) lastIdx--;
-                    
-                    size_t nextIdx = aveIdx;
-                    
-                    // Look for the end point which will be when we return to baseline
-                    while(nextIdx < averageVecVec.at(wireIdx).size() && differenceVecVec.at(wireIdx).at(nextIdx) > diffMean) nextIdx++;
-                    
-                    if (nextIdx >= averageVecVec.at(wireIdx).size())
-                    {
-                        nextIdx = averageVecVec.at(wireIdx).size() - 1;
-                    }
-                    
-                    if (nextIdx > lastIdx)
-                    {
-                        float lastVal = averageVecVec.at(wireIdx).at(lastIdx);
-                        float nextVal = averageVecVec.at(wireIdx).at(nextIdx);
-                        float slope   = (nextVal - lastVal) / float(nextIdx - lastIdx);
-                        
-                        if (nextIdx >= averageVecVec.at(wireIdx).size() - 1) slope = 0.;
-                        
-                        for(size_t idx = lastIdx; idx < nextIdx; idx++)
-                            averageVecVec.at(wireIdx).at(idx) = slope * float(idx - lastIdx) + lastVal;
-                        
-                        aveIdx = nextIdx;
-                    }
-                    
-                }
-            }
-        }
-        
+
         // Build the vector of corrections for each time bin
         for(size_t sampleIdx = 0; sampleIdx < maxTimeSamples; sampleIdx++)
         {
@@ -324,8 +258,7 @@ void RawDigitCorrelatedCorrectionAlg::removeCorrelatedNoise(RawDigitAdcIdxPair& 
                 int wireIdx(wireAdcItr.first - baseWireIdx);
 
                 // Accumulate
-                //adcValuesVec.push_back(float(wireToRawDigitVecMap.at(wireAdcItr.first)[sampleIdx]) - truncMeanWireVec[wireIdx]);
-                adcValuesVec.push_back(float(wireToRawDigitVecMap.at(wireAdcItr.first)[sampleIdx]) - averageVecVec[wireIdx][sampleIdx]);
+                adcValuesVec.push_back(float(wireToRawDigitVecMap.at(wireAdcItr.first)[sampleIdx]) - truncMeanWireVec[wireIdx]);
                 
                 // Make hists if requested
                 if (fillHists)
@@ -334,8 +267,8 @@ void RawDigitCorrelatedCorrectionAlg::removeCorrelatedNoise(RawDigitAdcIdxPair& 
                 }
             }
             
-            float medianValue = getMedian(adcValuesVec, float(-10000.));
-            //float medianValue = getMostProbable(adcValuesVec, float(-10000.));
+            //float medianValue = getMedian(adcValuesVec, float(-10000.));
+            float medianValue = getMostProbable(adcValuesVec, float(-10000.));
             
             corValVec[sampleIdx] = medianValue;
         }
@@ -384,12 +317,10 @@ void RawDigitCorrelatedCorrectionAlg::removeCorrelatedNoise(RawDigitAdcIdxPair& 
                 if (sampleIdx < wireAdcItr.second.first || sampleIdx >= wireAdcItr.second.second)
                     corVal = 0.;
                 
-                //RawDigitVector& rawDataTimeVec = wireToRawDigitVecMap.at(wireIdx);
                 short& rawDataTimeVal = wireToRawDigitVecMap.at(wireIdx).at(sampleIdx);
                 
                 // Probably doesn't matter, but try to get slightly more accuracy by doing float math and rounding
-                //float newAdcValueFloat = float(rawDataTimeVal) - corVal - pedCorWireVec[wireIdx - baseWireIdx];
-                float newAdcValueFloat = float(rawDataTimeVal) - corVal - pedCorWireVec.at(wireIdx - baseWireIdx) - averageVecVec.at(wireIdx - baseWireIdx).at(sampleIdx);
+                float newAdcValueFloat = float(rawDataTimeVal) - corVal - pedCorWireVec[wireIdx - baseWireIdx];
                 
                 rawDataTimeVal = std::round(newAdcValueFloat);
                 
@@ -402,6 +333,81 @@ void RawDigitCorrelatedCorrectionAlg::removeCorrelatedNoise(RawDigitAdcIdxPair& 
                     fFFTCorHist[viewIdx]->Fill(sampleIdx,corVal);
                 }
             }
+        }
+        
+        // Try working (again) with erosion/dilation vectors
+        for(const auto& wireAdcItr : wireToAdcIdxMap)
+        {
+            RawDigitVector     erosionVec;
+            RawDigitVector     dilationVec;
+            std::vector<float> averageVec;
+            RawDigitVector     differenceVec;
+            
+            RawDigitVector& rawDigitVec = wireToRawDigitVecMap.at(wireAdcItr.first);
+            
+            getErosionDilationAverageDifference(rawDigitVec,
+                                                viewIdx,
+                                                erosionVec,
+                                                dilationVec,
+                                                averageVec,
+                                                differenceVec);
+            
+            // Get the mean and rms of the difference vector
+            float diffMean;
+            float diffRMS;
+            
+            getTruncatedMeanRMS(differenceVec, diffMean, diffRMS);
+            
+            // set a low bar...
+            float diffThreshold = diffMean + 2. * diffRMS;
+            
+            size_t aveIdx(0);
+            
+            while(++aveIdx < averageVec.size())
+            {
+                // Have we gone over threshold?
+                if (differenceVec.at(aveIdx) > diffThreshold)
+                {
+                    size_t lastIdx = aveIdx;
+                    
+                    // We are over threshold, back up to find the start point
+                    while(lastIdx > 0 && differenceVec.at(lastIdx) > diffMean) lastIdx--;
+                    
+                    size_t nextIdx = aveIdx;
+                    
+                    // Look for the end point which will be when we return to baseline
+                    while(nextIdx < averageVec.size() && differenceVec.at(nextIdx) > diffMean) nextIdx++;
+                    
+                    if (nextIdx >= averageVec.size())
+                    {
+                        nextIdx = averageVec.size() - 1;
+                    }
+                    
+                    if (nextIdx > lastIdx)
+                    {
+                        float lastVal = averageVec.at(lastIdx);
+                        float nextVal = averageVec.at(nextIdx);
+                        float slope   = (nextVal - lastVal) / float(nextIdx - lastIdx);
+                        
+                        if (nextIdx >= averageVec.size() - 1) slope = 0.;
+                        
+                        for(size_t idx = lastIdx; idx < nextIdx; idx++)
+                            averageVec.at(idx) = slope * float(idx - lastIdx) + lastVal;
+                        
+                        aveIdx = nextIdx;
+                    }
+                    
+                }
+            }
+            
+            // Now adjust the input vector...
+            float truncMean = truncMeanWireVec[wireAdcItr.first - baseWireIdx];
+            
+            std::transform(rawDigitVec.begin()+wireAdcItr.second.first,
+                           rawDigitVec.begin()+wireAdcItr.second.second,
+                           averageVec.begin()+wireAdcItr.second.first,
+                           rawDigitVec.begin()+wireAdcItr.second.first,
+                           [truncMean](const auto& left, const auto& right){return std::round(left - right + truncMean);});
         }
     }
     
@@ -516,47 +522,41 @@ float RawDigitCorrelatedCorrectionAlg::getMostProbable(const std::vector<float>&
     
     if (!valuesVec.empty())
     {
-        std::pair<std::vector<float>::const_iterator,std::vector<float>::const_iterator> minMaxItrPair = std::minmax_element(valuesVec.begin(),valuesVec.end());
+        std::map<int,int> frequencyMap;
+        int               mpCount(0);
+        int               mpVal(0);
         
-        float minValue = *minMaxItrPair.first;
-        float maxValue = *minMaxItrPair.second;
-        float minMax   = maxValue - minValue;
-        int   range    = 2 * std::ceil(minMax) + 1;
-        
-        if (range > 1)
+        for(const auto& val : valuesVec)
         {
-            std::vector<int> countVec;
+            int intVal = std::round(2.*val);
             
-            countVec.resize(range, 0);
+            frequencyMap[intVal]++;
             
-            for(const auto& val : valuesVec)
+            if (frequencyMap.at(intVal) > mpCount)
             {
-                int idx = std::min(range, int(std::max(0.,2.*(val-minValue))));
-                
-                countVec.at(idx)++;
+                mpCount = frequencyMap.at(intVal);
+                mpVal   = intVal;
             }
-        
-            std::vector<int>::iterator mostProbableItr = std::max_element(countVec.begin(),countVec.end());
-        
-            // Should we average over largest neighboring bin?
-            int   cnt(*mostProbableItr);
-            float aveSum(0.5 * cnt * std::distance(countVec.begin(),mostProbableItr));
-        
-            if (mostProbableItr + 1 != countVec.end() && 5 * *(mostProbableItr + 1) > *mostProbableItr)
-            {
-                cnt    += *(mostProbableItr + 1);
-                aveSum += 0.5 * *(mostProbableItr + 1) * std::distance(countVec.begin(),mostProbableItr+1);
-            }
-            
-            if (std::distance(countVec.begin(),mostProbableItr-1) >= 0 && 5 * *(mostProbableItr - 1) > *mostProbableItr)
-            {
-                cnt    += *(mostProbableItr - 1);
-                aveSum += 0.5 * *(mostProbableItr - 1) * std::distance(countVec.begin(),mostProbableItr-1);
-            }
-        
-            mostProbableValue = aveSum / cnt + minValue;
         }
-        else mostProbableValue = (maxValue + minValue) / 2;
+        
+        // take a weighted average of two neighbor bins
+        int meanCnt = mpCount;
+        int meanSum = mpVal * mpCount;
+        
+        for(int idx = -3; idx < 4; idx++)
+        {
+            if (!idx) continue;
+            
+            std::map<int,int>::iterator neighborItr = frequencyMap.find(mpVal+idx);
+            
+            if (neighborItr != frequencyMap.end() && 5 * neighborItr->second > mpCount)
+            {
+                meanSum += neighborItr->first * neighborItr->second;
+                meanCnt += neighborItr->second;
+            }
+        }
+        
+        mostProbableValue = 0.5 * float(meanSum) / float(meanCnt);
     }
     
     return std::max(mostProbableValue,defaultValue);
@@ -570,7 +570,7 @@ void RawDigitCorrelatedCorrectionAlg::getErosionDilationAverageDifference(const 
                                                                           RawDigitVector&       differenceVec) const
 {
     // Set the window size
-    int halfWindowSize(60);
+    int halfWindowSize(30);
     
     // Define the "smallest" function
     //    auto smaller = [](const auto& left, const auto& right){return std::fabs(left) < std::fabs(right);};
@@ -626,72 +626,47 @@ void RawDigitCorrelatedCorrectionAlg::getErosionDilationAverageDifference(const 
 void RawDigitCorrelatedCorrectionAlg::getTruncatedMeanRMS(const RawDigitVector& waveform, float& mean, float& rms) const
 {
     // We need to get a reliable estimate of the mean and can't assume the input waveform will be ~zero mean...
-    // So we employ a histogramming method...
-    std::pair<RawDigitVector::const_iterator,RawDigitVector::const_iterator> rangeItrPair = std::minmax_element(waveform.begin(),waveform.end());
-    
-    int   minInputValue = *rangeItrPair.first;
-    int   maxInputValue = *rangeItrPair.second;
-    int   range         = maxInputValue - minInputValue;
-    int   numBins       = range;
-    
-    std::vector<int> waveformHist;
-    
-    waveformHist.resize(numBins + 1, 0);
+    // The input waveform will in in (short) int form, so one can employ a map method to find the
+    // most probable value, then develop mean about that
+    std::map<int,int> frequencyMap;
+    int               mpCount(0);
+    int               mpVal(0);
     
     for(const auto& val : waveform)
     {
-        int bin = std::min(numBins, std::max(0, int(val - minInputValue)));
+        frequencyMap[val]++;
         
-        waveformHist.at(bin)++;
-    }
-    
-    std::vector<int>::iterator maxBinItr = std::max_element(waveformHist.begin(),waveformHist.end());
-    
-    float aveSum(0.);
-    int   aveCount = *maxBinItr;
-    
-    if (aveCount > 0)
-    {
-        int maxSteps = std::max(std::distance(waveformHist.begin(),maxBinItr),std::distance(maxBinItr,waveformHist.end()));
-        int curStep  = 0;
-        
-        aveSum = aveCount * std::distance(waveformHist.begin(),maxBinItr);
-        
-        while(curStep++ < maxSteps)
+        if (frequencyMap.at(val) > mpCount)
         {
-            if (std::distance(waveformHist.begin(),maxBinItr-curStep) >= 0)
-            {
-                if (10 * *(maxBinItr-curStep) > *maxBinItr)
-                {
-                    int count = *(maxBinItr-curStep);
-                    
-                    aveSum   += count * std::distance(waveformHist.begin(),maxBinItr-curStep);
-                    aveCount += count;
-                }
-            }
-            
-            if (std::distance(waveformHist.end(),maxBinItr+curStep) < 0)
-            {
-                if (10 * *(maxBinItr+curStep) > *maxBinItr)
-                {
-                    int count = *(maxBinItr+curStep);
-                    
-                    aveSum   += count * std::distance(waveformHist.begin(),maxBinItr+curStep);
-                    aveCount += count;
-                }
-            }
+            mpCount = frequencyMap.at(val);
+            mpVal   = val;
         }
     }
-    else aveCount = 1;
     
-    mean = aveSum / aveCount + minInputValue;
+    // take a weighted average of two neighbor bins
+    int meanCnt = mpCount;
+    int meanSum = mpVal * mpCount;
+    
+    for(int idx = -3; idx < 4; idx++)
+    {
+        if (!idx) continue;
+        
+        std::map<int,int>::iterator neighborItr = frequencyMap.find(mpVal+idx);
+        
+        if (neighborItr != frequencyMap.end() && 5 * neighborItr->second > mpCount)
+        {
+            meanSum += neighborItr->first * neighborItr->second;
+            meanCnt += neighborItr->second;
+        }
+    }
+    
+    mean = float(meanSum) / float(meanCnt);
     
     // do rms calculation - the old fashioned way and over all adc values
     std::vector<float> locWaveform(waveform.size());
     
-    std::transform(waveform.begin(),waveform.end(),locWaveform.begin(),[](const auto& val){return float(val);});
-    
-    std::transform(locWaveform.begin(), locWaveform.end(), locWaveform.begin(),std::bind2nd(std::minus<float>(),mean));
+    // convert input waveform to real and zero suppress all at once...
+    std::transform(waveform.begin(), waveform.end(), locWaveform.begin(),std::bind2nd(std::minus<float>(),mean));
     
     // sort in ascending order so we can truncate the sume
     std::sort(locWaveform.begin(), locWaveform.end(),[](const auto& left, const auto& right){return std::fabs(left) < std::fabs(right);});
@@ -700,11 +675,11 @@ void RawDigitCorrelatedCorrectionAlg::getTruncatedMeanRMS(const RawDigitVector& 
     
     localRMS = std::sqrt(std::max(float(0.),localRMS / float(locWaveform.size()/2)));
     
-    float threshold = 6. * localRMS;
+    float threshold = std::min(4.,3. * localRMS);
     
     std::vector<float>::iterator threshItr = std::find_if(locWaveform.begin(),locWaveform.end(),[threshold](const auto& val){return std::fabs(val) > threshold;});
     
-    int minNumBins = std::max(int(0.6 * locWaveform.size()),int(std::distance(locWaveform.begin(),threshItr)));
+    int minNumBins = std::max(int(0.5 * locWaveform.size()),int(std::distance(locWaveform.begin(),threshItr)));
     
     // recalculate the rms
     localRMS = std::inner_product(locWaveform.begin(), locWaveform.begin() + minNumBins, locWaveform.begin(), 0.);
