@@ -382,7 +382,7 @@ void RawDigitFilterUBooNE::produce(art::Event & event)
                 for(auto& groupToDigitIdxPair : groupToDigitIdxPairMap)
                 {
                     fCorCorrectAlg.removeCorrelatedNoise(groupToDigitIdxPair.second,
-                                                         view,
+                                                         channel,
                                                          truncMeanWireVec,
                                                          truncRmsWireVec,
                                                          minMaxWireVec,
