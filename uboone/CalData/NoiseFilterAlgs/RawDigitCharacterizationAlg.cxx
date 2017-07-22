@@ -97,19 +97,19 @@ void RawDigitCharacterizationAlg::initializeHists(art::ServiceHandle<art::TFileS
         fSkewnessProfiles.resize(3);
         fModeRatioProfiles.resize(3);
         
-        for(size_t viewIdx = 0; viewIdx < 3; viewIdx++)
+        for(size_t planeIdx = 0; planeIdx < 3; planeIdx++)
         {
-            std::string minMaxName = "MinMax_" + std::to_string(viewIdx);
+            std::string minMaxName = "MinMax_" + std::to_string(planeIdx);
         
-            fMinMaxProfiles[viewIdx] = tfs->make<TProfile>(minMaxName.c_str(), "Min/Max Profiles;Wire", fNumWiresToGroup[viewIdx], 0., fNumWiresToGroup[viewIdx], 0., 200.);
+            fMinMaxProfiles[planeIdx] = tfs->make<TProfile>(minMaxName.c_str(), "Min/Max Profiles;Wire", fNumWiresToGroup[planeIdx], 0., fNumWiresToGroup[planeIdx], 0., 200.);
         
-            minMaxName = "Skewness_" + std::to_string(viewIdx);
+            minMaxName = "Skewness_" + std::to_string(planeIdx);
         
-            fSkewnessProfiles[viewIdx] = tfs->make<TProfile>(minMaxName.c_str(), "Skewness Profiles;Wire", fNumWiresToGroup[viewIdx], 0., fNumWiresToGroup[viewIdx], -4., 4.);
+            fSkewnessProfiles[planeIdx] = tfs->make<TProfile>(minMaxName.c_str(), "Skewness Profiles;Wire", fNumWiresToGroup[planeIdx], 0., fNumWiresToGroup[planeIdx], -4., 4.);
         
-            minMaxName = "ModeRatio_" + std::to_string(viewIdx);
+            minMaxName = "ModeRatio_" + std::to_string(planeIdx);
         
-            fModeRatioProfiles[viewIdx] = tfs->make<TProfile>(minMaxName.c_str(), "Mode Ratio;Wire", fNumWiresToGroup[viewIdx], 0., fNumWiresToGroup[viewIdx], 0., 1.2);
+            fModeRatioProfiles[planeIdx] = tfs->make<TProfile>(minMaxName.c_str(), "Mode Ratio;Wire", fNumWiresToGroup[planeIdx], 0., fNumWiresToGroup[planeIdx], 0., 1.2);
         }
     
         fHistsInitialized = true;
@@ -265,10 +265,6 @@ void RawDigitCharacterizationAlg::getMeanRmsAndPedCor(const RawDigitVector& rawW
                                                       float&                rmsVal,
                                                       float&                pedCorVal) const
 {
-    if (channel > 5681 && channel < 5689)
-    {
-        std::cout << "--> channel: " << channel << std::endl;
-    }
     // First simply get the mean and rms...
     getMeanAndRms(rawWaveform, truncMean, rmsVal, fTruncMeanFraction);
     
@@ -276,11 +272,6 @@ void RawDigitCharacterizationAlg::getMeanRmsAndPedCor(const RawDigitVector& rawW
     float pedestal = fPedestalRetrievalAlg.PedMean(channel);
     
     pedCorVal = truncMean - pedestal;
-    
-    if (channel > 5681 && channel < 5689)
-    {
-        std::cout << "   - truncMean: " << truncMean << ", truncRMS: " << rmsVal << ", ped: " << pedestal << ", pedCor: " << pedCorVal << std::endl;
-    }
     
     // Fill some histograms here
     if (fHistsInitialized)
@@ -397,7 +388,7 @@ void RawDigitCharacterizationAlg::getMeanAndRms(const RawDigitVector& rawWavefor
 }
 
 bool RawDigitCharacterizationAlg::classifyRawDigitVec(RawDigitVector&         rawWaveform,
-                                                      unsigned int            viewIdx,
+                                                      unsigned int            planeIdx,
                                                       unsigned int            wire,
                                                       float                   truncRms,
                                                       short                   minMax,
@@ -412,13 +403,13 @@ bool RawDigitCharacterizationAlg::classifyRawDigitVec(RawDigitVector&         ra
     bool classified(false);
     
     // Dereference the selection/rejection cut
-    float selectionCut = fMinMaxSelectionCut[viewIdx];
-    float rejectionCut = fRmsRejectionCutHi[viewIdx];
+    float selectionCut = fMinMaxSelectionCut[planeIdx];
+    float rejectionCut = fRmsRejectionCutHi[planeIdx];
     
     // Selection to process
     if (minMax > selectionCut && truncRms < rejectionCut)
     {
-        size_t group = fChannelGroups.channelGroup(viewIdx,wire);
+        size_t group = fChannelGroups.channelGroup(planeIdx,wire);
         
         if (groupToDigitIdxPairMap.find(group) == groupToDigitIdxPairMap.end())
             groupToDigitIdxPairMap.insert(std::pair<size_t,RawDigitAdcIdxPair>(group,RawDigitAdcIdxPair()));
@@ -427,7 +418,7 @@ bool RawDigitCharacterizationAlg::classifyRawDigitVec(RawDigitVector&         ra
         groupToDigitIdxPairMap.at(group).second.insert(std::pair<size_t,RawDigitVectorIdxPair>(wire,RawDigitVectorIdxPair(0,rawWaveform.size())));
         
         // Look for chirping wire sections. Confine this to only the V plane
-        if (viewIdx == 1)
+        if (planeIdx == 1)
         {
             // Do wire shape corrections to look for chirping wires and other oddities to avoid
             // Recover our objects...
