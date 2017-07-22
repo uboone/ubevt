@@ -329,8 +329,6 @@ void CalWireROI::produce(art::Event& evt)
     evt.put(std::move(WireDigitAssn), fSpillName);
 
     fEventCount++;
-    
-    std::cout << "**>> CalWireROI finito" << std::endl;
 
     return;
 } // produce
