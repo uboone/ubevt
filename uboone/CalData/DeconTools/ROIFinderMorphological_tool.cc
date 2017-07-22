@@ -165,7 +165,7 @@ void ROIFinderMorphological::FindROIs(const Waveform& waveform, size_t channel, 
         fRmsHistVec.at(planeID.Plane)->Fill(truncRMS, 1.);
     }
     
-    float threshold = truncMean + fNumSigma.at(planeID.Plane) * truncRMS;
+    float threshold = truncMean + fNumSigma.at(planeID.Plane) * std::max(float(0.5),truncRMS);
     
     findROICandidatesDiff(differenceVec, erosionVec, dilationVec, 0, averageVec.size(), threshold, roiVec);
     
@@ -341,66 +341,43 @@ void ROIFinderMorphological::getErosionDilationAverageDifference(const Waveform&
 void ROIFinderMorphological::getTruncatedMeanRMS(const Waveform& waveform, float& mean, float& rms) const
 {
     // We need to get a reliable estimate of the mean and can't assume the input waveform will be ~zero mean...
-    // So we employ a histogramming method...
-    std::pair<Waveform::const_iterator,Waveform::const_iterator> rangeItrPair = std::minmax_element(waveform.begin(),waveform.end());
-    
-    float minInputValue = *rangeItrPair.first;
-    float maxInputValue = *rangeItrPair.second;
-    float range         = maxInputValue - minInputValue;
-    int   numBins       = 2. * range;
-    float binSize       = range / float(numBins);
-    
-    std::vector<int> waveformHist;
-    
-    waveformHist.resize(numBins + 1, 0);
+    // Basic idea is to find the most probable value in the ROI presented to us
+    // From that we can develop an average of the true baseline of the ROI.
+    // To do that we employ a map based scheme
+    std::map<int,int> frequencyMap;
+    int               mpCount(0);
+    int               mpVal(0);
     
     for(const auto& val : waveform)
     {
-        int bin = std::min(numBins, std::max(0, int(2. * (val - minInputValue))));
+        int intVal = std::round(4.*val);
         
-        waveformHist.at(bin)++;
-    }
-    
-    std::vector<int>::iterator maxBinItr = std::max_element(waveformHist.begin(),waveformHist.end());
-    
-    float aveSum(0.);
-    int   aveCount = *maxBinItr;
-    
-    if (aveCount > 0)
-    {
-        int   maxSteps = std::max(std::distance(waveformHist.begin(),maxBinItr),std::distance(maxBinItr,waveformHist.end()));
-        int   curStep  = 0;
+        frequencyMap[intVal]++;
         
-        aveSum = aveCount * binSize * std::distance(waveformHist.begin(),maxBinItr);
-    
-        while(curStep++ < maxSteps)
+        if (frequencyMap.at(intVal) > mpCount)
         {
-            if (std::distance(waveformHist.begin(),maxBinItr-curStep) >= 0)
-            {
-                if (10. * *(maxBinItr-curStep) > *maxBinItr)
-                {
-                    int count = *(maxBinItr-curStep);
-                    
-                    aveSum   += count * binSize * std::distance(waveformHist.begin(),maxBinItr-curStep);
-                    aveCount += count;
-                }
-            }
-        
-            if (std::distance(waveformHist.end(),maxBinItr+curStep) < 0)
-            {
-                if (10. * *(maxBinItr+curStep) > *maxBinItr)
-                {
-                    int count = *(maxBinItr+curStep);
-                    
-                    aveSum   += count * binSize * std::distance(waveformHist.begin(),maxBinItr+curStep);
-                    aveCount += count;
-                }
-            }
+            mpCount = frequencyMap.at(intVal);
+            mpVal   = intVal;
         }
     }
-    else aveCount = 1;
     
-    mean = aveSum / aveCount  + minInputValue;
+    // take a weighted average of two neighbor bins
+    int meanCnt  = 0;
+    int meanSum  = 0;
+    int binRange = 8;
+    
+    for(int idx = -binRange; idx <= binRange; idx++)
+    {
+        std::map<int,int>::iterator neighborItr = frequencyMap.find(mpVal+idx);
+        
+        if (neighborItr != frequencyMap.end() && 5 * neighborItr->second > mpCount)
+        {
+            meanSum += neighborItr->first * neighborItr->second;
+            meanCnt += neighborItr->second;
+        }
+    }
+    
+    mean = 0.25 * float(meanSum) / float(meanCnt);
     
     // do rms calculation - the old fashioned way and over all adc values
     Waveform locWaveform = waveform;
@@ -414,7 +391,7 @@ void ROIFinderMorphological::getTruncatedMeanRMS(const Waveform& waveform, float
     
     localRMS = std::sqrt(std::max(float(0.),localRMS / float(locWaveform.size()/2)));
     
-    float threshold = 6. * localRMS;
+    float threshold = std::max(0.2,6. * localRMS);
     
     std::vector<float>::iterator threshItr = std::find_if(locWaveform.begin(),locWaveform.end(),[threshold](const auto& val){return std::fabs(val) > threshold;});
     
