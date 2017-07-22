@@ -31,6 +31,8 @@ public:
     float GetBaseline(const std::vector<float>&, raw::ChannelID_t, size_t, size_t) const override;
     
 private:
+    float GetBaseline(const std::vector<float>&, int, size_t, size_t) const;
+
     art::ServiceHandle<util::SignalShapingServiceMicroBooNE> fSignalShaping;
 };
     
@@ -59,110 +61,70 @@ float BaselineMostProbAve::GetBaseline(const std::vector<float>& holder,
                                        size_t                    roiStart,
                                        size_t                    roiLen) const
 {
-    if (roiLen < 2) return 0.0; // not enough information
-
-    float base=0;
+    float base(0.);
     
-    // Recover the expected electronics noise on this channel
-    float deconNoise = 1.26491 * fSignalShaping->GetDeconNoise(channel);
-    
-    // Basic idea is to find the most probable value in the ROI presented to us
-    // From that, get the average value within range of the expected noise and
-    // return that as the ROI baseline.
-    auto const minmax = std::minmax_element(holder.begin()+roiStart,holder.begin()+roiStart+roiLen);
-    
-    float min = *(minmax.first);
-    float max = *(minmax.second);
-    
-    if (max > min)
+    if (roiLen > 1)
     {
-        // we are being generous and allow for one bin more,
-        // which is actually needed in the rare case where (max-min) is an integer
-        size_t nbin = 2 * std::ceil(max - min) + 1;
+        // Recover the expected electronics noise on this channel
+        float  deconNoise = 1.26491 * fSignalShaping->GetDeconNoise(channel);
+        int    binRange   = std::max(1, int(1.5*deconNoise));
+        size_t halfLen    = std::min(size_t(150),roiLen/2);
+    
+        float baseFront = GetBaseline(holder, binRange, roiStart, halfLen);
+        float baseBack  = GetBaseline(holder, binRange, roiLen - halfLen, roiLen);
         
-        // In principle this can't happen...
-        if (nbin == 0) return base;
+        if (std::fabs(baseFront - baseBack) > deconNoise) base = std::max(baseFront,baseBack);
+        else                                              base = 0.5 * (baseFront + baseBack);
+    }
+    
+    return base;
+}
+    
+float BaselineMostProbAve::GetBaseline(const std::vector<float>& holder,
+                                       int                       binRange,
+                                       size_t                    roiStart,
+                                       size_t                    roiLen) const
+{
+    float base(0.);
+    
+    if (roiLen > 1)
+    {
+        // Basic idea is to find the most probable value in the ROI presented to us
+        // From that we can develop an average of the true baseline of the ROI.
+        // To do that we employ a map based scheme
+        std::map<int,int> frequencyMap;
+        int               mpCount(0);
+        int               mpVal(0);
         
-        std::vector<int> roiHistVec(nbin, 0);
-        
-        size_t maxBinIdx = std::min(size_t(75), roiLen/2);
-        
-        for(size_t binIdx = 0; binIdx < maxBinIdx; binIdx++)
+        for(size_t idx = roiStart; idx < roiLen; idx++)
         {
-            // First get bin on low side of ROI
-            int    intIdx = std::floor(2. * (holder.at(roiStart+binIdx) - min));
-            size_t idx    = std::max(std::min(intIdx,int(nbin-1)),0);
+            int intVal = std::round(2.*holder.at(idx));
             
-            roiHistVec.at(idx)++;
+            frequencyMap[intVal]++;
             
-            // Now get the high side of the ROI
-            intIdx = std::floor(2. * (holder.at(roiStart+roiLen-binIdx-1) - min));
-            idx    = std::max(std::min(intIdx,int(nbin-1)),0);
-            
-            roiHistVec.at(idx)++;
-        }
-        
-        std::vector<int>::const_iterator mpValItr = std::max_element(roiHistVec.cbegin(),roiHistVec.cend());
-        
-        // Really can't see how this can happen... but check just to be sure
-        if (mpValItr != roiHistVec.end())
-        {
-//            float mpVal   = min + 0.5 * std::distance(roiHistVec.cbegin(),mpValItr);
-//            int   baseCnt = 0;
-//
-//            for(size_t binIdx = roiStart; binIdx < roiStart+roiLen; binIdx++)
-//            {
-//                if (std::fabs(holder.at(binIdx) - mpVal) < deconNoise)
-//                {
-//                    base += holder.at(binIdx);
-//                    baseCnt++;
-//                }
-//            }
-//
-//            if (baseCnt > 0) base /= baseCnt;
-
-            // Strategy is to get weighted average of the bins near the most probable value, taking only
-            // those within some range of the expected electronics noise of the MP value.
-            int   baseCnt  = *mpValItr;
-            float mpVal    = 0.5 * std::distance(roiHistVec.cbegin(),mpValItr);
-            int   maxSteps = std::max(std::distance(roiHistVec.cbegin(),mpValItr),std::distance(mpValItr,roiHistVec.cend()));
-            int   curStep  = 0;
-            
-            base = baseCnt * mpVal;
-            
-            while(curStep++ < maxSteps)
+            if (frequencyMap.at(intVal) > mpCount)
             {
-                if (std::distance(roiHistVec.cbegin(),mpValItr-curStep) >= 0)
-                {
-                    float bin = 0.5 * std::distance(roiHistVec.cbegin(),mpValItr-curStep);
-                    
-                    if (std::fabs(bin - mpVal) < 6.*deconNoise)
-                    {
-                        int count = *(mpValItr-curStep);
-                        
-                        base    += count * bin;
-                        baseCnt += count;
-                    }
-                    else maxSteps = 0;
-                }
-                
-                if (std::distance(roiHistVec.cend(),mpValItr+curStep) < 0)
-                {
-                    float bin = 0.5 * std::distance(roiHistVec.cbegin(),mpValItr+curStep);
-                    
-                    if (std::fabs(bin - mpVal) < 6.*deconNoise)
-                    {
-                        int count = *(mpValItr+curStep);
-                        
-                        base    += count * bin;
-                        baseCnt += count;
-                    }
-                    else maxSteps = 0;
-                }
+                mpCount = frequencyMap.at(intVal);
+                mpVal   = intVal;
             }
-            
-            base = base / baseCnt + min;
         }
+        
+        // take a weighted average of two neighbor bins
+        int meanCnt  = 0;
+        int meanSum  = 0;
+        
+        for(int idx = -binRange; idx <= binRange; idx++)
+        {
+            std::map<int,int>::iterator neighborItr = frequencyMap.find(mpVal+idx);
+            
+            if (neighborItr != frequencyMap.end() && 5 * neighborItr->second > mpCount)
+            {
+                meanSum += neighborItr->first * neighborItr->second;
+                meanCnt += neighborItr->second;
+            }
+        }
+        
+        base = 0.5 * float(meanSum) / float(meanCnt);
     }
     
     return base;
