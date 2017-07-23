@@ -31,7 +31,7 @@ public:
     float GetBaseline(const std::vector<float>&, raw::ChannelID_t, size_t, size_t) const override;
     
 private:
-    float GetBaseline(const std::vector<float>&, int, size_t, size_t) const;
+    std::pair<float,int> GetBaseline(const std::vector<float>&, int, size_t, size_t) const;
 
     art::ServiceHandle<util::SignalShapingServiceMicroBooNE> fSignalShaping;
 };
@@ -70,22 +70,26 @@ float BaselineMostProbAve::GetBaseline(const std::vector<float>& holder,
         int    binRange   = std::max(1, int(1.5*deconNoise));
         size_t halfLen    = std::min(size_t(150),roiLen/2);
     
-        float baseFront = GetBaseline(holder, binRange, roiStart, halfLen);
-        float baseBack  = GetBaseline(holder, binRange, roiLen - halfLen, roiLen);
+        std::pair<float,int> baseFront = GetBaseline(holder, binRange, roiStart, halfLen);
+        std::pair<float,int> baseBack  = GetBaseline(holder, binRange, roiLen - halfLen, roiLen);
         
-        if (std::fabs(baseFront - baseBack) > deconNoise) base = std::max(baseFront,baseBack);
-        else                                              base = 0.5 * (baseFront + baseBack);
+        if (baseFront.second > 2 * baseBack.second)      base = baseFront.first;
+        else if (baseBack.second > 2 * baseFront.second) base = baseBack.first;
+        else if (std::fabs(baseFront.first - baseBack.first) > deconNoise)
+            base = std::max(baseFront.first,baseBack.first);
+        else
+            base = (baseFront.first*baseFront.second + baseBack.first*baseBack.second)/float(baseFront.second+baseBack.second);
     }
     
     return base;
 }
     
-float BaselineMostProbAve::GetBaseline(const std::vector<float>& holder,
-                                       int                       binRange,
-                                       size_t                    roiStart,
-                                       size_t                    roiLen) const
+std::pair<float,int> BaselineMostProbAve::GetBaseline(const std::vector<float>& holder,
+                                                      int                       binRange,
+                                                      size_t                    roiStart,
+                                                      size_t                    roiLen) const
 {
-    float base(0.);
+    std::pair<float,int> base(0.,1);
     
     if (roiLen > 1)
     {
@@ -124,7 +128,8 @@ float BaselineMostProbAve::GetBaseline(const std::vector<float>& holder,
             }
         }
         
-        base = 0.5 * float(meanSum) / float(meanCnt);
+        base.first  = 0.5 * float(meanSum) / float(meanCnt);
+        base.second = meanCnt;
     }
     
     return base;
