@@ -211,13 +211,13 @@ void ROIFinderMorphological::FindROIs(const Waveform& waveform, size_t channel, 
     return;
 }
     
-void ROIFinderMorphological::findROICandidatesDiff(const Waveform&                differenceVec,
-                                                   const Waveform&                erosionVec,
-                                                   const Waveform&                dilationVec,
-                                                   int                            startTick,
-                                                   int                            stopTick,
-                                                   float                          threshold,
-                                                   CandidateROIVec&               roiCandidateVec) const
+void ROIFinderMorphological::findROICandidatesDiff(const Waveform&  differenceVec,
+                                                   const Waveform&  erosionVec,
+                                                   const Waveform&  dilationVec,
+                                                   int              startTick,
+                                                   int              stopTick,
+                                                   float            threshold,
+                                                   CandidateROIVec& roiCandidateVec) const
 {
     int roiLength = stopTick - startTick;
     
