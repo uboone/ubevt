@@ -73,8 +73,8 @@ float BaselineMostProbAve::GetBaseline(const std::vector<float>& holder,
         std::pair<float,int> baseFront = GetBaseline(holder, binRange, roiStart, halfLen);
         std::pair<float,int> baseBack  = GetBaseline(holder, binRange, roiLen - halfLen, roiLen);
         
-        if (baseFront.second > 2 * baseBack.second)      base = baseFront.first;
-        else if (baseBack.second > 2 * baseFront.second) base = baseBack.first;
+        if      (baseFront.second > 3 * baseBack.second  / 2)  base = baseFront.first;
+        else if (baseBack.second  > 3 * baseFront.second / 2)  base = baseBack.first;
         else if (std::fabs(baseFront.first - baseBack.first) > deconNoise)
             base = std::max(baseFront.first,baseBack.first);
         else
