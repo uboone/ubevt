@@ -67,16 +67,18 @@ float BaselineMostProbAve::GetBaseline(const std::vector<float>& holder,
     {
         // Recover the expected electronics noise on this channel
         float  deconNoise = 1.26491 * fSignalShaping->GetDeconNoise(channel);
-        int    binRange   = std::max(1, int(1.5*deconNoise));
-        size_t halfLen    = std::min(size_t(150),roiLen/2);
+        int    binRange   = std::max(1, int(deconNoise));
+        size_t halfLen    = std::min(size_t(100),roiLen/2);
     
         std::pair<float,int> baseFront = GetBaseline(holder, binRange, roiStart, halfLen);
         std::pair<float,int> baseBack  = GetBaseline(holder, binRange, roiLen - halfLen, roiLen);
         
-        if      (baseFront.second > 3 * baseBack.second  / 2)  base = baseFront.first;
-        else if (baseBack.second  > 3 * baseFront.second / 2)  base = baseBack.first;
-        else if (std::fabs(baseFront.first - baseBack.first) > deconNoise)
-            base = std::max(baseFront.first,baseBack.first);
+        if (std::fabs(baseFront.first - baseBack.first) > deconNoise)
+        {
+            if      (baseFront.second > 3 * baseBack.second  / 2) base = baseFront.first;
+            else if (baseBack.second  > 3 * baseFront.second / 2) base = baseBack.first;
+            else                                                  base = std::max(baseFront.first,baseBack.first);
+        }
         else
             base = (baseFront.first*baseFront.second + baseBack.first*baseBack.second)/float(baseFront.second+baseBack.second);
     }
