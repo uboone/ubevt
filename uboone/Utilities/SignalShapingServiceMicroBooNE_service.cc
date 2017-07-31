@@ -28,7 +28,8 @@
 util::SignalShapingServiceMicroBooNE::SignalShapingServiceMicroBooNE(const fhicl::ParameterSet& pset,
                                                                      art::ActivityRegistry& /* reg */)
 : fInitForConvolution(false),
-  fInitForDeconvolution(false)
+  fInitForDeconvolution(false),
+  fConvFFTSize(0)
 {
   
   //Before calling reconfigure(), initialize some of the diagnostic variables and histograms
@@ -357,6 +358,7 @@ void util::SignalShapingServiceMicroBooNE::init()
   // re-initialize the FFT service for the request size
   art::ServiceHandle<util::LArFFT> fFFT;
   int fftsize = (int) fFFT->FFTSize();
+  fConvFFTSize = (unsigned int)fftsize;
   
   
   //----------------------------------------------------------------------
@@ -377,6 +379,7 @@ void util::SignalShapingServiceMicroBooNE::init()
       //check the fft sampling for when we calculate convolution kernels later
       if ( (size_t)fFFT->FFTSize() < fElectResponse[channel].size()) {
 	fFFT->ReinitializeFFT( fElectResponse.size(), fFFT->FFTOptions(), fFFT->FFTFitBins());
+	fConvFFTSize = fElectResponse.size();
       }
 
       for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
@@ -513,33 +516,35 @@ void util::SignalShapingServiceMicroBooNE::SetDecon(size_t datasize)
   // do this test for *every* ss
   // But it will in general only happen once per run! 
   size_t FFTSize = fft->FFTSize();
-  bool changedFFTSize = false;
-  if (datasize > FFTSize){
-    fft->ReinitializeFFT( datasize, fft->FFTOptions(), fft->FFTFitBins() );
-    changedFFTSize = true;
+  bool changingFFTSize = false;
+  if (datasize > FFTSize || datasize <= FFTSize/2){
+    changingFFTSize = true;
   }  
   
   //do nothing if deconvolution kernels are already initialized and FFTSize is appropriate
-  if (fInitForDeconvolution && !changedFFTSize) return;
+  if (fInitForDeconvolution && !changingFFTSize) return;
   
-  //if the convolution kernels were initialized, we lost the original responses and have to remake them
-  if (fInitForConvolution) {
-    for (unsigned int channel=0; channel!=geo->Nchannels(); ++channel) {
-      size_t view = geo->View(channel);
-      fSignalShapingVec[channel].ResetAll();
-      for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
-	std::string resp_name = itResp->first;
-	if ( StoreThisResponse(resp_name,channel) ) {
-	  fSignalShapingVec[channel].Response(resp_name).AddResponseFunction(itResp->second);
-	  fSignalShapingVec[channel].Response(resp_name).AddResponseFunction(fElectResponse[channel]);
-	  fSignalShapingVec[channel].Response(resp_name).set_normflag(false);
-	}
+  //first, change fftsize to the one used for convolution - so that responses are added as before
+  fft->ReinitializeFFT( fConvFFTSize, fft->FFTOptions(), fft->FFTFitBins() );
+  
+  //during convolution kernel initialization, we lost the original responses and have to remake them
+  for (unsigned int channel=0; channel!=geo->Nchannels(); ++channel) {
+    size_t view = geo->View(channel);
+    fSignalShapingVec[channel].ResetAll();
+    for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
+      std::string resp_name = itResp->first;
+      if ( StoreThisResponse(resp_name,channel) ) {
+	fSignalShapingVec[channel].Response(resp_name).AddResponseFunction(itResp->second);
+	fSignalShapingVec[channel].Response(resp_name).AddResponseFunction(fElectResponse[channel]);
+	fSignalShapingVec[channel].Response(resp_name).set_normflag(false);
       }
     }
   }
     
-  //Resample convolution responses and kernels in fSignalShapingVec, using the saved response
-  //and the FFT Size.
+  //now that the convolution responses are recalculated, change the FFTSize to the desired size for deconvolution
+  fft->ReinitializeFFT( datasize, fft->FFTOptions(), fft->FFTFitBins() );  
+    
+  //Resample convolution responses in fSignalShapingVec, using the deconvolution FFT Size.
   SetResponseSampling();
   
   //Calculate convolution kernels

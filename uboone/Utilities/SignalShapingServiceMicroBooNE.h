@@ -89,8 +89,8 @@
 
 // LArSoft include
 #include "larcore/Geometry/Geometry.h"
-#include "larcore/Geometry/TPCGeo.h"
-#include "larcore/Geometry/PlaneGeo.h"
+#include "larcorealg/Geometry/TPCGeo.h"
+#include "larcorealg/Geometry/PlaneGeo.h"
 
 using DoubleVec  = std::vector<double>;
 using FloatVec   = std::vector<float>;
@@ -248,7 +248,8 @@ namespace util {
 
 
       //Convolution and Deconvolution
-      std::vector<util::SignalShapingContainer> fSignalShapingVec; ///< Stores the convolution and deconvolution kernels    
+      std::vector<util::SignalShapingContainer> fSignalShapingVec; ///< Stores the convolution and deconvolution kernels   
+      unsigned int fConvFFTSize;                                   ///< Stores the FFTSize used for convolution 
       std::vector<int>                          fDeconvPol;        ///< switch for DeconvKernel normalization sign (+ -> max pos ADC, - -> max neg ADC). Entry 0,1,2 = U,V,Y plane settings
 
 
