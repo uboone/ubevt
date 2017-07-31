@@ -25,8 +25,8 @@ public:
     
     ~BaselineMostProbAve();
     
-    void configure(const fhicl::ParameterSet& pset)                                override;
-    void outputHistograms(art::TFileDirectory&)                              const override;
+    void configure(const fhicl::ParameterSet& pset)                                      override;
+    void outputHistograms(art::TFileDirectory&)                                    const override;
     
     float GetBaseline(const std::vector<float>&, raw::ChannelID_t, size_t, size_t) const override;
     
