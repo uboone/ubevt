@@ -24,7 +24,7 @@ microboone_signalshapingservice:
   #------------------------------------------------------
   #Field response-related parameters
   #------------------------------------------------------
-  NResponses:           [3, 3, 2]                   #data-driven YZ-dependent responses per view
+  NResponses:           [2, 3, 2]                   #data-driven YZ-dependent responses per view
                                                     #use [1, 2, 1] if YZ-dependent but not DDR
 						    #use [1, 1, 1] if not YZ-dependent
   FieldRespAmpVec:      [ 0.555, 0.447, 1.46 ]  
@@ -34,7 +34,8 @@ microboone_signalshapingservice:
   datadrivenResponse:     true                      # flag to use data driven field response (also by default uses specific electronics response for misconfigured U channels on FT 1)  
   FieldResponseFNameBase: "uboone_response"       
   FieldResponseHNameBase: "FieldResponse"
-  FieldResponseFVersion:  "v3.11"
+  FieldResponseFVersion:  "v3.11.1"
+  FieldResponseNames:     [ ["nominal","shortedY"], ["nominal","shortedU","shortedY"], ["nominal","shortedU"] ]
   
   
   
