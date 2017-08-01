@@ -257,7 +257,8 @@ namespace util {
       std::vector<FloatVec>  fElectResponse;            ///< Stores electronics response. Vector elements correspond to channel, then response bins
       unsigned int           fMaxElectResponseBins;     ///< Maximum number of bins to use to store the electronics response
       double                 fADCPerPCAtLowestASICGain; ///< Pulse amplitude gain for a 1 pc charge impulse after convoluting it the with field and electronics response with the lowest ASIC gain setting of 4.7 mV/fC
-
+      bool                   fIgnoreMisconfigStatus;    ///< If true, use nominal (default) gain and shaping time to calculate electronics response of misconfigured channels.  Useful for deconvolution if noise filtering already performed the correction
+      
 
       // Field Response
       std::vector< std::map<std::string, FloatVec> >  fFieldResponseVec;      ///< Stores adjusted field response. Vector elements corespond to plane, map key is a response name

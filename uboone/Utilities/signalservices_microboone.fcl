@@ -17,6 +17,7 @@ microboone_signalshapingservice:
   #------------------------------------------------------
   ADCPerPCAtLowestASICGain: 9390 #ADC/pC
   MaxElectResponseBins: 200
+  IgnoreMisconfigStatus: false
   
   
   
