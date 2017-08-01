@@ -32,6 +32,11 @@ namespace lariov {
     bool UseFile    = p.get<bool>("UseFile", false);
     std::string fileName = p.get<std::string>("FileName", "");
     fOnlyMisconfigStatusFromDB = p.get<bool>("OnlyMisconfigStatusFromDB");
+    
+    fDefaultGain           = p.get<float>("DefaultGain");
+    fDefaultGainErr        = p.get<float>("DefaultGainErr");
+    fDefaultShapingTime    = p.get<float>("DefaultShapingTime");
+    fDefaultShapingTimeErr = p.get<float>("DefaultShapingTimeErr");
 
     //priority:  (1) use db, (2) use table, (3) use defaults
     //If none are specified, use defaults
@@ -50,14 +55,11 @@ namespace lariov {
         std::cout<<"Using default electronics calibrations for properly-configured channels, and database for misconfigured channels"<<std::endl;
       }
       
-      fDefaultGain           = p.get<float>("DefaultGain");
-      fDefaultGainErr        = p.get<float>("DefaultGainErr");
-      fDefaultShapingTime    = p.get<float>("DefaultShapingTime");
-      fDefaultShapingTimeErr = p.get<float>("DefaultShapingTimeErr");
-
       ElectronicsCalib defaultCalib(0);
       CalibrationExtraInfo extra_info("ElectronicsCalib");
       extra_info.AddOrReplaceBoolData("is_misconfigured", false);
+      extra_info.AddOrReplaceFloatData("DefaultGain", fDefaultGain);
+      extra_info.AddOrReplaceFloatData("DefaultShapingTime", fDefaultShapingTime);
 
       defaultCalib.SetGain(fDefaultGain);
       defaultCalib.SetGainErr(fDefaultGainErr);
@@ -105,6 +107,8 @@ namespace lariov {
         
 	CalibrationExtraInfo extra_info("ElectronicsCalib");
 	extra_info.AddOrReplaceBoolData("is_misconfigured", (bool)is_misconfigured);
+	extra_info.AddOrReplaceFloatData("DefaultGain", fDefaultGain);
+        extra_info.AddOrReplaceFloatData("DefaultShapingTime", fDefaultShapingTime);
 
         dp.SetChannel(ch);
         dp.SetGain(gain);
@@ -157,6 +161,8 @@ namespace lariov {
       ElectronicsCalib pg(*it);
       CalibrationExtraInfo extra_info("ElectronicsCalib");
       extra_info.AddOrReplaceBoolData("is_misconfigured", is_misconfigured);
+      extra_info.AddOrReplaceFloatData("DefaultGain", fDefaultGain);
+      extra_info.AddOrReplaceFloatData("DefaultShapingTime", fDefaultShapingTime);
       
       pg.SetGain( (float)gain );
       pg.SetGainErr( (float)gain_err );
