@@ -43,7 +43,7 @@ microboone_signalshapingservice:
   #Field Response time offset and stretching
   #------------------------------------------------------
   Drift3DCorrVec:       [ 1.0, 1.0, 1.0 ]
-  CalibResponseTOffset: [0.0, 2.0, 0.0]   # in us time offset to align all three planes
+  CalibResponseTOffset: [0.0, 0.0, 0.0]   # in us time offset to align all three planes
   StretchFullResponse:  false             # to maintain the original stretching scheme
                                           # false means only the field response is stretched, not the electronic response
   TimeScaleParams:   [ 1.0, 0.806 ]     # this does the scaling from full- to half-field

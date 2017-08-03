@@ -270,6 +270,7 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
 	response_name =  ( rp == 0 ? "nominal" : "alt_" + std::to_string(rp) );
 	fname0 = Form("%s_vw%02i_%s.root", fileNameBase.c_str(), vw, version.c_str());
       }  
+      
       sp.find_file(fname0, fname);
       std::unique_ptr<TFile> fin(new TFile(fname.c_str(), "READ"));
 
@@ -334,9 +335,9 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
 	  if(found) break;
 	}
       }
-
+      
+      std::cout<<"For view "<<vw<<" and response "<<response_name<<" toffset is: "<<tOffset<<std::endl;
       tOffset *= f3DCorrectionVec[vw]*fTimeScaleFactor;
-      std::cout<<"For view "<<vw<<" and response "<<response_name<<" toffset parameters are: "<<std::endl;
       fFieldResponseTOffset[vw][response_name] = (-tOffset + fCalibResponseTOffset[vw])*1000.;
 
     }//end loop over responses
