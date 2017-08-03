@@ -101,6 +101,7 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
   //Electronics Response-related parameters
   fADCPerPCAtLowestASICGain = pset.get<double>("ADCPerPCAtLowestASICGain");
   fMaxElectResponseBins     = pset.get<unsigned int>("MaxElectResponseBins");
+  fIgnoreMisconfigStatus    = pset.get<bool>("IgnoreMisconfigStatus");
   
   fElectResponse.resize(geo->Nchannels());
   fHist_ElectResponse       = tfs->make<TH1D>("ER","ER", fMaxElectResponseBins, 0.0, (float)fMaxElectResponseBins);
@@ -249,7 +250,7 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
   std::string fileNameBase = pset.get<std::string>("FieldResponseFNameBase"); 
   std::string version      = pset.get<std::string>("FieldResponseFVersion");
   std::string histNameBase = pset.get<std::string>("FieldResponseHNameBase");
-  std::vector<std::string> ddr_resp_names = {"nominal", "shortedU", "shortedY"};
+  std::vector<std::vector<std::string> > ddr_resp_names = pset.get<std::vector<std::vector<std::string> > >("FieldResponseNames");
   cet::search_path sp("FW_SEARCH_PATH");
   
   // get the field response histograms
@@ -262,13 +263,14 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
 
       // open file with this response
       if (fdatadrivenResponse) {
-	response_name = ddr_resp_names[rp];
+	response_name = ddr_resp_names[vw][rp];
 	fname0 = Form("%s_vw%02i_%s_%s.root", fileNameBase.c_str(), vw, response_name.c_str(), version.c_str());	  
       }
       else {
 	response_name =  ( rp == 0 ? "nominal" : "alt_" + std::to_string(rp) );
 	fname0 = Form("%s_vw%02i_%s.root", fileNameBase.c_str(), vw, version.c_str());
       }  
+      
       sp.find_file(fname0, fname);
       std::unique_ptr<TFile> fin(new TFile(fname.c_str(), "READ"));
 
@@ -333,7 +335,8 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
 	  if(found) break;
 	}
       }
-
+      
+      std::cout<<"For view "<<vw<<" and response "<<response_name<<" toffset is: "<<tOffset<<std::endl;
       tOffset *= f3DCorrectionVec[vw]*fTimeScaleFactor;
       fFieldResponseTOffset[vw][response_name] = (-tOffset + fCalibResponseTOffset[vw])*1000.;
 
@@ -669,7 +672,7 @@ void util::SignalShapingServiceMicroBooNE::SetElectResponse()
   // electronics. SPICE gives the electronics transfer function in
   // frequency-space. The inverse laplace transform of that function
   // (in time-space) was calculated in Mathematica and is what is being
-  // used below. Parameters Ao and To are cumulative gain/timing parameters
+  // used below. Parameter  To are cumulative timing parameters
   // from the full (ASIC->Intermediate amp->Receiver->ADC) electronics chain.
   // They have been adjusted to make the SPICE simulation to match the
   // actual electronics response. Default params are Ao=1.4, To=0.5us.
@@ -690,8 +693,18 @@ void util::SignalShapingServiceMicroBooNE::SetElectResponse()
     else fElectResponse[channel].resize(fMaxElectResponseBins, 0.0);
     
     double FieldBinWidth = fFieldResponseHistVec[view][nominal_resp_name]->GetBinWidth(1);   
-    double To = elec_provider.ShapingTime(channel);    
-    double Ao = 1.0;
+    
+    //gain and shaping time
+    double To, gain;
+    if (fIgnoreMisconfigStatus && elec_provider.ExtraInfo(channel).GetBoolData("is_misconfigured")) {
+      To = elec_provider.ExtraInfo(channel).GetFloatData("DefaultShapingTime");
+      gain = elec_provider.ExtraInfo(channel).GetFloatData("DefaultGain");
+    }
+    else {
+      To = elec_provider.ShapingTime(channel); 
+      gain = elec_provider.Gain(channel); 
+    }
+      
     double max = 0;
     for (unsigned int i=0; i < fElectResponse[channel].size(); ++i) {
       double timebin = (1.*i) * FieldBinWidth / To; 
@@ -711,8 +724,6 @@ void util::SignalShapingServiceMicroBooNE::SetElectResponse()
       fElectResponse[channel][i] = 4.31054*exp(-2.94809*timebin)
       +exp(-2.82833*timebin)*(  0.762456*(sin11 + sin2311) - 2.620200*(cos11 + cos2311) )
       +exp(-2.40318*timebin)*( -0.327684*(sin25 + sin5125) + 0.464924*(cos25 + cos5125) );
-      
-      fElectResponse[channel][i] *= Ao;
 
       if (fElectResponse[channel][i] > max) max = fElectResponse[channel][i];
     }// end loop over time buckets
@@ -729,7 +740,6 @@ void util::SignalShapingServiceMicroBooNE::SetElectResponse()
     // thus we expect peak to be 1 * 9390 (fADCPerPCtAtLowestAsicGain) * 1.602e-7 * (1 fC) = 9.39 ADC
     // At 4.7 mV/fC, the ADC value should be 4.7 (mV/fC) * 2 (ADC/mV) ~ 9.4 ADC/fC
     // so the normalization are consistent
-    double gain = elec_provider.Gain(channel);
     for(auto& element : fElectResponse[channel]){
       element /= max;
       element *= gain * fADCPerPCAtLowestASICGain * 1.60217657e-7 / 4.7;

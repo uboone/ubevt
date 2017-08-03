@@ -17,13 +17,14 @@ microboone_signalshapingservice:
   #------------------------------------------------------
   ADCPerPCAtLowestASICGain: 9390 #ADC/pC
   MaxElectResponseBins: 200
+  IgnoreMisconfigStatus: false
   
   
   
   #------------------------------------------------------
   #Field response-related parameters
   #------------------------------------------------------
-  NResponses:           [3, 3, 2]                   #data-driven YZ-dependent responses per view
+  NResponses:           [2, 3, 2]                   #data-driven YZ-dependent responses per view
                                                     #use [1, 2, 1] if YZ-dependent but not DDR
 						    #use [1, 1, 1] if not YZ-dependent
   FieldRespAmpVec:      [ 0.555, 0.447, 1.46 ]  
@@ -33,7 +34,8 @@ microboone_signalshapingservice:
   datadrivenResponse:     true                      # flag to use data driven field response (also by default uses specific electronics response for misconfigured U channels on FT 1)  
   FieldResponseFNameBase: "uboone_response"       
   FieldResponseHNameBase: "FieldResponse"
-  FieldResponseFVersion:  "v3.11"
+  FieldResponseFVersion:  "v3.11.1"
+  FieldResponseNames:     [ ["nominal","shortedY"], ["nominal","shortedU","shortedY"], ["nominal","shortedU"] ]
   
   
   
@@ -41,7 +43,7 @@ microboone_signalshapingservice:
   #Field Response time offset and stretching
   #------------------------------------------------------
   Drift3DCorrVec:       [ 1.0, 1.0, 1.0 ]
-  CalibResponseTOffset: [0.0, 2.0, 0.0]   # in us time offset to align all three planes
+  CalibResponseTOffset: [0.0, 0.0, 0.0]   # in us time offset to align all three planes
   StretchFullResponse:  false             # to maintain the original stretching scheme
                                           # false means only the field response is stretched, not the electronic response
   TimeScaleParams:   [ 1.0, 0.806 ]     # this does the scaling from full- to half-field
