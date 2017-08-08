@@ -250,7 +250,7 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
   std::string fileNameBase = pset.get<std::string>("FieldResponseFNameBase"); 
   std::string version      = pset.get<std::string>("FieldResponseFVersion");
   std::string histNameBase = pset.get<std::string>("FieldResponseHNameBase");
-  std::vector<std::string> ddr_resp_names = {"nominal", "shortedU", "shortedY"};
+  std::vector<std::vector<std::string> > ddr_resp_names = pset.get<std::vector<std::vector<std::string> > >("FieldResponseNames");
   cet::search_path sp("FW_SEARCH_PATH");
   
   // get the field response histograms
@@ -263,13 +263,14 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
 
       // open file with this response
       if (fdatadrivenResponse) {
-	response_name = ddr_resp_names[rp];
+	response_name = ddr_resp_names[vw][rp];
 	fname0 = Form("%s_vw%02i_%s_%s.root", fileNameBase.c_str(), vw, response_name.c_str(), version.c_str());	  
       }
       else {
 	response_name =  ( rp == 0 ? "nominal" : "alt_" + std::to_string(rp) );
 	fname0 = Form("%s_vw%02i_%s.root", fileNameBase.c_str(), vw, version.c_str());
       }  
+      
       sp.find_file(fname0, fname);
       std::unique_ptr<TFile> fin(new TFile(fname.c_str(), "READ"));
 
@@ -334,7 +335,8 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
 	  if(found) break;
 	}
       }
-
+      
+      std::cout<<"For view "<<vw<<" and response "<<response_name<<" toffset is: "<<tOffset<<std::endl;
       tOffset *= f3DCorrectionVec[vw]*fTimeScaleFactor;
       fFieldResponseTOffset[vw][response_name] = (-tOffset + fCalibResponseTOffset[vw])*1000.;
 
