@@ -135,14 +135,12 @@ void RawDigitCharacterizationAlg::getWaveformParams(const RawDigitVector& rawWav
                                                     float&                pedCorVal) const
 {
     // Recover the truncated mean and rms, plus the ped correction
-    getMeanRmsAndPedCor(rawWaveform, channel, truncMean, truncRms, pedCorVal);
+    float minMaxFloat;
     
-    // Determine the range of ADC values on this wire
-    std::pair<RawDigitVector::const_iterator,RawDigitVector::const_iterator> minMaxItrPair = std::minmax_element(rawWaveform.begin(),rawWaveform.end());
-    short minVal = *minMaxItrPair.first;
-    short maxVal = *minMaxItrPair.second;
+    getMeanRmsMinMaxAndPedCor(rawWaveform, channel, truncMean, truncRms, minMaxFloat, pedCorVal);
     
-    minMax = std::min(maxVal - minVal,199);
+    // Convert to a short
+    minMax = std::max(float(-4095),std::min(float(4095.),minMaxFloat));
     
     // We also want mean, median, rms, etc., for all ticks on the waveform
     std::vector<short> localTimeVec = rawWaveform;
@@ -165,40 +163,40 @@ void RawDigitCharacterizationAlg::getWaveformParams(const RawDigitVector& rawWav
     
     // Final task is to get the mode and neighbor ratio
     // To do this we need to set up a vector of counts by ADC value...
-    std::vector<int> countVec(maxVal - minVal + 1);
+    std::map<short,int> countMap;
+    short               adcValMP(-4095);
+    int                 countMP(0);
     
     for(const auto& adc : rawWaveform)
     {
-        size_t idx = std::min(minMax, short(std::max(0, adc - minVal)));
-        
-        countVec.at(idx)++;
+        if (++countMap[adc] > countMP)
+        {
+            adcValMP = adc;
+            countMP  = countMap[adc];
+        }
     }
     
-    std::vector<int>::iterator maxBinItr = std::max_element(countVec.begin(),countVec.end());
-    
     short neighborSum(0);
-    short leftNeighbor(*maxBinItr);
-    short rightNeighbor(*maxBinItr);
+    short leftNeighbor(countMP);
+    short rightNeighbor(countMP);
     
-    mode = std::distance(countVec.begin(),maxBinItr);
+    mode = adcValMP;
     
-    if (mode > 0)
+    if (countMap.find(adcValMP-1) != countMap.end())
     {
-        leftNeighbor  = countVec.at(mode-1);
+        leftNeighbor  = countMap.find(adcValMP-1)->second;
         neighborSum  += leftNeighbor;
     }
     
-    if (mode + 1 < short(countVec.size()))
+    if (countMap.find(adcValMP+1) != countMap.end())
     {
-        rightNeighbor  = countVec.at(mode+1);
+        rightNeighbor  = countMap.find(adcValMP+1)->second;
         neighborSum   += rightNeighbor;
     }
     
-    mode += minVal;
-    
-    neighborRatio = float(neighborSum) / float(2*(*maxBinItr));
+    neighborRatio = float(neighborSum) / float(2*countMP);
 
-    neighborRatio = float(std::min(leftNeighbor,rightNeighbor)) / float(*maxBinItr);
+    neighborRatio = float(std::min(leftNeighbor,rightNeighbor)) / float(countMP);
     
     // Fill some histograms here
     if (fHistsInitialized)
@@ -215,7 +213,7 @@ void RawDigitCharacterizationAlg::getWaveformParams(const RawDigitVector& rawWav
     
     if (wire / fNumWiresToGroup[view] == fHistsWireGroup[view])
     {
-        float  leastNeighborRatio = float(std::min(leftNeighbor,rightNeighbor)) / float(*maxBinItr);
+        float  leastNeighborRatio = float(std::min(leftNeighbor,rightNeighbor)) / float(countMP);
         size_t wireIdx            = wire % fNumWiresToGroup[view];
         
         if (skewness > 0. && leastNeighborRatio < 0.7)
@@ -259,14 +257,15 @@ void RawDigitCharacterizationAlg::getTruncatedRMS(const RawDigitVector& rawWavef
     return;
 }
 
-void RawDigitCharacterizationAlg::getMeanRmsAndPedCor(const RawDigitVector& rawWaveform,
-                                                      unsigned int          channel,
-                                                      float&                truncMean,
-                                                      float&                rmsVal,
-                                                      float&                pedCorVal) const
+void RawDigitCharacterizationAlg::getMeanRmsMinMaxAndPedCor(const RawDigitVector& rawWaveform,
+                                                            unsigned int          channel,
+                                                            float&                truncMean,
+                                                            float&                rmsVal,
+                                                            float&                minMax,
+                                                            float&                pedCorVal) const
 {
     // First simply get the mean and rms...
-    getMeanAndRms(rawWaveform, truncMean, rmsVal, fTruncMeanFraction);
+    getMeanRmsAndMinMax(rawWaveform, truncMean, rmsVal, minMax, fTruncMeanFraction);
     
     // Recover the database version of the pedestal
     float pedestal = fPedestalRetrievalAlg.PedMean(channel);
@@ -306,10 +305,11 @@ void RawDigitCharacterizationAlg::getMeanRmsAndPedCor(const RawDigitVector& rawW
     return;
 }
 
-void RawDigitCharacterizationAlg::getMeanAndRms(const RawDigitVector& rawWaveform,
-                                                float&                aveVal,
-                                                float&                rmsVal,
-                                                float                 fracBins) const
+void RawDigitCharacterizationAlg::getMeanRmsAndMinMax(const RawDigitVector& rawWaveform,
+                                                      float&                aveVal,
+                                                      float&                rmsVal,
+                                                      float&                minMax,
+                                                      float                 fracBins) const
 {
     // first step is to copy the input waveform into a local work vector - convert to floats
     std::vector<float> locWaveform(rawWaveform.size());
@@ -334,6 +334,9 @@ void RawDigitCharacterizationAlg::getMeanAndRms(const RawDigitVector& rawWavefor
             mpVal   = val;
         }
     }
+    
+    if (frequencyMap.size() > 1) minMax = frequencyMap.rbegin()->first - frequencyMap.begin()->first;
+    else                         minMax = 0;
     
     // take a weighted average of two neighbor bins
     int meanCnt = mpCount;

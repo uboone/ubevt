@@ -147,7 +147,7 @@ void RawDigitCorrelatedCorrectionAlg::initializeHists(art::ServiceHandle<art::TF
     fFFTvsMBProf[0]   = tfs->make<TProfile2D>("FFTvsMBPlaneU", "FFT;MB;kHz", numSamples, minFreq, maxFreq, 2400/16, 0., 2400/16);
     fFFTvsMBProf[1]   = tfs->make<TProfile2D>("FFTvsMBPlaneV", "FFT;MB;kHz", numSamples, minFreq, maxFreq, 2400/16, 0., 2400/16);
     fFFTvsMBProf[2]   = tfs->make<TProfile2D>("FFTvsMBPlaneW", "FFT;MB;kHz", numSamples, minFreq, maxFreq, 3456/16, 0., 3456/16);
-/*
+
     fCorrectionHistVec.resize(3);
     fCorrFixedHistVec.resize(3);
     fErosionHistVec.resize(3);
@@ -171,7 +171,7 @@ void RawDigitCorrelatedCorrectionAlg::initializeHists(art::ServiceHandle<art::TF
             fDiffHistVec.at(planeIdx)[wireKey]       = tfs->make<TH1D>(("Difference_" + histName).c_str(), ";Tick", 6400, 0, 6400);
         }
     }
- */
+ 
 }
 
 void RawDigitCorrelatedCorrectionAlg::smoothCorrectionVec(std::vector<float>& corValVec, raw::ChannelID_t channel) const
@@ -196,7 +196,7 @@ void RawDigitCorrelatedCorrectionAlg::smoothCorrectionVec(std::vector<float>& co
     
     // set a low bar...
     float diffThreshold = diffMean + 5. * diffRMS;
-/*
+
     // Recover plane/wire from channel
     std::vector<geo::WireID> wids = fGeometry->ChannelToWire(channel);
     
@@ -225,7 +225,7 @@ void RawDigitCorrelatedCorrectionAlg::smoothCorrectionVec(std::vector<float>& co
             differenceHist->Fill(tickIdx,differenceVec.at(tickIdx));
         }
     }
-*/
+
     size_t aveIdx(0);
     
     while(++aveIdx < averageVec.size())
@@ -266,7 +266,7 @@ void RawDigitCorrelatedCorrectionAlg::smoothCorrectionVec(std::vector<float>& co
             
         }
     }
-/*
+
     std::map<int,TH1D*>::const_iterator corrFixedMapItr = fCorrFixedHistVec.at(plane).find(wire);
     
     if (corrFixedMapItr != fCorrFixedHistVec.at(plane).end())
@@ -279,7 +279,7 @@ void RawDigitCorrelatedCorrectionAlg::smoothCorrectionVec(std::vector<float>& co
             corFixed->Fill(tickIdx,corValVec.at(tickIdx));
         }
     }
-*/
+
     return;
 }
 
