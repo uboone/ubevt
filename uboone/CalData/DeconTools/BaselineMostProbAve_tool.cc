@@ -63,15 +63,21 @@ float BaselineMostProbAve::GetBaseline(const std::vector<float>& holder,
 {
     float base(0.);
     
+    if (channel == 6501)
+    {
+        std::cout << "This is the channel we are looking for..." << std::endl;
+    }
+    
     if (roiLen > 1)
     {
         // Recover the expected electronics noise on this channel
         float  deconNoise = 1.26491 * fSignalShaping->GetDeconNoise(channel);
         int    binRange   = std::max(1, int(deconNoise));
         size_t halfLen    = std::min(size_t(100),roiLen/2);
-    
-        std::pair<float,int> baseFront = GetBaseline(holder, binRange, roiStart, halfLen);
-        std::pair<float,int> baseBack  = GetBaseline(holder, binRange, roiLen - halfLen, roiLen);
+        size_t roiStop    = roiStart + roiLen;
+        
+        std::pair<float,int> baseFront = GetBaseline(holder, binRange, roiStart,          roiStop);
+        std::pair<float,int> baseBack  = GetBaseline(holder, binRange, roiStop - halfLen, roiStop);
         
         if (std::fabs(baseFront.first - baseBack.first) > deconNoise)
         {
@@ -89,11 +95,11 @@ float BaselineMostProbAve::GetBaseline(const std::vector<float>& holder,
 std::pair<float,int> BaselineMostProbAve::GetBaseline(const std::vector<float>& holder,
                                                       int                       binRange,
                                                       size_t                    roiStart,
-                                                      size_t                    roiLen) const
+                                                      size_t                    roiStop) const
 {
     std::pair<float,int> base(0.,1);
     
-    if (roiLen > 1)
+    if (roiStop > roiStart)
     {
         // Basic idea is to find the most probable value in the ROI presented to us
         // From that we can develop an average of the true baseline of the ROI.
@@ -102,36 +108,43 @@ std::pair<float,int> BaselineMostProbAve::GetBaseline(const std::vector<float>& 
         int               mpCount(0);
         int               mpVal(0);
         
-        for(size_t idx = roiStart; idx < roiLen; idx++)
+        for(size_t idx = roiStart; idx < roiStop; idx++)
         {
             int intVal = std::round(2.*holder.at(idx));
             
-            frequencyMap[intVal]++;
+            int binCount = ++frequencyMap[intVal];
             
-            if (frequencyMap.at(intVal) > mpCount)
+            if (binCount > mpCount)
             {
-                mpCount = frequencyMap.at(intVal);
+                mpCount = binCount;
                 mpVal   = intVal;
             }
         }
         
-        // take a weighted average of two neighbor bins
-        int meanCnt  = 0;
-        int meanSum  = 0;
-        
-        for(int idx = -binRange; idx <= binRange; idx++)
+        // Safety check...
+        if (mpCount > 0)
         {
-            std::map<int,int>::iterator neighborItr = frequencyMap.find(mpVal+idx);
-            
-            if (neighborItr != frequencyMap.end() && 5 * neighborItr->second > mpCount)
+            // take a weighted average of two neighbor bins
+            int meanCnt  = 0;
+            int meanSum  = 0;
+        
+            for(int idx = -binRange; idx <= binRange; idx++)
             {
-                meanSum += neighborItr->first * neighborItr->second;
-                meanCnt += neighborItr->second;
+                std::map<int,int>::iterator neighborItr = frequencyMap.find(mpVal+idx);
+            
+                if (neighborItr != frequencyMap.end() && 5 * neighborItr->second > mpCount)
+                {
+                    meanSum += neighborItr->first * neighborItr->second;
+                    meanCnt += neighborItr->second;
+                }
+            }
+
+            if (meanCnt > 0)
+            {
+                base.first  = 0.5 * float(meanSum) / float(meanCnt);
+                base.second = meanCnt;
             }
         }
-        
-        base.first  = 0.5 * float(meanSum) / float(meanCnt);
-        base.second = meanCnt;
     }
     
     return base;
