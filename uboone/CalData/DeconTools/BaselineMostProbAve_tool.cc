@@ -62,12 +62,7 @@ float BaselineMostProbAve::GetBaseline(const std::vector<float>& holder,
                                        size_t                    roiLen) const
 {
     float base(0.);
-    
-    if (channel == 6501)
-    {
-        std::cout << "This is the channel we are looking for..." << std::endl;
-    }
-    
+
     if (roiLen > 1)
     {
         // Recover the expected electronics noise on this channel
