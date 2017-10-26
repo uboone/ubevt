@@ -6,12 +6,12 @@ BEGIN_PROLOG
 microboone_services:                                @local::microboone_basic_services
 microboone_services.LArFFT:                         @local::microboone_larfft
 microboone_services.SignalShapingServiceMicroBooNE: @local::microboone_signalshapingservice
-microboone_services.BackTracker:                    @local::microboone_backtracker  
+microboone_services.BackTrackerService:                    @local::microboone_backtracker  
 microboone_services.MemoryPeakReporter: {}
 #microboone_services.OpDigiProperties:               @local::microboone_opdigiproperties
 
 microboone_services_ana:                            @local::microboone_simulation_services
-microboone_services_ana.BackTracker:                @local::microboone_backtracker  
+microboone_services_ana.BackTrackerService:                @local::microboone_backtracker  
 microboone_services_ana.MemoryPeakReporter: {}
 
 microboone_services_reco:                                @local::microboone_basic_services
@@ -27,7 +27,7 @@ microboone_services_reco.MemoryPeakReporter: {}
 
 # Define microboone_full_services ... this includes ALL services and we don't care about resource usage!
 microboone_full_services:                           @local::microboone_simulation_services
-microboone_full_services.BackTracker:               @local::microboone_backtracker
+microboone_full_services.BackTrackerService:               @local::microboone_backtracker
 microboone_full_services.ChannelStatusService:     @local::microboone_channelstatus_service
 microboone_full_services.MemoryPeakReporter: {}
 
@@ -43,7 +43,7 @@ microboone_message_services:
       threshold:  "DEBUG"
       categories:{
         default:{ limit: 0 }
-	BackTracker: { limit: 0 }
+	BackTrackerService: { limit: 0 }
       }
     }
     LogStandardOut: {
@@ -54,7 +54,7 @@ microboone_message_services:
         RecoBaseDefaultCtor: { limit: 0 }
         AnaBaseDefaultCtor:  { limit: 0 }
         GeometryBadInputPoint: { limit: 5 timespan: 1000}
-	BackTracker: { limit: 0 }
+	BackTrackerService: { limit: 0 }
       }
     }
     LogStandardError: {
@@ -87,7 +87,7 @@ microboone_message_services_prod_debug.destinations.LogDebugFile.categories:{
   SpacePointAlg: { limit: 0 }
   KalmanFilterAlg: { limit: 0 }
   Track3DKalmanHit: { limit: 0 }
-  BackTracker: { limit: 0 }
+  BackTrackerService: { limit: 0 }
 }
 
 
@@ -122,7 +122,7 @@ microboone_message_services_interactive.destinations.LogStandardError.categories
   RecoBaseDefaultCtor: { limit: 1 }
   AnaBaseDefaultCtor:  { limit: 1 }
   GeometryBadInputPoint: { limit: 5 timespan: 1000}
-  BackTracker: { limit: 0 }
+  BackTrackerService: { limit: 0 }
 }
 
 END_PROLOG

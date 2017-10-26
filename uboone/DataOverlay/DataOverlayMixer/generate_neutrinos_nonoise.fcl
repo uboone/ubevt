@@ -45,7 +45,7 @@ services : {
   UBOpticalChConfig: @local::microboone_optical_ch_config
   UBOpReadoutMap:                  @local::microboone_opreadoutmap
   DetPedestalService:            @local::microboone_detpedestalservice
-  #BackTracker:                    @local::microboone_backtracker  
+  #BackTrackerService:                    @local::microboone_backtracker  
   #MemoryPeakReporter: {}
   OpDigiProperties:               @local::microboone_opdigiproperties
 

@@ -28,7 +28,7 @@ services.DatabaseUtil.ShouldConnect: false
 #                                                    "ubProjectStage",   "reco2D",
 #                                                    "ubProjectVersion", "v1_3" ]
 #services.FileCatalogMetadataExtras.RenameTemplate: "${base .root}_${CLUSTER 0}_${PROCESS 0}_reco2D.root"
-#services.BackTracker: @local::microboone_backtracker
+#services.BackTrackerService: @local::microboone_backtracker
 
 #source is now a root file
 source:
