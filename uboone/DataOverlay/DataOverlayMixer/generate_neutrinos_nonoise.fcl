@@ -46,6 +46,7 @@ services : {
   UBOpReadoutMap:                  @local::microboone_opreadoutmap
   DetPedestalService:            @local::microboone_detpedestalservice
   #BackTrackerService:                    @local::microboone_backtrackerservice  
+  #ParticleInventoryService: @local::standard_particleinventoryservice
   #MemoryPeakReporter: {}
   OpDigiProperties:               @local::microboone_opdigiproperties
 

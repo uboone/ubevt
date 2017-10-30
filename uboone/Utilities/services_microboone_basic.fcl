@@ -8,6 +8,7 @@
 #include "magfield_larsoft.fcl"
 #include "databaseutil_microboone.fcl"
 #include "backtrackerservice.fcl"
+#include "particleinventoryservice.fcl"
 #include "photpropservices_microboone.fcl"
 #include "opticaldetectorservices_microboone.fcl"
 #include "sam_microboone.fcl"
