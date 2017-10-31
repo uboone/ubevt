@@ -12,8 +12,8 @@ microboone_services.MemoryPeakReporter: {}
 #microboone_services.OpDigiProperties:               @local::microboone_opdigiproperties
 
 microboone_services_ana:                            @local::microboone_simulation_services
-microboone_services_ana.BackTrackerService:                @local::microboone_backtrackerservice  
-  microboone_services_ana.ParticleInventoryService: @local::standard_particleinventoryservice
+microboone_services_ana.BackTrackerService:         @local::microboone_backtrackerservice  
+microboone_services_ana.ParticleInventoryService:   @local::standard_particleinventoryservice
 microboone_services_ana.MemoryPeakReporter: {}
 
 microboone_services_reco:                                @local::microboone_basic_services
@@ -29,9 +29,9 @@ microboone_services_reco.MemoryPeakReporter: {}
 
 # Define microboone_full_services ... this includes ALL services and we don't care about resource usage!
 microboone_full_services:                           @local::microboone_simulation_services
-microboone_full_services.BackTrackerService:               @local::microboone_backtrackerservice
-  microboone_full_service.ParticleInventoryService: @local::standard_particleinventoryservice
-microboone_full_services.ChannelStatusService:     @local::microboone_channelstatus_service
+microboone_full_services.BackTrackerService:        @local::microboone_backtrackerservice
+microboone_full_services.ParticleInventoryService:  @local::standard_particleinventoryservice
+microboone_full_services.ChannelStatusService:      @local::microboone_channelstatus_service
 microboone_full_services.MemoryPeakReporter: {}
 
 microboone_message_services:
