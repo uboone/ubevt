@@ -111,6 +111,7 @@ CalWireROI::CalWireROI(fhicl::ParameterSet const& pset)
   produces<art::Assns<raw::RawDigit, recob::Wire>>(fSpillName);
   if(fMakeSparseRawDigits) {
     produces< std::vector<raw::SparseRawDigit> >(fSpillName);
+    produces<art::Assns<recob::Wire, raw::SparseRawDigit>>();
   }
 }
 
@@ -177,7 +178,7 @@ void CalWireROI::reconfigure(fhicl::ParameterSet const& p)
     
     fTruncRMSThreshold          = p.get< float >         ("TruncRMSThreshold",    6.);
     fTruncRMSMinFraction        = p.get< float >         ("TruncRMSMinFraction", 0.6);
-    fMakeSparseRawDigits        = p.get< bool >          ("MakeSparseRawDigits", true);
+    fMakeSparseRawDigits        = p.get< bool >          ("MakeSparseRawDigits", false);
     
     fSpillName.clear();
     
@@ -226,8 +227,9 @@ void CalWireROI::produce(art::Event& evt)
     // ... and an association set
     std::unique_ptr<art::Assns<raw::RawDigit,recob::Wire> > WireDigitAssn(new art::Assns<raw::RawDigit,recob::Wire>);
 
-    // make a collection of SparseRawDigits.
+    // make a collection of SparseRawDigits and assns.
     std::unique_ptr<std::vector<raw::SparseRawDigit> > sparsecol(new std::vector<raw::SparseRawDigit>);
+    std::unique_ptr<art::Assns<recob::Wire, raw::SparseRawDigit> > sparse_assns(new art::Assns<recob::Wire, raw::SparseRawDigit>);
 
     // Read in the digit List object(s). 
     art::Handle< std::vector<raw::RawDigit> > digitVecHandle;
@@ -248,13 +250,13 @@ void CalWireROI::produce(art::Event& evt)
         // vector that will be moved into the Wire object
         recob::Wire::RegionsOfInterest_t ROIVec;
 
-	// vector that will be moved into SparseRawDigit.
-	lar::sparse_vector<short> sparsevec;
-      
         // get the reference to the current raw::RawDigit
         art::Ptr<raw::RawDigit> digitVec(digitVecHandle, rdIter);
         channel = digitVec->Channel();
 
+	// vector that will be moved into SparseRawDigit.
+	lar::sparse_vector<short> sparsevec(digitVec->Samples());
+      
         // The following test is meant to be temporary until the "correct" solution is implemented
         if (!chanFilt.IsPresent(channel)) continue;
 
@@ -329,13 +331,16 @@ void CalWireROI::produce(art::Event& evt)
         } // if failed to add association
         //  DumpWire(wirecol->back()); // for debugging
 
-	// Optionally create a new SparseRawDigit.
+	// Optionally create a new SparseRawDigit & assn.
 
 	if(fMakeSparseRawDigits) {
-	  sparsevec.resize(digitVec->Samples());
 	  sparsecol->push_back(raw::SparseRawDigit(channel, wirecol->back().View(), pedestal, digitVec->GetSigma(), std::move(sparsevec)));
-	}
-        
+	  if (!util::CreateAssn(*this, evt, *wirecol, *sparsecol, *sparse_assns, sparsecol->size()-1, sparsecol->size()-1, wirecol->size()-1)) {
+            throw art::Exception(art::errors::InsertFailure)
+	      << "Can't associate wire #" << (wirecol->size() - 1)
+	      << " with sparse raw digit #" << (sparsecol->size() - 1);
+	  }
+	}        
     }
 
     if(wirecol->size() == 0)
@@ -359,6 +364,7 @@ void CalWireROI::produce(art::Event& evt)
     evt.put(std::move(WireDigitAssn), fSpillName);
     if(fMakeSparseRawDigits) {
       evt.put(std::move(sparsecol), fSpillName);
+      evt.put(std::move(sparse_assns));
     }
 
     fEventCount++;
