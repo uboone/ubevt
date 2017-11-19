@@ -335,7 +335,7 @@ void CalWireROI::produce(art::Event& evt)
 
 	if(fMakeSparseRawDigits) {
 	  sparsecol->push_back(raw::SparseRawDigit(channel, wirecol->back().View(), pedestal, digitVec->GetSigma(), std::move(sparsevec)));
-	  if (!util::CreateAssn(*this, evt, *wirecol, *sparsecol, *sparse_assns, sparsecol->size()-1, sparsecol->size()-1, wirecol->size()-1)) {
+	  if (!util::CreateAssn(*this, evt, *wirecol, *sparsecol, *sparse_assns, sparsecol->size()-1, sparsecol->size())) {
             throw art::Exception(art::errors::InsertFailure)
 	      << "Can't associate wire #" << (wirecol->size() - 1)
 	      << " with sparse raw digit #" << (sparsecol->size() - 1);
