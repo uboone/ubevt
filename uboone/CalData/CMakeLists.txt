@@ -10,6 +10,7 @@ art_make( BASENAME_ONLY
 	  MODULE_LIBRARIES larcore_Geometry
 	                CalData
 			uboone_CalData_DeconTools
+			ubooneobj
   	  		NoiseFilterAlgs
 	  		larcore_Geometry_Geometry_service
 	                lardata_Utilities
