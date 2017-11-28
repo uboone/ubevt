@@ -8,13 +8,13 @@ microboone_services.LArFFT:                         @local::microboone_larfft
 microboone_services.SignalShapingServiceMicroBooNE: @local::microboone_signalshapingservice
 microboone_services.BackTrackerService:                    @local::microboone_backtrackerservice  
 microboone_services.ParticleInventoryService: @local::standard_particleinventoryservice
-microboone_services.MemoryPeakReporter: {}
+#microboone_services.MemoryPeakReporter: {}
 #microboone_services.OpDigiProperties:               @local::microboone_opdigiproperties
 
 microboone_services_ana:                            @local::microboone_simulation_services
 microboone_services_ana.BackTrackerService:         @local::microboone_backtrackerservice  
 microboone_services_ana.ParticleInventoryService:   @local::standard_particleinventoryservice
-microboone_services_ana.MemoryPeakReporter: {}
+#microboone_services_ana.MemoryPeakReporter: {}
 
 microboone_services_reco:                                @local::microboone_basic_services
 microboone_services_reco.LArFFT:                         @local::microboone_larfft
@@ -32,7 +32,7 @@ microboone_full_services:                           @local::microboone_simulatio
 microboone_full_services.BackTrackerService:        @local::microboone_backtrackerservice
 microboone_full_services.ParticleInventoryService:  @local::standard_particleinventoryservice
 microboone_full_services.ChannelStatusService:      @local::microboone_channelstatus_service
-microboone_full_services.MemoryPeakReporter: {}
+#microboone_full_services.MemoryPeakReporter: {}
 
 microboone_message_services:
 {
