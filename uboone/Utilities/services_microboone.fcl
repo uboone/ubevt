@@ -25,7 +25,6 @@ microboone_services_reco.PmtGainService:    @local::microboone_pmtgain_service
 microboone_services_reco.ElectronicsCalibService:       @local::microboone_electronicscalib_service
 microboone_services_reco.UBOpReadoutMap:                @local::microboone_opreadoutmap
 
-microboone_services_reco.MemoryPeakReporter: {}
 
 # Define microboone_full_services ... this includes ALL services and we don't care about resource usage!
 microboone_full_services:                           @local::microboone_simulation_services
