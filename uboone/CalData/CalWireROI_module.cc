@@ -52,6 +52,7 @@
 #include "uboone/CalData/DeconTools/ROIDeconvolution.h"
 #include "uboone/CalData/DeconTools/MCC7Deconvolution.h"
 #include "uboone/CalData/DeconTools/IBaseline.h"
+#include "ubooneobj/SparseRawDigit.h"
 
 ///creation of calibrated signals on wires
 namespace caldata {
@@ -86,6 +87,7 @@ class CalWireROI : public art::EDProducer
     
     float                                                    fTruncRMSThreshold;          ///< Calculate RMS up to this threshold...
     float                                                    fTruncRMSMinFraction;        ///< or at least this fraction of time bins
+    bool                                                     fMakeSparseRawDigits;        ///< Make SparseRawDigit data product?
     
     std::unique_ptr<uboone_tool::IROIFinder>                 fROIFinder;
     std::unique_ptr<uboone_tool::IDeconvolution>             fDeconvolution;
@@ -107,6 +109,10 @@ CalWireROI::CalWireROI(fhicl::ParameterSet const& pset)
 
   produces< std::vector<recob::Wire> >(fSpillName);
   produces<art::Assns<raw::RawDigit, recob::Wire>>(fSpillName);
+  if(fMakeSparseRawDigits) {
+    produces< std::vector<raw::SparseRawDigit> >(fSpillName);
+    produces<art::Assns<recob::Wire, raw::SparseRawDigit>>();
+  }
 }
 
 //-------------------------------------------------
@@ -172,6 +178,7 @@ void CalWireROI::reconfigure(fhicl::ParameterSet const& p)
     
     fTruncRMSThreshold          = p.get< float >         ("TruncRMSThreshold",    6.);
     fTruncRMSMinFraction        = p.get< float >         ("TruncRMSMinFraction", 0.6);
+    fMakeSparseRawDigits        = p.get< bool >          ("MakeSparseRawDigits", false);
     
     fSpillName.clear();
     
@@ -220,6 +227,10 @@ void CalWireROI::produce(art::Event& evt)
     // ... and an association set
     std::unique_ptr<art::Assns<raw::RawDigit,recob::Wire> > WireDigitAssn(new art::Assns<raw::RawDigit,recob::Wire>);
 
+    // make a collection of SparseRawDigits and assns.
+    std::unique_ptr<std::vector<raw::SparseRawDigit> > sparsecol(new std::vector<raw::SparseRawDigit>);
+    std::unique_ptr<art::Assns<recob::Wire, raw::SparseRawDigit> > sparse_assns(new art::Assns<recob::Wire, raw::SparseRawDigit>);
+
     // Read in the digit List object(s). 
     art::Handle< std::vector<raw::RawDigit> > digitVecHandle;
     
@@ -238,16 +249,21 @@ void CalWireROI::produce(art::Event& evt)
     {
         // vector that will be moved into the Wire object
         recob::Wire::RegionsOfInterest_t ROIVec;
-      
+
         // get the reference to the current raw::RawDigit
         art::Ptr<raw::RawDigit> digitVec(digitVecHandle, rdIter);
         channel = digitVec->Channel();
 
+	// vector that will be moved into SparseRawDigit.
+	lar::sparse_vector<short> sparsevec(digitVec->Samples());
+      
         // The following test is meant to be temporary until the "correct" solution is implemented
         if (!chanFilt.IsPresent(channel)) continue;
 
         // Testing an idea about rejecting channels
         if (digitVec->GetPedestal() < 0.) continue;
+
+	float pedestal = 0.;
         
         // skip bad channels
         if( chanFilt.Status(channel) >= fMinAllowedChanStatus)
@@ -265,7 +281,7 @@ void CalWireROI::produce(art::Event& evt)
             
             // loop over all adc values and subtract the pedestal
             // When we have a pedestal database, can provide the digit timestamp as the third argument of GetPedestalMean
-            float pedestal = pedestalRetrievalAlg.PedMean(channel);
+            pedestal = pedestalRetrievalAlg.PedMean(channel);
             
             // Get the pedestal subtracted data, centered in the deconvolution vector
             std::vector<float> rawAdcLessPedVec(dataSize);
@@ -289,11 +305,23 @@ void CalWireROI::produce(art::Event& evt)
             fROIFinder->FindROIs(rawAdcLessPedVec, thePlane, raw_noise, candRoiVec);
             
             fDeconvolution->Deconvolve(rawAdcLessPedVec, channel, candRoiVec, ROIVec);
-       } // end if not a bad channel
+
+	    // Optionally fill SparseRawDigit vector.
+
+	    if(fMakeSparseRawDigits) {
+
+	      // Loop over roi's (ranges).
+
+	      for (auto const& roi : ROIVec.get_ranges()) {
+		sparsevec.add_range(roi.begin_index(), &rawadc[roi.begin_index()], &rawadc[roi.end_index()]);
+	      }
+	    }
+
+	} // end if not a bad channel
 
         // create the new wire directly in wirecol
         wirecol->push_back(recob::WireCreator(std::move(ROIVec),*digitVec).move());
-        
+
         // add an association between the last object in wirecol
         // (that we just inserted) and digitVec
         if (!util::CreateAssn(*this, evt, *wirecol, digitVec, *WireDigitAssn, fSpillName)) {
@@ -302,6 +330,17 @@ void CalWireROI::produce(art::Event& evt)
                 << " with raw digit #" << digitVec.key();
         } // if failed to add association
         //  DumpWire(wirecol->back()); // for debugging
+
+	// Optionally create a new SparseRawDigit & assn.
+
+	if(fMakeSparseRawDigits) {
+	  sparsecol->push_back(raw::SparseRawDigit(channel, wirecol->back().View(), pedestal, digitVec->GetSigma(), std::move(sparsevec)));
+	  if (!util::CreateAssn(*this, evt, *wirecol, *sparsecol, *sparse_assns, sparsecol->size()-1, sparsecol->size())) {
+            throw art::Exception(art::errors::InsertFailure)
+	      << "Can't associate wire #" << (wirecol->size() - 1)
+	      << " with sparse raw digit #" << (sparsecol->size() - 1);
+	  }
+	}        
     }
 
     if(wirecol->size() == 0)
@@ -323,6 +362,10 @@ void CalWireROI::produce(art::Event& evt)
     
     evt.put(std::move(wirecol), fSpillName);
     evt.put(std::move(WireDigitAssn), fSpillName);
+    if(fMakeSparseRawDigits) {
+      evt.put(std::move(sparsecol), fSpillName);
+      evt.put(std::move(sparse_assns));
+    }
 
     fEventCount++;
 
