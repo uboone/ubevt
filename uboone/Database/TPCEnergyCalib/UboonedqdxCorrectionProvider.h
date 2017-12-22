@@ -1,15 +1,15 @@
 /**
- * \file Uboonedqdx2DCorrectionProvider.h
+ * \file UboonedqdxCorrectionProvider.h
  * 
- * \brief Class def header for a class Uboonedqdx2DCorrectionProvider
+ * \brief Class def header for a class UboonedqdxCorrectionProvider
  *
  * @author eberly@slac.stanford.edu
  */
 
-#ifndef UBOONEDQDX2DCORRECTIONPROVIDER_H
-#define UBOONEDQDX2DCORRECTIONPROVIDER_H
+#ifndef UBOONEDQDXCORRECTIONPROVIDER_H
+#define UBOONEDQDXCORRECTIONPROVIDER_H
 
-#include "dqdx1DCorrection.h"
+#include "DqdxCorrection.h"
 #include "larevt/CalibrationDBI/IOVData/Snapshot.h"
 #include "larevt/CalibrationDBI/IOVData/IOVDataConstants.h"
 #include "larevt/CalibrationDBI/Providers/DatabaseRetrievalAlg.h"
@@ -36,12 +36,12 @@ namespace lariov {
    * - *DefaultShapingTimeErr* (real, default: ): Shaping Time uncertainty returned
    *   when /UseDB/ and /UseFile/ parameters are false
    */
-  class Uboonedqdx2DCorrectionProvider : public DatabaseRetrievalAlg {
+  class UboonedqdxCorrectionProvider : public DatabaseRetrievalAlg {
   
     public:
     
       /// Constructors
-      Uboonedqdx2DCorrectionProvider(fhicl::ParameterSet const& p);
+      UboonedqdxCorrectionProvider(fhicl::ParameterSet const& p);
       
       /// Reconfigure function called by fhicl constructor
       void Reconfigure(fhicl::ParameterSet const& p);
@@ -50,11 +50,11 @@ namespace lariov {
       bool Update(DBTimeStamp_t ts);
       
       /// Retrieve calibration object
-      const dqdx1DCorrection& Dqdx2DCorrectionObject(const std::vector<float>&) const;      
+      const DqdxCorrection& DqdxCorrectionObject(const std::vector<float>&) const;      
       
       /// Retrieve calibration info
-      float DqdxCorrection(const std::vector<float>&) const;
-      float DqdxCorrectionErr(const std::vector<float>&) const;
+      float Correction(const std::vector<float>&) const;
+      float CorrectionErr(const std::vector<float>&) const;
       
     private:
       
@@ -68,7 +68,7 @@ namespace lariov {
     
       DataSource::ds fDataSource;
           
-      Snapshot<dqdx1DCorrection> fData;
+      Snapshot<DqdxCorrection> fData;
       
       //convert from input coordinate to bin number used by Snapshot
       std::vector<float> fCoord_min;

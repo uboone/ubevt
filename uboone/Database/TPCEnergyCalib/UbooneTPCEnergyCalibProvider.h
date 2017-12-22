@@ -10,7 +10,7 @@
 #define UBOONETPCENERGYCALIBPROVIDER_H
 
 #include "larevt/CalibrationDBI/IOVData/IOVDataConstants.h"
-#include "Uboonedqdx1DCorrectionProvider.h"
+#include "UboonedqdxCorrectionProvider.h"
 #include "TPCEnergyCalibProvider.h"
 
 namespace lariov {
@@ -77,9 +77,9 @@ namespace lariov {
       
     private:
       
-      //Uboonedqdx2DCorrectionProvider    fYZProvider;
-      Uboonedqdx1DCorrectionProvider     fXProvider;
-      //Uboonedqdx1DCorrectionProvider fThetaProvider;
+      //UboonedqdxCorrectionProvider    fYZProvider;
+      UboonedqdxCorrectionProvider     fXProvider;
+      //UboonedqdxCorrectionProvider fThetaProvider;
       //UboonedEdxCorrectionProvider      fdEdxProvider;
   };
 }//end namespace lariov

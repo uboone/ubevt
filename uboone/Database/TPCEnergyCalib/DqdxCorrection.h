@@ -1,33 +1,33 @@
 /**
- * \file dqdx1DCorrection.h
+ * \file DqdxCorrection.h
  * 
- * \brief Class def header for a class dqdx1DCorrection
+ * \brief Class def header for a class DqdxCorrection
  *
  * @author eberly@slac.stanford.edu
  */
 
-#ifndef IOVDATA_DQDX1DCORRECTION_H
-#define IOVDATA_DQDX1DCORRECTION_H
+#ifndef IOVDATA_DQDXCORRECTION_H
+#define IOVDATA_DQDXCORRECTION_H
 
 #include "larevt/CalibrationDBI/IOVData/ChData.h"
 #include "larevt/CalibrationDBI/IOVData/CalibrationExtraInfo.h"
 
 namespace lariov {
   /**
-     \class dqdx1DCorrection   
+     \class DqdxCorrection   
   *
   */
-  class dqdx1DCorrection : public ChData {
+  class DqdxCorrection : public ChData {
     
     public:
     
       /// Constructor
-      dqdx1DCorrection(unsigned int bin) : 
+      DqdxCorrection(unsigned int bin) : 
         ChData(bin),
-	fExtraInfo("dqdx1DCorrection") {}
+	fExtraInfo("DqdxCorrection") {}
       
       /// Default destructor
-      ~dqdx1DCorrection() {}
+      ~DqdxCorrection() {}
             
       float Correction()    const { return fCorrection; }
       float CorrectionErr() const { return fCorrectionErr; }

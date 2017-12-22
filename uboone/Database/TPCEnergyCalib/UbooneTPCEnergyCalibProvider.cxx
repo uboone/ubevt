@@ -37,19 +37,21 @@ namespace lariov {
   }
   
   float UbooneTPCEnergyCalibProvider::DriftdqdxCorrection(float drift_coord) const {
-    return fXProvider.DqdxCorrection(drift_coord);
+    return this->XdqdxCorrection(drift_coord);
   }
   
   float UbooneTPCEnergyCalibProvider::DriftdqdxCorrectionErr(float drift_coord) const {
-    return fXProvider.DqdxCorrectionErr(drift_coord);
+    return this->XdqdxCorrectionErr(drift_coord);
   }
 
   float UbooneTPCEnergyCalibProvider::XdqdxCorrection(float x) const {
-    return fXProvider.DqdxCorrection(x);
+    std::vector<float> vec(1, x);
+    return fXProvider.Correction(vec);
   }
   
   float UbooneTPCEnergyCalibProvider::XdqdxCorrectionErr(float x) const {
-    return fXProvider.DqdxCorrectionErr(x);
+    std::vector<float> vec(1, x);
+    return fXProvider.CorrectionErr(vec);
   }
   
   float UbooneTPCEnergyCalibProvider::YdqdxCorrection(float y) const {
