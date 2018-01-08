@@ -45,6 +45,7 @@ art_make( BASENAME_ONLY
 	  SERVICE_LIBRARIES 
 	              larevt_CalibrationDBI_Providers
 		      uboone_Database
+		      uboone_Database_TPCEnergyCalib
                       ${ART_FRAMEWORK_PRINCIPAL}
                       ${ART_FRAMEWORK_SERVICES_REGISTRY}
                       art_Persistency_Common canvas_Persistency_Common
@@ -74,5 +75,3 @@ art_make( BASENAME_ONLY
 install_headers()
 install_fhicl()
 install_source()
-
-add_subdirectory(TPCEnergyCalib)
