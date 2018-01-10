@@ -217,7 +217,7 @@ std::vector<double> spacecharge::SpaceChargeMicroBooNE::GetPosOffsets(double xVa
 {
   std::vector<double> thePosOffsets;
 
-  if(IsInsideBoundaries(xVal,yVal,zVal) == false)
+  if(!fEnableSimSpatialSCE || !IsInsideBoundaries(xVal,yVal,zVal))
   {
     thePosOffsets.resize(3,0.0);
   }
