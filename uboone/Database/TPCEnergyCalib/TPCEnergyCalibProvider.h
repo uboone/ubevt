@@ -36,28 +36,34 @@ namespace lariov {
       virtual ~TPCEnergyCalibProvider() = default;
        
       /// dqdx corrections factorized into drift and drift-orthogonal components   
-      virtual float YZdqdxCorrection(float y, float z) const = 0;
-      virtual float YZdqdxCorrectionErr(float y, float z) const = 0;
-      virtual float DriftdqdxCorrection(float drift_coord) const = 0;
-      virtual float DriftdqdxCorrectionErr(float drift_coord) const = 0;
+      virtual float YZdqdxCorrection(int plane, float y, float z) const = 0;
+      virtual float YZdqdxCorrectionErr(int plane, float y, float z) const = 0;
+      virtual float DriftdqdxCorrection(int plane, float drift_coord) const = 0;
+      virtual float DriftdqdxCorrectionErr(int plane, float drift_coord) const = 0;
       
       /// dqdx corrections factorized into x, y, and z components
-      virtual float XdqdxCorrection(float x) const = 0;
-      virtual float XdqdxCorrectionErr(float x) const = 0;
-      virtual float YdqdxCorrection(float y) const = 0;
-      virtual float YdqdxCorrectionErr(float y) const = 0;
-      virtual float ZdqdxCorrection(float z) const = 0;
-      virtual float ZdqdxCorrectionErr(float z) const = 0;
+      virtual float XdqdxCorrection(int plane, float x) const = 0;
+      virtual float XdqdxCorrectionErr(int plane, float x) const = 0;
+      virtual float YdqdxCorrection(int plane, float y) const = 0;
+      virtual float YdqdxCorrectionErr(int plane, float y) const = 0;
+      virtual float ZdqdxCorrection(int plane, float z) const = 0;
+      virtual float ZdqdxCorrectionErr(int plane, float z) const = 0;
+      
+      /// dqdx x-correction factorized into shape and normalization components
+      virtual float XNormdqdxCorrection(int plane) const = 0;
+      virtual float XNormdqdxCorrectionErr(int plane) const = 0;
+      virtual float XShapedqdxCorrection(int plane, float x) const = 0;
+      virtual float XShapedqdxCorrectionErr(int plane, float x) const = 0;
       
       /// phi and theta dependence of the dqdx correction
-      virtual float ThetadqdxCorrection(float theta) const = 0;
-      virtual float ThetadqdxCorrectionErr(float theta) const = 0;
-      virtual float PhidqdxCorrection(float phi) const = 0;
-      virtual float PhidqdxCorrectionErr(float phi) const = 0;
+      virtual float ThetadqdxCorrection(int plane, float theta) const = 0;
+      virtual float ThetadqdxCorrectionErr(int plane, float theta) const = 0;
+      virtual float PhidqdxCorrection(int plane, float phi) const = 0;
+      virtual float PhidqdxCorrectionErr(int plane, float phi) const = 0;
       
       /// total dqdx correction
-      virtual float TotaldqdxCorrection(float x, float y, float z, float theta, float phi) const = 0;
-      virtual float TotaldqdxCorrectionErr(float x, float y, float z, float theta, float phi) const = 0;
+      virtual float TotaldqdxCorrection(int plane, float x, float y, float z, float theta, float phi) const = 0;
+      virtual float TotaldqdxCorrectionErr(int plane, float x, float y, float z, float theta, float phi) const = 0;
       
       /// dEdx correction as a function of plane number
       virtual float dEdxCorrection(int plane) const = 0;

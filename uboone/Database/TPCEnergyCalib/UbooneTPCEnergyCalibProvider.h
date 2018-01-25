@@ -11,6 +11,7 @@
 
 #include "larevt/CalibrationDBI/IOVData/IOVDataConstants.h"
 #include "UboonedqdxCorrectionProvider.h"
+#include "UboonePlaneCorrectionProvider.h"
 #include "TPCEnergyCalibProvider.h"
 
 namespace lariov {
@@ -49,26 +50,31 @@ namespace lariov {
       bool Update(DBTimeStamp_t ts);
       
       /// Retrieve TPC dq/dx and dE/dx calibration information     
-      float YZdqdxCorrection(float y, float z) const override;
-      float YZdqdxCorrectionErr(float y, float z) const override;
-      float DriftdqdxCorrection(float drift_coord) const override;
-      float DriftdqdxCorrectionErr(float drift_coord) const override;
+      float YZdqdxCorrection(int plane, float y, float z) const override;
+      float YZdqdxCorrectionErr(int plane, float y, float z) const override;
+      float DriftdqdxCorrection(int plane, float drift_coord) const override;
+      float DriftdqdxCorrectionErr(int plane, float drift_coord) const override;
       
-      float XdqdxCorrection(float x) const override;
-      float XdqdxCorrectionErr(float x) const override;
-      float YdqdxCorrection(float y) const override;
-      float YdqdxCorrectionErr(float y) const override;
-      float ZdqdxCorrection(float z) const override;
-      float ZdqdxCorrectionErr(float z) const override;
+      float XdqdxCorrection(int plane, float x) const override;
+      float XdqdxCorrectionErr(int plane, float x) const override;
+      float YdqdxCorrection(int plane, float y) const override;
+      float YdqdxCorrectionErr(int plane, float y) const override;
+      float ZdqdxCorrection(int plane, float z) const override;
+      float ZdqdxCorrectionErr(int plane, float z) const override;
       
-      float ThetadqdxCorrection(float theta) const override;
-      float ThetadqdxCorrectionErr(float theta) const override;
-      float PhidqdxCorrection(float phi) const override;
-      float PhidqdxCorrectionErr(float phi) const override;
+      float XNormdqdxCorrection(int plane) const override;
+      float XNormdqdxCorrectionErr(int plane) const override;
+      float XShapedqdxCorrection(int plane, float x) const override;
+      float XShapedqdxCorrectionErr(int plane, float x) const override;
+      
+      float ThetadqdxCorrection(int plane, float theta) const override;
+      float ThetadqdxCorrectionErr(int plane, float theta) const override;
+      float PhidqdxCorrection(int plane, float phi) const override;
+      float PhidqdxCorrectionErr(int plane, float phi) const override;
       
       /// total dqdx correction
-      float TotaldqdxCorrection(float x, float y, float z, float theta, float phi=0.0) const override;
-      float TotaldqdxCorrectionErr(float x, float y, float z, float theta, float phi=0.0) const override;
+      float TotaldqdxCorrection(int plane, float x, float y, float z, float theta=0.0, float phi=0.0) const override;
+      float TotaldqdxCorrectionErr(int plane, float x, float y, float z, float theta=0.0, float phi=0.0) const override;
       
       /// dEdx correction as a function of plane number
       float dEdxCorrection(int plane) const override;
@@ -77,10 +83,12 @@ namespace lariov {
       
     private:
       
-      //UboonedqdxCorrectionProvider    fYZProvider;
-      UboonedqdxCorrectionProvider     fXProvider;
-      //UboonedqdxCorrectionProvider fThetaProvider;
-      //UboonedEdxCorrectionProvider      fdEdxProvider;
+      std::vector<std::shared_ptr<UboonedqdxCorrectionProvider> >     fXShapeProvider; 
+      std::vector<std::shared_ptr<UboonedqdxCorrectionProvider> >     fYZProvider;
+      
+      UboonePlaneCorrectionProvider fXNormProvider; 
+      
+      UboonePlaneCorrectionProvider fdEdxProvider;
   };
 }//end namespace lariov
 

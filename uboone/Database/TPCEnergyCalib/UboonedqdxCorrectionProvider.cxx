@@ -17,7 +17,7 @@ namespace lariov {
     
     this->Reconfigure(p);
   }
-      
+  
   void UboonedqdxCorrectionProvider::Reconfigure(fhicl::ParameterSet const& p) {
     
     this->DatabaseRetrievalAlg::Reconfigure(p.get<fhicl::ParameterSet>("DatabaseRetrievalAlg"));
@@ -123,10 +123,10 @@ namespace lariov {
 	//-------------------
 	//make sure bins are ordered correctly in file by checking that this current bin low_edge is greater than the previous bin lowedge
 	//-------------------
-	if (line_number != 0 && !UboonedqdxCorrectionProvider::CompareFunction(prev_low_edge, low_edge) ) {
+	/*if (line_number != 0 && !UboonedqdxCorrectionProvider::CompareFunction(prev_low_edge, low_edge) ) {
 	  throw cet::exception("UboonedqdxCorrectionProvider")
 	    << "Bins in file "<<abs_fp<<" are not ordered correctly!";
-        }
+        }*/
 	
 	
 	//-------------------
@@ -228,8 +228,7 @@ namespace lariov {
       }
 
     } //end if datasource is a file
-    else {
-      std::cout << "Using electronics calibrations from conditions database"<<std::endl;     
+    else {    
       fBinEdgeNames = p.get<std::vector<std::string> >("BinEdgeNames");
     }
   }
@@ -279,6 +278,7 @@ namespace lariov {
       std::vector<float> low_edge(fBinEdgeNames.size());
       std::vector<float> high_edge(fBinEdgeNames.size());
       double correction, correction_err;
+      bool dummy_bin=true;
       for (unsigned int n_dim = 0; n_dim != fBinEdgeNames.size(); ++n_dim) {
       
         std::string low_edge_str = fBinEdgeNames[n_dim]+"_low_edge";
@@ -289,6 +289,8 @@ namespace lariov {
 	low_edge[n_dim] = (float)le;
 	high_edge[n_dim] = (float)he;
 	
+	dummy_bin = dummy_bin && le > 1.0e5;
+	
 	//sanity check
 	if (high_edge[n_dim] <= low_edge[n_dim]) {
 	  throw cet::exception("UboonedqdxCorrectionProvider")
@@ -296,14 +298,21 @@ namespace lariov {
 	}
       }
       
+      //-------------------
+      //break out of loop over bins if we've reached the last bin
+      //i.e. the bin edges have dummy values
+      //-------------------
+      if (dummy_bin) break;
+      
       
       //-------------------
-      //make sure bins are ordered correctly in file by checking that this current bin low_edge is greater than the previous bin lowedge
+      //make sure bins are ordered correctly in the database by checking that this current bin low_edge is greater than the previous bin lowedge
       //-------------------
-      if (it_bin != bins.begin() && !UboonedqdxCorrectionProvider::CompareFunction(prev_low_edge, low_edge) ) {
+      /*if (it_bin != bins.begin() && !UboonedqdxCorrectionProvider::CompareFunction(prev_low_edge, low_edge) ) {
 	throw cet::exception("UboonedqdxCorrectionProvider")
-	  << "Bins in TPC dq/dx calib database are not ordered correctly!";
-      }
+	  << "Bins in TPC dq/dx calib database are not ordered correctly! "<<prev_low_edge.front()<<","<<prev_low_edge.back()
+	  <<" vs. "<<low_edge.front()<<","<<low_edge.back();
+      }*/
 	
 	
       //-------------------
@@ -379,52 +388,56 @@ namespace lariov {
       if (fIsFixedBinSize) {
 	float first_bin_size = bin_list[n_dim][1] - bin_list[n_dim][0];
 	for (std::vector<float>::const_iterator itV = bin_list[n_dim].begin()+2; itV != bin_list[n_dim].end(); ++itV) {
-	  if ( fabs((*itV - (*itV-1)) - first_bin_size)/first_bin_size > 1.0e-6) {
+	  if ( fabs((*itV - *(itV-1)) - first_bin_size)/first_bin_size > 1.0e-6) {
 	    fIsFixedBinSize = false;
+	    std::cout<<"Bin size varied: "<<n_dim<<" "<<*itV<<" "<<*(itV-1)<<" "<<first_bin_size<<std::endl;
 	    break;
 	  }
 	}
       }
 
       //Set these variables using bin_list
-      fCoord_min.push_back(bin_list[n_dim].front());
-      fCoord_max.push_back(bin_list[n_dim].back());	
+      fCoord_min[n_dim] = bin_list[n_dim].front();
+      fCoord_max[n_dim] = bin_list[n_dim].back();	
       fNbins[n_dim] = bin_list[n_dim].size() - 1;
     }
     
     return true;
   }
   
-  //returns true if each element of v1 is less than or equal to its corresponding element in v2
-  bool UboonedqdxCorrectionProvider::CompareFunction(const std::vector<float>& v1, const std::vector<float>& v2) {
-    if (v2.empty()) return false;
-    if (v1.empty()) return true;
+  
+  bool UboonedqdxCorrectionProvider::CompareFunction(const std::vector<float>& coord, const std::vector<float>& bin_lower_bounds) {
+    if (bin_lower_bounds.empty()) return false;
+    if (coord.empty()) return true;
     
-    std::vector<float>::const_iterator it1 = v1.cbegin();
-    std::vector<float>::const_iterator it2 = v2.cbegin();
+    std::vector<float>::const_iterator it_coord = coord.cbegin();
+    std::vector<float>::const_iterator it_bounds = bin_lower_bounds.cbegin();
     
-    std::vector<float>::const_iterator end1 = v1.cend();
-    std::vector<float>::const_iterator end2 = v2.cend();
+    std::vector<float>::const_iterator end_coord = coord.cend();
+    std::vector<float>::const_iterator end_bounds = bin_lower_bounds.cend();
     
-    while (it1!=end1) {
-      if (it2 == end2) return true;
-      if (*it1 > *it2) return false;
-      ++it1; ++it2;
+    while (it_coord!=end_coord && it_bounds!=end_bounds) {
+      if (*it_coord < *it_bounds) return false;
+      ++it_coord; ++it_bounds;
     }
-    return true;
+    return false;
   }
     
   
-  int UboonedqdxCorrectionProvider::GetBinNumber(const std::vector<float>& coord) const {
+  int UboonedqdxCorrectionProvider::GetBinNumber(const std::vector<float>& input_coord) const {
+    
+    std::vector<float> coord = input_coord;
     if (coord.size() != fCoord_min.size()) {
       throw cet::exception("UboonedqdxCorrectionProvider")
-        << "number of input coordinate dimensions doesn't match initialization";
+        << "number of input coordinate dimensions ("<<coord.size()<<") doesn't match initialization ("<<fCoord_min.size()<<")";
     }
     
     for (unsigned int n_dim=0; n_dim != coord.size(); ++n_dim) {
-      if (coord[n_dim] < fCoord_min[n_dim] || coord[n_dim] > fCoord_max[n_dim]) {
-	throw cet::exception("UboonedqdxCorrectionProvider")
-          << "coordinate #"<<n_dim<<" is out of bounds!";
+      if (coord[n_dim] < fCoord_min[n_dim]) {
+        coord[n_dim] = fCoord_min[n_dim];
+      }
+      else if (coord[n_dim] > fCoord_max[n_dim]) {
+        coord[n_dim] = fCoord_max[n_dim]*(1.0 - 1.0e-5);
       }
     }
     
@@ -432,20 +445,36 @@ namespace lariov {
       int ret_val = 0;
       int dim_product = 1;
       for (int n_dim=coord.size()-1; n_dim >= 0; --n_dim) {
-        ret_val += fNbins[n_dim]*(coord[n_dim]-fCoord_min[n_dim])/(fCoord_max[n_dim]-fCoord_min[n_dim])*dim_product;
+        ret_val += ((int)(fNbins[n_dim]*(coord[n_dim]-fCoord_min[n_dim])/(fCoord_max[n_dim]-fCoord_min[n_dim])))*dim_product;
 	dim_product *= fNbins[n_dim];
       }
+      /*std::cout<<"Chosen bin "<<ret_val<<std::endl;
+      for (int n_dim=coord.size()-1; n_dim >= 0; --n_dim) {
+        std::cout<<fNbins[n_dim]<<" "<<fCoord_min[n_dim]<<" "<<fCoord_max[n_dim]<<std::endl;
+      }*/
       return ret_val;
     }
     
     //not fixed bins
-    std::vector<std::vector<float> >::const_iterator it = std::lower_bound(fCoordToBinMap.begin(), fCoordToBinMap.end(), coord, UboonedqdxCorrectionProvider::CompareFunction);
+    throw cet::exception("UboonedqdxCorrectionProvider")
+      <<"GetBinNumber: Not fixed bins: doesn't work yet"<<std::endl;
+      
+    /*if (coord.size()==2) {
+      int tmp_bin=0;
+      for (auto iter = fCoordToBinMap.begin(); iter!= fCoordToBinMap.end(); ++iter, ++tmp_bin) {
+        std::cout<<"Bin: "<<tmp_bin<<" coord "<<iter->at(0)<<","<<iter->at(1)<<std::endl;
+      }
+    }
+    
+    std::vector<std::vector<float> >::const_iterator it = std::upper_bound(fCoordToBinMap.begin(), fCoordToBinMap.end(), coord, UboonedqdxCorrectionProvider::CompareFunction);
+    if (coord.size()==2) std::cout<<"Chosen bin coord: "<<it->at(0)<<","<<it->at(1)<<std::endl;
+    std::cout<<"Chosen bin number: "<<std::distance(fCoordToBinMap.cbegin(),it)-1<<std::endl;
+    std::cout<<"Compares: "<<this->CompareFunction(coord, *it)<<std::endl;
     if ( it==fCoordToBinMap.end() ) {
       throw cet::exception("UboonedqdxCorrectionProvider")
         << "coordinate is out of search bounds!";
     }
-    return std::distance(fCoordToBinMap.cbegin(),it);
-    return 0;
+    return std::distance(fCoordToBinMap.cbegin(),it)-1;*/
   }
   
   

@@ -1,13 +1,13 @@
 /**
- * \file UboonedqdxCorrectionProvider.h
+ * \file UboonePlaneCorrectionProvider.h
  * 
- * \brief Class def header for a class UboonedqdxCorrectionProvider
+ * \brief Class def header for a class UboonePlaneCorrectionProvider
  *
  * @author eberly@slac.stanford.edu
  */
 
-#ifndef UBOONEDQDXCORRECTIONPROVIDER_H
-#define UBOONEDQDXCORRECTIONPROVIDER_H
+#ifndef UBOONEPLANECORRECTIONPROVIDER_H
+#define UBOONEPLANECORRECTIONPROVIDER_H
 
 #include "DqdxCorrection.h"
 #include "larevt/CalibrationDBI/IOVData/Snapshot.h"
@@ -36,12 +36,12 @@ namespace lariov {
    * - *DefaultShapingTimeErr* (real, default: ): Shaping Time uncertainty returned
    *   when /UseDB/ and /UseFile/ parameters are false
    */
-  class UboonedqdxCorrectionProvider : public DatabaseRetrievalAlg {
+  class UboonePlaneCorrectionProvider : public DatabaseRetrievalAlg {
   
     public:
     
       /// Constructor
-      UboonedqdxCorrectionProvider(fhicl::ParameterSet const& p);      
+      UboonePlaneCorrectionProvider(fhicl::ParameterSet const& p);      
       
       /// Reconfigure function called by fhicl constructor
       void Reconfigure(fhicl::ParameterSet const& p);
@@ -50,33 +50,17 @@ namespace lariov {
       bool Update(DBTimeStamp_t ts);
       
       /// Retrieve calibration object
-      const DqdxCorrection& DqdxCorrectionObject(const std::vector<float>&) const;      
+      const DqdxCorrection& DqdxCorrectionObject(int plane) const;      
       
       /// Retrieve calibration info
-      float Correction(const std::vector<float>&) const;
-      float CorrectionErr(const std::vector<float>&) const;
+      float Correction(int plane) const;
+      float CorrectionErr(int plane) const;
       
     private:
-      
-      /// Compares two std::vector<floats> and returns true if each element of v1 is 
-      /// less than or equal to its corresponding element in v2
-      static bool CompareFunction(const std::vector<float>& v1, const std::vector<float>& v2);
-      
-      /// Determine which bin number (element position in fCoordToBinMap) corresponds to the 
-      /// input coord
-      int GetBinNumber(const std::vector<float>& coord) const;
     
       DataSource::ds fDataSource;
           
       Snapshot<DqdxCorrection> fData;
-      
-      //convert from input coordinate to bin number used by Snapshot
-      std::vector<float> fCoord_min;
-      std::vector<float> fCoord_max;
-      std::vector<unsigned int>   fNbins;
-      std::vector<std::string> fBinEdgeNames;
-      bool fIsFixedBinSize;
-      std::vector<std::vector<float> > fCoordToBinMap;
   };
 }//end namespace lariov
 
