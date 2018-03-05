@@ -41,9 +41,19 @@ namespace lariov {
   }
   
   bool UbooneTPCEnergyCalibProvider::Update(DBTimeStamp_t ts) {
-    return fXShapeProvider[0]->Update(ts) && fXShapeProvider[1]->Update(ts) && fXShapeProvider[2]->Update(ts) &&
-           fYZProvider[0]->Update(ts) && fYZProvider[1]->Update(ts) && fYZProvider[2]->Update(ts) &&
-	   fXNormProvider.Update(ts) && fdEdxProvider.Update(ts);
+    
+    //get around compiler optimization shenanigans by putting each update call in a separate line before returning
+    bool return_val1 = fXShapeProvider[0]->Update(ts);
+    bool return_val2 = fXShapeProvider[1]->Update(ts);
+    bool return_val3 = fXShapeProvider[2]->Update(ts);
+    bool return_val4 = fYZProvider[0]->Update(ts);
+    bool return_val5 = fYZProvider[1]->Update(ts);
+    bool return_val6 = fYZProvider[2]->Update(ts);
+    bool return_val7 = fXNormProvider.Update(ts);
+    bool return_val8 = fdEdxProvider.Update(ts);
+    
+    return return_val1 || return_val2 || return_val3 || return_val4 || return_val5 || return_val6 || return_val7 || return_val8;
+    
   }
   
   float UbooneTPCEnergyCalibProvider::YZdqdxCorrection(int plane, float y, float z) const {
