@@ -398,7 +398,8 @@ namespace lariov {
 
       //Set these variables using bin_list
       fCoord_min[n_dim] = bin_list[n_dim].front();
-      fCoord_max[n_dim] = bin_list[n_dim].back();	
+      fCoord_max[n_dim] = bin_list[n_dim].back();
+      //std::cout<<"STATEMENT: Set min and max bin coords for this dimension to: "<<fCoord_min[n_dim]<<" and "<<fCoord_max[n_dim]<<std::endl;	
       fNbins[n_dim] = bin_list[n_dim].size() - 1;
     }
     
@@ -436,10 +437,12 @@ namespace lariov {
       if (coord[n_dim] < fCoord_min[n_dim]) {
         coord[n_dim] = fCoord_min[n_dim];
       }
-      else if (coord[n_dim] > fCoord_max[n_dim]) {
+      else if (coord[n_dim] >= fCoord_max[n_dim]) {
         coord[n_dim] = fCoord_max[n_dim]*(1.0 - 1.0e-5);
       }
     }
+    
+    //std::cout<<"STATEMENT: bin ranges: "<<coord[0]<<" - "<<fCoord_min[0]<<","<<fCoord_max[0]<<std::endl;
     
     if (fIsFixedBinSize) {
       int ret_val = 0;
