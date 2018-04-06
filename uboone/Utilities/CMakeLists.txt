@@ -30,27 +30,16 @@ set( uboone_util_lib_list lardata_Utilities_LArFFT_service
 			${ROOT_BASIC_LIB_LIST}
     )
 
-
-simple_plugin( SignalShapingServiceMicroBooNE  "service"
-               ${uboone_util_lib_list}
-	       BASENAME_ONLY
-        )
-simple_plugin( FileCatalogMetadataMicroBooNE "service"
-               ${uboone_util_lib_list}
-	       BASENAME_ONLY
+art_make( BASENAME_ONLY
+          LIB_LIBRARIES
+	               ${uboone_util_lib_list}
+	  MODULE_LIBRARIES
+	               ${uboone_util_lib_list}
+	  SERVICE_LIBRARIES
+	               ${uboone_util_lib_list}
+		       uboone_Utilities
 	)
-simple_plugin( TFileMetadataMicroBooNE "service"
-               ${uboone_util_lib_list}
-	       BASENAME_ONLY
-	)	
-simple_plugin( TinyHitFinderAna "module"
-               ${uboone_util_lib_list}
-	       BASENAME_ONLY
-        )
-simple_plugin( RandomPrescale "module"
-               ${uboone_util_lib_list}
-	       BASENAME_ONLY
-	)	
+	
 simple_plugin( FileCatalogMetadataRawDigit "plugin"
                ${uboone_util_lib_list}
 	       BASENAME_ONLY
