@@ -44,11 +44,6 @@ simple_plugin( FileCatalogMetadataRawDigit "plugin"
                ${uboone_util_lib_list}
 	       BASENAME_ONLY
 	)	
-simple_plugin( OpHitRemapProducer "module"
-               ${uboone_util_lib_list}
-	       BASENAME_ONLY
-	)
-             
  
 install_headers()
 # do not install duplicate standard_reco_uboone.fcl file
