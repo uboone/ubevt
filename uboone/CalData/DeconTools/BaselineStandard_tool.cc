@@ -74,7 +74,6 @@ float BaselineStandard::GetBaseline(std::vector<float> const& holder,
     size_t roiStop(roiStart + roiLen);
     size_t newRoiStart(roiStart);
     size_t newRoiStop(roiStop);
-    size_t nTries(0);
     
     // Calculate baslines from the very front of the deconvolution buffer and from the end
     float  basePre  = std::accumulate(holder.begin() + roiStart, holder.begin() + roiStart + nBinsToAve, 0.) / float(nBinsToAve);
@@ -85,7 +84,7 @@ float BaselineStandard::GetBaseline(std::vector<float> const& holder,
     
     // If the estimated baseline from the front of the roi does not agree well with that from the end
     // of the roi then we'll extend the roi hoping for good agreement
-    while(!(fabs(basePre - basePost) < deconNoise) && nTries++ < 0) //3)
+    while(!(fabs(basePre - basePost) < deconNoise)) //3)
     {
         size_t nBinsToAdd(10);
         
