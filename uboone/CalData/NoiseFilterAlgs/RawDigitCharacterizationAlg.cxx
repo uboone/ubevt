@@ -19,7 +19,7 @@ namespace caldata
 ///
 RawDigitCharacterizationAlg::RawDigitCharacterizationAlg(fhicl::ParameterSet const & pset) :
                       fHistsInitialized(false),
-                      fFirstEvent(true),
+                      //fFirstEvent(true),
                       fChannelGroups(pset),
                       fPedestalRetrievalAlg(art::ServiceHandle<lariov::DetPedestalService>()->GetPedestalProvider())
 
