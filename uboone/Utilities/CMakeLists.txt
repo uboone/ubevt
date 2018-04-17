@@ -63,6 +63,10 @@ simple_plugin( TFileMetadataMicroBooNE "service"
                ${uboone_util_lib_list}
 	       BASENAME_ONLY
 	)	
+simple_plugin( PMTRemapService "service"
+               ${uboone_util_lib_list}
+	       BASENAME_ONLY
+	)	
 simple_plugin( TinyHitFinderAna "module"
                ${uboone_util_lib_list}
 	       BASENAME_ONLY
@@ -71,11 +75,16 @@ simple_plugin( RandomPrescale "module"
                ${uboone_util_lib_list}
 	       BASENAME_ONLY
 	)	
+simple_plugin( OpHitRemapProducer "module"
+               ${uboone_util_lib_list}
+               BASENAME_ONLY
+	)
 simple_plugin( FileCatalogMetadataRawDigit "plugin"
                ${uboone_util_lib_list}
 	       BASENAME_ONLY
 	)	
              
+            
  
 install_headers()
 # do not install duplicate standard_reco_uboone.fcl file
