@@ -279,7 +279,7 @@ void CalWireROI::produce(art::Event& evt)
             // Get the pedestal subtracted data, centered in the deconvolution vector
             std::vector<float> rawAdcLessPedVec(dataSize);
             
-            std::transform(rawadc.begin(),rawadc.end(),rawAdcLessPedVec.begin(),std::bind2nd(std::minus<short>(),pedestal));
+            std::transform(rawadc.begin(),rawadc.end(),rawAdcLessPedVec.begin(),std::bind(std::minus<short>(), std::placeholders::_1, pedestal));
             
             // It seems there are deviations from the pedestal when using wirecell for noise filtering
             float raw_noise = fixTheFreakingWaveform(rawAdcLessPedVec, channel, rawAdcLessPedVec);
@@ -412,7 +412,7 @@ float CalWireROI::fixTheFreakingWaveform(const std::vector<float>& waveform, raw
     
     std::vector<float> locWaveformDiff(locWaveform.size()/2);
     
-    std::transform(locWaveform.begin(),locWaveform.begin() + locWaveform.size()/2,locWaveformDiff.begin(), std::bind2nd(std::minus<float>(),meanWaveform));
+    std::transform(locWaveform.begin(),locWaveform.begin() + locWaveform.size()/2,locWaveformDiff.begin(), std::bind(std::minus<float>(), std::placeholders::_1, meanWaveform));
     
     float localRMS = std::inner_product(locWaveformDiff.begin(), locWaveformDiff.end(), locWaveformDiff.begin(), 0.);
     
@@ -431,7 +431,7 @@ float CalWireROI::fixTheFreakingWaveform(const std::vector<float>& waveform, raw
     // recalculate the rms
     locWaveformDiff.resize(minNumBins);
     
-    std::transform(locWaveform.begin(),locWaveform.begin() + minNumBins,locWaveformDiff.begin(), std::bind2nd(std::minus<float>(),newPedestal));
+    std::transform(locWaveform.begin(),locWaveform.begin() + minNumBins,locWaveformDiff.begin(), std::bind(std::minus<float>(), std::placeholders::_1, newPedestal));
     
     localRMS = std::inner_product(locWaveform.begin(), locWaveform.begin() + minNumBins, locWaveform.begin(), 0.);
     localRMS = std::sqrt(std::max(float(0.),localRMS / float(minNumBins)));

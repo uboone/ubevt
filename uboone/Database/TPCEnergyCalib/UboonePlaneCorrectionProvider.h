@@ -1,26 +1,23 @@
 /**
- * \file UboonePmtGainProvider.h
- *
- * \ingroup WebDBI
+ * \file UboonePlaneCorrectionProvider.h
  * 
- * \brief Class def header for a class UboonePmtGainProvider
+ * \brief Class def header for a class UboonePlaneCorrectionProvider
  *
  * @author eberly@slac.stanford.edu
  */
 
-#ifndef UBOONEPMTGAINPROVIDER_H
-#define UBOONEPMTGAINPROVIDER_H
+#ifndef UBOONEPLANECORRECTIONPROVIDER_H
+#define UBOONEPLANECORRECTIONPROVIDER_H
 
-#include "larevt/CalibrationDBI/IOVData/PmtGain.h"
+#include "DqdxCorrection.h"
 #include "larevt/CalibrationDBI/IOVData/Snapshot.h"
 #include "larevt/CalibrationDBI/IOVData/IOVDataConstants.h"
-#include "larevt/CalibrationDBI/Interface/PmtGainProvider.h"
 #include "larevt/CalibrationDBI/Providers/DatabaseRetrievalAlg.h"
 
 namespace lariov {
 
   /**
-   * @brief Retrieves information: pmt gain
+   * @brief Retrieves information: electronics calibrations, specifically gain and shaping time
    * 
    * Configuration parameters
    * =========================
@@ -34,33 +31,37 @@ namespace lariov {
    *   when /UseDB/ and /UseFile/ parameters are false
    * - *DefaultGainErr* (real, default: ): Gain uncertainty returned
    *   when /UseDB/ and /UseFile/ parameters are false
+   * - *DefaultShapingTime* (real, default: ): Shaping Time returned 
+   *   when /UseDB/ and /UseFile/ parameters are false
+   * - *DefaultShapingTimeErr* (real, default: ): Shaping Time uncertainty returned
+   *   when /UseDB/ and /UseFile/ parameters are false
    */
-  class UboonePmtGainProvider : public DatabaseRetrievalAlg, public PmtGainProvider {
+  class UboonePlaneCorrectionProvider : public DatabaseRetrievalAlg {
   
     public:
     
-      /// Constructors
-      UboonePmtGainProvider(fhicl::ParameterSet const& p);
+      /// Constructor
+      UboonePlaneCorrectionProvider(fhicl::ParameterSet const& p);      
       
       /// Reconfigure function called by fhicl constructor
-      void Reconfigure(fhicl::ParameterSet const& p) override;
+      void Reconfigure(fhicl::ParameterSet const& p);
       
       /// Update Snapshot and inherited DBFolder if using database.  Return true if updated
       bool Update(DBTimeStamp_t ts);
       
-      /// Retrieve gain information
-      const PmtGain& PmtGainObject(DBChannelID_t ch) const;      
-      float Gain(DBChannelID_t ch) const override;
-      float GainErr(DBChannelID_t ch) const override;
-      CalibrationExtraInfo const& ExtraInfo(DBChannelID_t ch) const override;
+      /// Retrieve calibration object
+      const DqdxCorrection& DqdxCorrectionObject(int plane) const;      
+      
+      /// Retrieve calibration info
+      float Correction(int plane) const;
+      float CorrectionErr(int plane) const;
       
     private:
     
       DataSource::ds fDataSource;
           
-      Snapshot<PmtGain> fData;
+      Snapshot<DqdxCorrection> fData;
   };
 }//end namespace lariov
 
 #endif
-
