@@ -57,7 +57,7 @@ private:
 
 spacecharge::ShiftEdepSCE::ShiftEdepSCE(fhicl::ParameterSet const & p)
   : fEDepTag(p.get<art::InputTag>("EDepTag")),
-    fMakeAnaTree(p.get<bool>("MakeAnaTree",true)
+    fMakeAnaTree(p.get<bool>("MakeAnaTree",true))
 {
   produces< std::vector<sim::SimEnergyDeposit> >();
 }
@@ -66,7 +66,7 @@ void spacecharge::ShiftEdepSCE::beginJob()
 {
   if(fMakeAnaTree){
     art::ServiceHandle<art::TFileService> tfs;
-    fNtEdepAna = tfs->make<TNtuple>("nt_edep_ana","Edep PosDiff Ana Ntuple","old_x:old_y_old_z:new_x:new_y:new_z");
+    fNtEdepAna = tfs->make<TNtuple>("nt_edep_ana","Edep PosDiff Ana Ntuple","orig_x:orig_y:orig_z:shift_x:shift_y:shift_z");
   }
 }
 

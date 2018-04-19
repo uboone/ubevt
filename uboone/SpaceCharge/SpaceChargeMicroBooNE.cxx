@@ -283,13 +283,16 @@ std::vector<double> spacecharge::SpaceChargeMicroBooNE::GetPosOffsets(double xVa
 
   double data_corr_scale=1.;
   if(fEnableDataSimSpatialCorrection){
-    if(xVal<fDataSimCorrFunc_MinX || xVal>fDataSimCorrFunc_MaxX) data_corr_scale=1.;
+    if(xVal<fDataSimCorrFunc_MinX || xVal>fDataSimCorrFunc_MaxX) {
+      thePosOffsets[0] = 0.0; thePosOffsets[1] = 0.0; thePosOffsets[2] = 0.0;
+      data_corr_scale=1.;
+    }
     else data_corr_scale = 0.5*(fDataSimCorrFunc_DataTop.Eval(xVal)/fDataSimCorrFunc_MCTop.Eval(xVal) + 
 				fDataSimCorrFunc_DataBottom.Eval(xVal)/fDataSimCorrFunc_MCBottom.Eval(xVal));
   }
-  for(size_t i=0; i<3; i++)
+  for(size_t i=0; i<3; i++){
     thePosOffsets[i] = thePosOffsets[i]*data_corr_scale*fSpatialOffsetScale;
-
+  }
   return thePosOffsets;
 }
 
