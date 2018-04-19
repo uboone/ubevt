@@ -16,11 +16,13 @@
 #include "canvas/Utilities/InputTag.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
+#include "art/Framework/Services/Optional/TFileService.h"
 
 #include <memory>
 
 #include "lardataobj/Simulation/SimEnergyDeposit.h"
 #include "larevt/SpaceChargeServices/SpaceChargeService.h"
+#include "TNtuple.h"
 
 namespace spacecharge {
   class ShiftEdepSCE;
@@ -41,31 +43,43 @@ public:
 
   // Required functions.
   void produce(art::Event & e) override;
+  void beginJob() override;
 
 private:
 
   // Declare member data here.
   art::InputTag fEDepTag;
+  bool          fMakeAnaTree;
+  TNtuple*      fNtEdepAna;
 
 };
 
 
 spacecharge::ShiftEdepSCE::ShiftEdepSCE(fhicl::ParameterSet const & p)
-  : fEDepTag(p.get<art::InputTag>("EDepTag"))
+  : fEDepTag(p.get<art::InputTag>("EDepTag")),
+    fMakeAnaTree(p.get<bool>("MakeAnaTree",true)
 {
   produces< std::vector<sim::SimEnergyDeposit> >();
+}
+
+void spacecharge::ShiftEdepSCE::beginJob()
+{
+  if(fMakeAnaTree){
+    art::ServiceHandle<art::TFileService> tfs;
+    fNtEdepAna = tfs->make<TNtuple>("nt_edep_ana","Edep PosDiff Ana Ntuple","old_x:old_y_old_z:new_x:new_y:new_z");
+  }
 }
 
 void spacecharge::ShiftEdepSCE::produce(art::Event & e)
 {
   auto sce = lar::providerFrom<spacecharge::SpaceChargeService>();
 
-  std::uniqute_ptr< std::vector<sim::SimEnergyDeposit> > 
+  std::unique_ptr< std::vector<sim::SimEnergyDeposit> > 
     outEdepVecPtr(new std::vector<sim::SimEnergyDeposit>() );
   auto & outEdepVec(*outEdepVecPtr);
 
   art::Handle< std::vector<sim::SimEnergyDeposit> > inEdepHandle;
-  e.getByLabel(fEdepTag,inEdepHandle);
+  e.getByLabel(fEDepTag,inEdepHandle);
   auto const& inEdepVec(*inEdepHandle);
   
   outEdepVec.reserve(inEdepVec.size());
@@ -77,12 +91,19 @@ void spacecharge::ShiftEdepSCE::produce(art::Event & e)
     outEdepVec.emplace_back(edep.NumPhotons(),
 			    edep.NumElectrons(),
 			    edep.Energy(),
-			    {edep.StartX()+posOffsets[0],edep.StartY+posOffsets[1],edep.StartZ()+posOffsets[2]},
-			    {edep.EndX()+posOffsets[0],edep.EndY+posOffsets[1],edep.EndZ()+posOffsets[2]},
+			    sim::SimEnergyDeposit::Point_t{(float)(edep.StartX()+posOffsets[0]),
+				(float)(edep.StartY()+posOffsets[1]),
+				(float)(edep.StartZ()+posOffsets[2])},
+			    sim::SimEnergyDeposit::Point_t{(float)(edep.EndX()+posOffsets[0]),
+				(float)(edep.EndY()+posOffsets[1]),
+				(float)(edep.EndZ()+posOffsets[2])},
 			    edep.StartT(),
 			    edep.EndT(),
 			    edep.TrackID(),
 			    edep.PdgCode());
+    if(fMakeAnaTree)
+      fNtEdepAna->Fill(edep.X(),edep.Y(),edep.Z(),
+		       outEdepVec.back().X(),outEdepVec.back().Y(),outEdepVec.back().Z());
   }
 
   e.put(std::move(outEdepVecPtr));
