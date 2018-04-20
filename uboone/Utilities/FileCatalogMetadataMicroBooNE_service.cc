@@ -69,7 +69,7 @@ void util::FileCatalogMetadataMicroBooNE::postEndSubRun(art::SubRun const& sr)
   std::ostringstream streamObj;
   streamObj << fTotPOT;
   std::string strPOT = streamObj.str();
-  mds->addMetadata("mc_pot", strPOT);
+  mds->addMetadata("mc.pot", strPOT);
 }
 
 
