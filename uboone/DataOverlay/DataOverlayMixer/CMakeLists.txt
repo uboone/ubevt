@@ -46,6 +46,7 @@ art_make(
                         ${ART_FRAMEWORK_PRINCIPAL}
                         ${ART_FRAMEWORK_SERVICES_REGISTRY}
                         ${ART_FRAMEWORK_SERVICES_SYSTEM_FILECATALOGMETADATA_SERVICE}
+			uboone_Utilities
                         art_Persistency_Common
                         art_Utilities
 			canvas
