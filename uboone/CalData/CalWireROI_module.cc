@@ -53,7 +53,7 @@
 #include "uboone/CalData/DeconTools/IROIFinder.h"
 #include "uboone/CalData/DeconTools/IDeconvolution.h"
 #include "uboone/CalData/DeconTools/IBaseline.h"
-#include "ubooneobj/SparseRawDigit.h"
+#include "ubooneobj/RawData/SparseRawDigit.h"
 
 ///creation of calibrated signals on wires
 namespace caldata {
