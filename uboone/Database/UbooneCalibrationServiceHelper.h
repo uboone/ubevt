@@ -4,7 +4,7 @@
 #include "art/Framework/Principal/Event.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h" 
-#include "uboone/DataOverlay/DataOverlayProducts/EventMixingSummary.h"
+#include "ubooneobj/DataOverlay/EventMixingSummary.h"
 
 namespace lariov {
 

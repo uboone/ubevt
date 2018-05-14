@@ -47,7 +47,7 @@
 
 #include "lardataobj/RawData/OpDetWaveform.h"
 
-#include "DataOverlayProducts/EventMixingSummary.h"
+#include "ubooneobj/DataOverlay/EventMixingSummary.h"
 
 namespace mix {
   class RetrieveOverlayDataMicroBooNE;
