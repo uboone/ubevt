@@ -23,7 +23,6 @@ set( uboone_util_lib_list lardata_Utilities_LArFFT_service
 			larcorealg_Geometry
 			larevt_CalibrationDBI_IOVData
 			larevt_CalibrationDBI_Providers
-			larreco_HitFinder
 			lardataobj_RecoBase
 			larcore_Geometry_Geometry_service
 			lardata_Utilities
