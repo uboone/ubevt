@@ -16,14 +16,12 @@ art_make( BASENAME_ONLY
 			art_Utilities canvas
           MODULE_LIBRARIES larcorealg_Geometry
                         larcore_Geometry_Geometry_service
-                        larsim_Simulation nutools_ParticleNavigation lardataobj_Simulation
                         lardata_Utilities
                         larevt_Filters
                         lardataobj_RawData
                         SignalShapingServiceMicroBooNE_service
 			larevt_CalibrationDBI_Providers
 			uboone_Database
-                        nutools_RandomUtils_NuRandomService_service
                         ${ART_FRAMEWORK_CORE}
                         ${ART_FRAMEWORK_PRINCIPAL}
                         ${ART_FRAMEWORK_SERVICES_REGISTRY}
