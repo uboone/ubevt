@@ -4,7 +4,6 @@ art_make( NO_PLUGINS
                         lardata_Utilities
 			larcorealg_Geometry
                         ${MF_MESSAGELOGGER}
-                        ${MF_UTILITIES}
                         cetlib cetlib_except
 			${FHICLCPP}
                         ${ROOT_BASIC_LIB_LIST}
@@ -24,7 +23,6 @@ simple_plugin(ShiftEdepSCE "module"
 #              ${ART_FRAMEWORK_SERVICES_SYSTEM_FILECATALOGMETADATA_SERVICE}
               art_Utilities canvas
               ${MF_MESSAGELOGGER}
-              ${MF_UTILITIES}
               cetlib cetlib_except
               ${ROOT_BASIC_LIB_LIST}
 )
