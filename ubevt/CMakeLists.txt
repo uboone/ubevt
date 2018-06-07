@@ -1,0 +1,6 @@
+add_subdirectory(CalData)
+add_subdirectory(DataOverlay)
+add_subdirectory(Database)
+add_subdirectory(SpaceCharge)
+add_subdirectory(SpaceChargeServices)
+add_subdirectory(Utilities)
