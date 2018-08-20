@@ -23,6 +23,8 @@
 // ROOT includes
 #include "TGraph.h"
 #include "TF1.h"
+#include "TTree.h"
+#include "TH3.h"
 
 // C/C++ standard libraries
 #include <string>
@@ -147,6 +149,7 @@ namespace spacecharge {
     public:
 
       typedef enum {
+        kVoxelized,
         kParametric,
         kUnknown
       } SpaceChargeRepresentation_t;
@@ -162,12 +165,19 @@ namespace spacecharge {
       bool EnableSimEfieldSCE() const override;
       bool EnableCorrSCE() const override;
       geo::Vector_t GetPosOffsets(geo::Point_t const& point) const override;
+      geo::Vector_t GetCorrPosOffsets(geo::Point_t const& point) const;
       geo::Vector_t GetEfieldOffsets(geo::Point_t const& point) const override;
       
     protected:
 
       static SpaceChargeRepresentation_t ParseRepresentationType
         (std::string repr_str);
+
+      geo::Vector_t GetOffsetsVoxel(geo::Point_t const& point, TH3F* hX, TH3F* hY, TH3F* hZ) const;
+      std::vector<TH3F*> Build_TH3(TTree* tree, TTree* eTree, std::string xvar, std::string yvar, std::string zvar, std::string posLeaf) const;
+      std::vector<TH3F*> SCEhistograms; //Histograms are Dx, Dy, Dz, dEx/E0, dEy/E0, dEz/E0 
+      std::vector<TH3F*> CorrSCEhistograms; 
+      
       
       geo::Vector_t GetPosOffsetsParametric(geo::Point_t const& point) const;
       double GetOnePosOffsetParametricX(geo::Point_t const& point) const;
@@ -184,6 +194,8 @@ namespace spacecharge {
       geo::Point_t Transform(geo::Point_t const& point) const;
 
       bool IsInsideBoundaries(geo::Point_t const& point) const;
+      bool IsTooFarFromBoundaries(geo::Point_t const& point) const;
+      geo::Point_t PretendAtBoundary(geo::Point_t const& point) const;
 
       bool fEnableSimSpatialSCE;
       bool fEnableSimEfieldSCE;
