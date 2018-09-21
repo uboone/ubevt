@@ -10,8 +10,8 @@ microboone_detproperties.Efield:           [0.273, 0.367,0.767] # 0.273 correspo
 
 microboone_detproperties.NumberTimeSamples: 9600
 microboone_detproperties.TimeOffsetU:       0.
-microboone_detproperties.TimeOffsetV:       0.
-microboone_detproperties.TimeOffsetZ:       0.
+microboone_detproperties.TimeOffsetV:       -4.539
+microboone_detproperties.TimeOffsetZ:       -7.782
 microboone_detproperties.ReadOutWindowSize: 9600
 microboone_detproperties.InheritNumberTimeSamples: true
 
