@@ -13,6 +13,7 @@
 
 // LArSoft includes
 #include "ubevt/SpaceCharge/SpaceChargeMicroBooNE.h"
+#include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
 
 // Framework includes
 #include "cetlib_except/exception.h"
@@ -64,7 +65,11 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
 {  
   fEnableSimSpatialSCE = pset.get<bool>("EnableSimSpatialSCE");
   fEnableSimEfieldSCE = pset.get<bool>("EnableSimEfieldSCE");
-  fEnableCorrSCE = pset.get<bool>("EnableCorrSCE");
+  fEnableCalSpatialSCE = pset.get<bool>("EnableCalSpatialSCE");
+  fEnableCalEfieldSCE = pset.get<bool>("EnableCalEfieldSCE");
+   
+  auto const *detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
+  fEfield = detprop->Efield();  
 
   if((fEnableSimSpatialSCE == true) || (fEnableSimEfieldSCE == true))
   {
@@ -183,13 +188,13 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
     infile.Close();
   }
   
-  if(fEnableCorrSCE == true)
+  if((fEnableCalSpatialSCE == true) || (fEnableCalEfieldSCE == true))
   {
-    fInputFilename = pset.get<std::string>("InputFilename");
+    fCalInputFilename = pset.get<std::string>("CalibrationInputFilename");
 
     std::string fname;
     cet::search_path sp("FW_SEARCH_PATH");
-    sp.find_file(fInputFilename,fname);
+    sp.find_file(fCalInputFilename,fname);
     
     TFile infile(fname.c_str(), "READ");
     if(!infile.IsOpen()) throw cet::exception("SpaceChargeMicroBooNE") << "Could not find the space charge effect file '" << fname << "'!\n";
@@ -199,7 +204,7 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
     TTree* treeE = (TTree*)infile.Get("SpaCEtree");
     
     //Build histograms
-    CorrSCEhistograms = Build_TH3(treeD,treeE,"x_reco","y_reco","z_reco","bkwd");
+    CalSCEhistograms = Build_TH3(treeD,treeE,"x_reco","y_reco","z_reco","bkwd");
     //histograms are Dx, Dy, Dz, dEx/E0, dEy/E0, dEz/E0
     
     infile.Close();
@@ -282,10 +287,19 @@ bool spacecharge::SpaceChargeMicroBooNE::EnableSimEfieldSCE() const
 }
 
 //----------------------------------------------------------------------------
-/// Return boolean indicating whether or not to apply SCE corrections
-bool spacecharge::SpaceChargeMicroBooNE::EnableCorrSCE() const
+/// Return boolean indicating whether or not to apply SCE corrections from 
+/// calibration for spatial distortions
+bool spacecharge::SpaceChargeMicroBooNE::EnableCalSpatialSCE() const
 {
-  return fEnableCorrSCE;
+  return fEnableCalSpatialSCE;
+}
+
+//----------------------------------------------------------------------------
+/// Return boolean indicating whether or not to apply SCE corrections from 
+/// calibration for E field distortions
+bool spacecharge::SpaceChargeMicroBooNE::EnableCalEfieldSCE() const
+{
+  return fEnableCalEfieldSCE;
 }
 
 //----------------------------------------------------------------------------
@@ -328,15 +342,15 @@ geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetPosOffsets(geo::Point_t con
 
 /// Primary working method of service that provides position offsets to be
 /// used in ionization electron drift for correction in reconstruction
-geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetCorrPosOffsets(geo::Point_t const& tmp_point) const
+geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetCalPosOffsets(geo::Point_t const& tmp_point) const
 {
   geo::Vector_t thePosOffsets;
   geo::Point_t point = tmp_point;
-  if (!EnableCorrSCE()) return thePosOffsets;     // no correction, zero displacement
-  if(IsTooFarFromBoundaries(point)) return thePosOffsets;  // zero-initialised
-  if(!IsInsideBoundaries(point)&&!IsTooFarFromBoundaries(point)) point = PretendAtBoundary(point);
+  if (!EnableCalSpatialSCE()) return thePosOffsets;     // no correction, zero displacement
+  if (IsTooFarFromBoundaries(point)) return thePosOffsets;  // zero-initialised
+  if (!IsInsideBoundaries(point)&&!IsTooFarFromBoundaries(point)) point = PretendAtBoundary(point);
   
-  thePosOffsets = GetOffsetsVoxel(point,CorrSCEhistograms.at(0),CorrSCEhistograms.at(1),CorrSCEhistograms.at(2));
+  thePosOffsets = GetOffsetsVoxel(point,CalSCEhistograms.at(0),CalSCEhistograms.at(1),CalSCEhistograms.at(2));
     
   return thePosOffsets;
 }
@@ -368,7 +382,7 @@ std::vector<TH3F*> spacecharge::SpaceChargeMicroBooNE::Build_TH3
   double cell_size = Lx/numDivisions_x;
   double numDivisions_y = TMath::Nint((Ly/Lx)*((Double_t)numDivisions_x));
   double numDivisions_z = TMath::Nint((Lz/Lx)*((Double_t)numDivisions_x));
-  double E_field = 273.0;
+
   double E_numDivisions_x = 20.0;
   double E_cell_size = Lx/E_numDivisions_x;
   double E_numDivisions_y = TMath::Nint((Ly/Lx)*((Double_t)E_numDivisions_x));
@@ -381,7 +395,7 @@ std::vector<TH3F*> spacecharge::SpaceChargeMicroBooNE::Build_TH3
   
   TH3F* hEx = new TH3F("hEx", "", E_numDivisions_x+1, -0.5*E_cell_size, Lx+0.5*E_cell_size, E_numDivisions_y+1, -0.5*E_cell_size, Ly+0.5*E_cell_size, E_numDivisions_z+1, -0.5*E_cell_size, Lz+0.5*E_cell_size);
   TH3F* hEy = new TH3F("hEy", "", E_numDivisions_x+1, -0.5*E_cell_size, Lx+0.5*E_cell_size, E_numDivisions_y+1, -0.5*E_cell_size, Ly+0.5*E_cell_size, E_numDivisions_z+1, -0.5*E_cell_size, Lz+0.5*E_cell_size);
-  TH3F* hEz = new TH3F("hez", "", E_numDivisions_x+1, -0.5*E_cell_size, Lx+0.5*E_cell_size, E_numDivisions_y+1, -0.5*E_cell_size, Ly+0.5*E_cell_size, E_numDivisions_z+1, -0.5*E_cell_size, Lz+0.5*E_cell_size);
+  TH3F* hEz = new TH3F("hEz", "", E_numDivisions_x+1, -0.5*E_cell_size, Lx+0.5*E_cell_size, E_numDivisions_y+1, -0.5*E_cell_size, Ly+0.5*E_cell_size, E_numDivisions_z+1, -0.5*E_cell_size, Lz+0.5*E_cell_size);
  
   //For each event, read the tree and fill each histogram
   for (int ii = 0; ii<tree->GetEntries(); ii++){
@@ -394,16 +408,26 @@ std::vector<TH3F*> spacecharge::SpaceChargeMicroBooNE::Build_TH3
     Double_t dx = tree->GetBranch("Dx")->GetLeaf(Form("data_%sDisp",posLeaf.c_str()))->GetValue();
     Double_t dy = tree->GetBranch("Dy")->GetLeaf(Form("data_%sDisp",posLeaf.c_str()))->GetValue();
     Double_t dz = tree->GetBranch("Dz")->GetLeaf(Form("data_%sDisp",posLeaf.c_str()))->GetValue();
-		
-    eTree->GetEntry(ii);
-    Double_t Ex = eTree->GetBranch("Ex")->GetLeaf("data")->GetValue() / E_field;
-    Double_t Ey = eTree->GetBranch("Ey")->GetLeaf("data")->GetValue() / E_field;
-    Double_t Ez = eTree->GetBranch("Ez")->GetLeaf("data")->GetValue() / E_field;
    
     //Fill the histograms		
-    hDx->Fill(x,y,z,1000.0*dx);
-    hDy->Fill(x,y,z,1000.0*dy);
-    hDz->Fill(x,y,z,1000.0*dz);
+    hDx->Fill(x,y,z,100.0*dx);
+    hDy->Fill(x,y,z,100.0*dy);
+    hDz->Fill(x,y,z,100.0*dz);
+  }
+  
+  //For each event, read the tree and fill each histogram
+  for (int ii = 0; ii<eTree->GetEntries(); ii++){
+
+		
+    eTree->GetEntry(ii);
+    Double_t x = eTree->GetBranch("xpoint")->GetLeaf("data")->GetValue();
+    Double_t y = eTree->GetBranch("ypoint")->GetLeaf("data")->GetValue();
+    Double_t z = eTree->GetBranch("zpoint")->GetLeaf("data")->GetValue();
+    Double_t Ex = eTree->GetBranch("Ex")->GetLeaf("data")->GetValue() / (100000.0*fEfield);
+    Double_t Ey = eTree->GetBranch("Ey")->GetLeaf("data")->GetValue() / (100000.0*fEfield);
+    Double_t Ez = eTree->GetBranch("Ez")->GetLeaf("data")->GetValue() / (100000.0*fEfield);
+   
+    //Fill the histograms	
     hEx->Fill(x,y,z,Ex);
     hEy->Fill(x,y,z,Ey);
     hEz->Fill(x,y,z,Ez);
@@ -582,6 +606,23 @@ geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetEfieldOffsets(geo::Point_t 
     
   } // switch
   
+  theEfieldOffsets *= fEfieldOffsetScale;
+
+  return theEfieldOffsets;
+}
+
+geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetCalEfieldOffsets(geo::Point_t const& tmp_point) const
+{
+  geo::Vector_t theEfieldOffsets;
+  geo::Point_t point = tmp_point;
+  if (!EnableCalEfieldSCE()) return theEfieldOffsets;      // no correction, zero distortion
+  if(IsTooFarFromBoundaries(point)) return theEfieldOffsets;  // zero-initialised
+  if(!IsInsideBoundaries(point)&&!IsTooFarFromBoundaries(point)) point = PretendAtBoundary(point);
+  
+  theEfieldOffsets = -1.0*GetOffsetsVoxel(point, CalSCEhistograms.at(3), CalSCEhistograms.at(4), CalSCEhistograms.at(5));
+  
+  std::cout<< "   in service: (" << point.X() << ", " << point.Y() << ", " << point.Z() << ") -> (" << theEfieldOffsets.X() << ", " << theEfieldOffsets.Y() << ", " << theEfieldOffsets.Z() << ")" << std::endl;
+
   theEfieldOffsets *= fEfieldOffsetScale;
 
   return theEfieldOffsets;
