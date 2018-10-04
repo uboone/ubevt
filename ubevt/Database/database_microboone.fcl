@@ -64,6 +64,17 @@ microboone_channelstatus_service:
   CalibrationHelper: @local::microboone_calibservicehelper
 }
 
+wirecell_channelstatus_service_data:
+{
+  service_provider: WireCellChannelStatusService
+  BadChannelModuleLabel: nfspl1
+}
+
+wirecell_channelstatus_service_mc:
+{
+  service_provider: WireCellChannelStatusService
+  BadChannelModuleLabel: simnfspl1
+}
 
 #===============================================
 #Uboone electron lifetime database configuration
