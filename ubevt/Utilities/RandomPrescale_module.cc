@@ -96,7 +96,9 @@ bool util::RandomPrescale::filter(art::Event & e)
   // Get random number generator.
 
   art::ServiceHandle<art::RandomNumberGenerator> rng;
-  CLHEP::HepRandomEngine &engine = rng->getEngine("RandomPrescale");
+  CLHEP::HepRandomEngine &engine = rng->getEngine(art::ScheduleID::first(),
+                                                  moduleDescription().moduleLabel(),
+                                                  "RandomPrescale");
 
   // Did this event pass?
 
