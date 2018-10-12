@@ -94,12 +94,6 @@ util::TFileMetadataMicroBooNE::TFileMetadataMicroBooNE(fhicl::ParameterSet const
 }
 
 //--------------------------------------------------------------------
-// Destructor.
-util::TFileMetadataMicroBooNE::~TFileMetadataMicroBooNE()
-{
-}
-
-//--------------------------------------------------------------------
 // Set service paramters
 void util::TFileMetadataMicroBooNE::reconfigure(fhicl::ParameterSet const& pset)
 {    
@@ -200,7 +194,8 @@ void util::TFileMetadataMicroBooNE::postOpenFile(std::string const& fn)
 
 //--------------------------------------------------------------------  	
 // PostEvent callback.
-void util::TFileMetadataMicroBooNE::postEvent(art::Event const& evt)
+void util::TFileMetadataMicroBooNE::postEvent(art::Event const& evt,
+                                              art::ScheduleContext)
 {
  
   if(!fEnable) return;	
