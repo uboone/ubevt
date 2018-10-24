@@ -11,10 +11,22 @@
 //          This class owns a list of bad channels, which is updated from 
 //          the associated service.
 //
-//          Channel status returned by this class is only "good" (kGOOD=4) or
+//          When accessed through the ChannelStatusProvider interface, channel
+//          status returned by this class is only "good" (kGOOD=4) or
 //          "bad" (kDEAD=1).  Refer to larevt/CalibrationDBI/IOVData/ChannelStatus.h.
 //
-//          This class does not have any configuration parameters.
+//          In addition to inherited methods, this class provides a wider
+//          interface that is able to identify good and back tick intervals
+//          in particular channels.
+//
+//          This class does not have any configuration parameters (has only default
+//          constructor).  However, this class does have per-event state information
+//          that is updated from its owning service.
+//
+//          This class has the ability to own a secondary database provider.  If
+//          it is used in this mode, the returned channel status is a combinarion
+//          of the per-event status as read from the badmask data product, and the
+//          database status (whichever is worse, defined as the smaller status enum).
 //
 // Created: 2-Oct-2018, H. Greenlee
 //
@@ -22,13 +34,30 @@
 //*********************************************************************************
 
 #include <vector>
-#include "larevt/CalibrationDBI/Interface/ChannelStatusProvider.h"
+#include <map>
+#include "fhiclcpp/ParameterSet.h"
+#include "larevt/CalibrationDBI/Providers/SIOVChannelStatusProvider.h"
 
 namespace lariov {
 
   class WireCellChannelStatusProvider : public ChannelStatusProvider
   {
   public:
+
+    // Types.
+
+    // Struct ChannelMask represents a tick interval for one channel.
+
+    struct ChannelMask {
+      raw::ChannelID_t first;
+      raw::ChannelID_t last;
+      bool valid;
+    ChannelMask() : first(0), last(0), valid(false) {}
+    ChannelMask(raw::ChannelID_t f, raw::ChannelID_t l) :
+      first(f), last(l), valid(true) {}
+    };
+
+    typedef std::map<raw::ChannelID_t, ChannelMask> ChannelMap_t;
 
     // Constructors, destructor.
 
@@ -52,11 +81,17 @@ namespace lariov {
     ChannelSet_t BadChannels() const;
     ChannelSet_t NoisyChannels() const;
 
-    // Methods.
+    // Additional accessors.
+
+    ChannelMask StatusMask(raw::ChannelID_t channel) const;
+    const ChannelMap_t& BadMasks() const;
+
+    // Updating methods.
 
     void updateNumChannels(unsigned int nchannels);
-    void clearBadChannels();
-    void updateBadChannels(const std::vector<int> bad_channels);
+    void clearBadMasks();
+    void updateBadMasks(const std::vector<int> badmasks);
+    void addDBProvider(fhicl::ParameterSet pset);
 
   private:
 
@@ -64,7 +99,8 @@ namespace lariov {
 
     unsigned int fNumChannels;
     ChannelSet_t fBadChannels;
-
+    ChannelMap_t fBadMasks;
+    std::unique_ptr<ChannelStatusProvider> fDBProvider;
   };
 } // namespace lariov
 
