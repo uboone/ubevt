@@ -68,7 +68,7 @@ wirecell_channelstatus_service_data:
 {
   service_provider: WireCellChannelStatusService
   BadMaskModuleLabel: "nfspl1:badmasks"  
-  UseDBProvider: true
+  UseDBProvider: false
   DBProvider: @local::microboone_channelstatus_provider
 }
 
@@ -76,7 +76,7 @@ wirecell_channelstatus_service_mc:
 {
   service_provider: WireCellChannelStatusService
   BadMaskModuleLabel: "simnfspl1:badmasks"
-  UseDBProvider: true
+  UseDBProvider: false
   DBProvider: @local::microboone_channelstatus_provider
 }
 
