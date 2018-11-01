@@ -12,6 +12,7 @@
 #include <iostream>
 #include "WireCellChannelStatusProvider.h"
 #include "larevt/CalibrationDBI/IOVData/ChannelStatus.h"
+#include "larevt/CalibrationDBI/Providers/SIOVChannelStatusProvider.h"
 
 namespace lariov {
 
@@ -168,8 +169,8 @@ namespace lariov {
 
     for(size_t i=0; i<badmasks.size()-2; i+=3) {
       raw::ChannelID_t c = badmasks[i];
-      raw::ChannelID_t first = badmasks[i+1];
-      raw::ChannelID_t last = badmasks[i+2];
+      int first = badmasks[i+1];
+      int last = badmasks[i+2];
       fBadChannels.insert(c);
       fBadMasks.emplace(c, ChannelMask(first, last));
       //std::cout << "Channel=" << c << " (" << first << ", " << last << ")" << std::endl;

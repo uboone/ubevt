@@ -36,7 +36,7 @@
 #include <vector>
 #include <map>
 #include "fhiclcpp/ParameterSet.h"
-#include "larevt/CalibrationDBI/Providers/SIOVChannelStatusProvider.h"
+#include "larevt/CalibrationDBI/Interface/ChannelStatusProvider.h"
 
 namespace lariov {
 
@@ -49,12 +49,11 @@ namespace lariov {
     // Struct ChannelMask represents a tick interval for one channel.
 
     struct ChannelMask {
-      raw::ChannelID_t first;
-      raw::ChannelID_t last;
+      int first;
+      int last;
       bool valid;
     ChannelMask() : first(0), last(0), valid(false) {}
-    ChannelMask(raw::ChannelID_t f, raw::ChannelID_t l) :
-      first(f), last(l), valid(true) {}
+    ChannelMask(int f, int l) : first(f), last(l), valid(true) {}
     };
 
     typedef std::map<raw::ChannelID_t, ChannelMask> ChannelMap_t;
