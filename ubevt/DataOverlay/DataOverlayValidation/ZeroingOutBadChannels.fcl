@@ -1,0 +1,9 @@
+BEGIN_PROLOG
+UBCRTCosmicFilter: {
+ module_type              : "ZeroingOutBadChannels"  
+ RawDigitProducer         : "simnfspl1"
+ BadMaskModuleLabel       : "badmask"
+
+}
+
+END_PROLOG
