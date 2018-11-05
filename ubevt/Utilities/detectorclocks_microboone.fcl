@@ -5,6 +5,7 @@ BEGIN_PROLOG
 microboone_detectorclocks: @local::standard_detectorclocks
 
 microboone_detectorclocks.TrigModuleName:     "triggersim"
+microboone_detectorclocks.ElecTimeModuleName: "electime"
 microboone_detectorclocks.InheritClockConfig: true
 microboone_detectorclocks.G4RefTime:        -4.05e3 # G4 time [us] where electronics clock counting start
 microboone_detectorclocks.TriggerOffsetTPC: -1.6e3 # Time [us] for TPC readout start w.r.t. trigger time
