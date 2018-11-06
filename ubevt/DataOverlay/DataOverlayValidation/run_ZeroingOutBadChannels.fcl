@@ -27,6 +27,7 @@ source:
   module_type: RootInput
   maxEvents:   -1        # Number of events to create
   #inputCommands: ["keep *_*_*_*","drop *_*_*_DetSim", "drop *_*_*_G4"]#, "keep sim::MCTrack_*_*_*", "keep recob::Track_*_pandoraCosmic_*" ]
+  outputCommands: ["drop raw::RawDigits_process_label_instance"]
 
 }
 
