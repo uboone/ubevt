@@ -45,8 +45,10 @@ public:
 private:
   
   // This is the name of the producer of the RawDigits.
-  std::string fRawDigitProducer;
-  std::string fBadMaskModuleLabel;
+  std::string fRawDigitLabel;
+  std::string fRawDigitInstanceName;
+  std::string fBadMaskLabel;
+  std::string fBadMaskInstanceName;
 
 };
 
@@ -58,8 +60,11 @@ lar::ZeroingOutBadChannels::ZeroingOutBadChannels(fhicl::ParameterSet const & p)
   // Call appropriate produces<>() functions here.
   produces<std::vector<raw::RawDigit>>();
 
-  fRawDigitProducer   = p.get<std::string>("RawDigitProducer");
-  fBadMaskModuleLabel = p.get<std::string>("BadMaskModuleLabel");
+  fRawDigitLabel        = p.get<std::string>("RawDigitLabel");
+  fRawDigitInstanceName = p.get<std::string>("RawDigitInstanceName");
+  fBadMaskLabel         = p.get<std::string>("BadMaskLabel");
+  fBadMaskInstanceName  = p.get<std::string>("BadMaskInstanceName");
+
 }
 
 void lar::ZeroingOutBadChannels::produce(art::Event & e)
@@ -67,7 +72,7 @@ void lar::ZeroingOutBadChannels::produce(art::Event & e)
   // Implementation of required member function here.
   // Read in the RawDigits of the overlay.                                                                                                                                                              
   art::Handle<std::vector<raw::RawDigit> > rawdigit_h;
-  e.getByLabel( fRawDigitProducer , rawdigit_h );
+  e.getByLabel( fRawDigitLabel, fRawDigitInstanceName , rawdigit_h );
 
   // make sure RawDigits look good.                                                                                                                                                                  
   if(!rawdigit_h.isValid()) {
@@ -77,7 +82,7 @@ void lar::ZeroingOutBadChannels::produce(art::Event & e)
 
   // Read in a vector of the dead channels and the dead times.
   art::Handle< std::vector<int> > bad_channels_h;
-  e.getByLabel(fBadMaskModuleLabel, bad_channels_h);
+  e.getByLabel(fBadMaskLabel, fBadMaskInstanceName, bad_channels_h);
 
   // make sure bad channels look good.
   if (!bad_channels_h.isValid()) {
@@ -125,19 +130,19 @@ void lar::ZeroingOutBadChannels::produce(art::Event & e)
     unsigned short             samples           = rawdigit_h->at( wire ).Samples();
     raw::RawDigit::ADCvector_t adc_counts        = rawdigit_h->at( wire ).ADCs();
     raw::Compress_t            compression       = rawdigit_h->at( wire ).Compression();
-    
-  // Loop through the time ticks to set the entries at the affected time ticks equal to 0.
+
+    // Loop through the time ticks to set the entries at the affected time ticks equal to 0.
     for ( size_t j = starting_time_tick; j < size_t(ending_time_tick); j++ ) {
     
-    adc_counts.at( j ) = 0;
+      adc_counts.at( j ) = 0;
     
-  } // End of the loop over setting the time ticks to 0.
+    } // End of the loop over setting the time ticks to 0.
 
-  // Make a new raw::RawDigit product with the correct adc counts.
-  raw::RawDigit new_raw_digit( channel, samples, adc_counts, compression );
+    // Make a new raw::RawDigit product with the correct adc counts.
+    raw::RawDigit new_raw_digit( channel, samples, adc_counts, compression );
 
-  // Set the value of 'zeroed_RawDigit_v' at this entry equal to the new raw digit.
-  zeroed_RawDigit_v->at( wire ) = new_raw_digit;
+    // Set the value of 'zeroed_RawDigit_v' at this entry equal to the new raw digit.
+    zeroed_RawDigit_v->at( wire ) = new_raw_digit;
 
   } // End of the loop over the effected channels.
   
