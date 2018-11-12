@@ -1,14 +1,14 @@
 #include "services_microboone.fcl"
 #include "triggeralgo_service.fcl"
-#include "ZeroingOutBadChannels.fcl"
+#include "ZeroingOutBadChannelsAna.fcl"
 
-process_name: ZeroingOutBadChannels
+process_name: ZeroingOutBadChannelsAna
 
 services:
 {
   scheduler:               { defaultExceptions: false }    # Make all uncaught exceptions fatal.
   # Load the service that manages root files for histograms.
-  TFileService:            { fileName: "ZeroingOutBadChannels_ana.root" }
+  TFileService:            { fileName: "ZeroingOutBadChannelsAna_ana.root" }
   TimeTracker:             {}
   ExptGeoHelperInterface:         @local::microboone_geometry_helper
   Geometry:                       @local::microboone_geo
@@ -28,6 +28,16 @@ source:
   maxEvents:   -1        # Number of events to create
 }
 
+outputs:{
+
+ out1:
+ {
+   module_type: RootOutput
+   fileName:    "ZeroingOutBadChannelsAna.root"
+   dataTier:    "ana"
+   compressionLevel: 1
+ }
+}
 
 # Define and configure some modules to do work on each event.
 # First modules are defined; they are scheduled later.
@@ -35,47 +45,23 @@ source:
 physics:
 {
 
-    producers:
- {
-
-  ### Channel zeroing.
-  zeroedoutchannels : @local::ZeroingOutBadChannels
- }
  analyzers:
  {
+        zeroedoutchannelsana : @local::ZeroingOutBadChannelsAna
  }
 
- reco: [ zeroedoutchannels ]
- ana: []
-
- #define the output stream, there could be more than one if using filters 
- stream1:  [ out1 ]
-
- #end_paths is a keyword and contains the paths that do not modify the art::Event, 
- #ie analyzers and output streams.  these all run simultaneously
- end_paths:     [stream1]
+ ana:       [ zeroedoutchannelsana ]
+ end_paths: [ ana ]
 }
 
 #block to define where the output goes.  if you defined a filter in the physics
 #block and put it in the trigger_paths then you need to put a SelectEvents: {SelectEvents: [XXX]}
 #entry in the output stream you want those to go to, where XXX is the label of the filter module(s)
-outputs:
-{
- out1:
- {
-   module_type: RootOutput
-   fileName:    "ZeroingOutBadChannelsOutput_AdiPracticeFile_v2.root"
-   dataTier:    "reco"
-   compressionLevel: 1
-   outputCommands: ["keep *_*_*_*", "drop raw::RawDigits_nfspl1_raw_NFforBadChannles"]
-   }
-}
 
 services.DetectorProperties.NumberTimeSamples:                             6400
 services.DetectorProperties.ReadOutWindowSize:                             6400
 services.DetectorClocksService.InheritClockConfig:                         false
 services.DetectorClocksService.TriggerOffsetTPC:                          -1.600e3
-
 
 ### Here we include the file giving us run/data dependent overrides
 
@@ -86,6 +72,7 @@ services.message.destinations :
   {
      type:      "cout"      #tells the message service to output this destination to cout
      threshold: "WARNING"   #tells the message service that this destination applies to WARNING and higher level messages
+     #append:     true       #says to append all messages to the output
      categories:
      {
        ChannelFilter:

@@ -50,6 +50,9 @@ private:
   std::string fBadMaskLabel;
   std::string fBadMaskInstanceName;
 
+  int         event_counter;
+  int         bad_adc_counter;
+
 };
 
 
@@ -65,10 +68,21 @@ lar::ZeroingOutBadChannels::ZeroingOutBadChannels(fhicl::ParameterSet const & p)
   fBadMaskLabel         = p.get<std::string>("BadMaskLabel");
   fBadMaskInstanceName  = p.get<std::string>("BadMaskInstanceName");
 
+  event_counter         = 0;
+  bad_adc_counter       = 0;
+
 }
 
 void lar::ZeroingOutBadChannels::produce(art::Event & e)
 {
+  std::cout << "Event #" << event_counter << std::endl;
+  event_counter++;
+
+  // Print out the run, subrun, and event.
+  std::cout << "run = " << e.run() << "." << std::endl;
+  std::cout << "subrun = " << e.subRun() << "." << std::endl;
+  std::cout << "event = " << e.event() << "." << std::endl;
+
   // Implementation of required member function here.
   // Read in the RawDigits of the overlay.                                                                                                                                                              
   art::Handle<std::vector<raw::RawDigit> > rawdigit_h;
@@ -130,9 +144,21 @@ void lar::ZeroingOutBadChannels::produce(art::Event & e)
     unsigned short             samples           = rawdigit_h->at( wire ).Samples();
     raw::RawDigit::ADCvector_t adc_counts        = rawdigit_h->at( wire ).ADCs();
     raw::Compress_t            compression       = rawdigit_h->at( wire ).Compression();
+    
+    // Increment bad_adc_counter.
+    bad_adc_counter++;
+
+    std::cout << "channel = " << channel << "." << std::endl;
+    std::cout << "samples = " << samples << "." << std::endl;
+    std::cout << "compression = " << compression << "." << std::endl;
+    std::cout << "starting time tick = " << starting_time_tick << "." << std::endl;
+    std::cout << "ending time tick = " << ending_time_tick << "." << std::endl;
 
     // Loop through the time ticks to set the entries at the affected time ticks equal to 0.
     for ( size_t j = starting_time_tick; j < size_t(ending_time_tick); j++ ) {
+
+      if ( adc_counts.at( j ) > 0.0 && bad_adc_counter == 1 ) 
+	std::cout << "The value of 'adc_counts.at( " << j << " )' that I am setting equal to 0 is " << adc_counts.at( j ) << "." << std::endl;
     
       adc_counts.at( j ) = 0;
     

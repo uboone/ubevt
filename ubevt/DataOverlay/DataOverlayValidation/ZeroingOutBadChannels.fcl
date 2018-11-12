@@ -1,9 +1,9 @@
 BEGIN_PROLOG
 ZeroingOutBadChannels: {
  module_type              : "ZeroingOutBadChannels"  
- RawDigitLabel            : "nfspl1"
- RawDigitInstanceName     : "raw"
- BadMaskLabel             : "nfspl1"
+ RawDigitLabel            : "daqnonoise"
+ RawDigitInstanceName     : ""
+ BadMaskLabel             : "nfbadchannel"
  BadMaskInstanceName      : "badmasks"
 
 }
