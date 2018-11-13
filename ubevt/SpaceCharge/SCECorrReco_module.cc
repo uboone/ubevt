@@ -83,6 +83,7 @@ void spacecharge::SCECorrReco::produce(art::Event & e)
   spacecharge::SpaceChargeMicroBooNE const* sce = 
     reinterpret_cast<spacecharge::SpaceChargeMicroBooNE const*>(lar::providerFrom<spacecharge::SpaceChargeService>());
 
+
   std::unique_ptr< std::vector<recob::Track> > SCECorrPtr( new std::vector<recob::Track>() );
   auto & SCECorrTrack(*SCECorrPtr);
   

@@ -163,6 +163,7 @@ namespace spacecharge {
       
       bool EnableSimSpatialSCE() const override;
       bool EnableSimEfieldSCE() const override;
+
       bool EnableCalSpatialSCE() const;// override; wes, 13Nov2018, not overriding for now
       bool EnableCalEfieldSCE() const;// override; wes, 13Nov2018, not overriding for now  
 
@@ -171,6 +172,7 @@ namespace spacecharge {
 
       geo::Vector_t GetPosOffsets(geo::Point_t const& point) const override;
       geo::Vector_t GetCalPosOffsets(geo::Point_t const& point) const;// override; wes, 13Nov2018, not overriding for now  
+
       geo::Vector_t GetEfieldOffsets(geo::Point_t const& point) const override;
       geo::Vector_t GetCalEfieldOffsets(geo::Point_t const& tmp_point) const;
       
