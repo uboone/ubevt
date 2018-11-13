@@ -76,8 +76,13 @@ spacecharge::SCECorrReco::SCECorrReco(fhicl::ParameterSet const & p)
 void spacecharge::SCECorrReco::produce(art::Event & e)
 {
   auto const& track_handle = e.getValidHandle<std::vector<recob::Track>>("pandora");
-  auto const* sce = lar::providerFrom<spacecharge::SpaceChargeService>();
-  
+
+  //auto const* sce = lar::providerFrom<spacecharge::SpaceChargeService>();
+  //wes, 13Nov2018: we need to hack this as we use functions not available in the base class, but providerFrom only gives
+  // us the base class part...
+  spacecharge::SpaceChargeMicroBooNE const* sce = 
+    reinterpret_cast<spacecharge::SpaceChargeMicroBooNE const*>(lar::providerFrom<spacecharge::SpaceChargeService>());
+
   std::unique_ptr< std::vector<recob::Track> > SCECorrPtr( new std::vector<recob::Track>() );
   auto & SCECorrTrack(*SCECorrPtr);
   
