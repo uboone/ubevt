@@ -12,6 +12,7 @@
 
 // LArSoft includes
 #include "ubevt/SpaceChargeServices/SpaceChargeServiceMicroBooNE.h"
+#include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
 
 // ROOT includes
 #include "TMath.h"
@@ -25,6 +26,9 @@ spacecharge::SpaceChargeServiceMicroBooNE::SpaceChargeServiceMicroBooNE(fhicl::P
 {
   fProp.reset(new spacecharge::SpaceChargeMicroBooNE(pset));
 
+  auto const *detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
+  fProp->Configure(pset,detprop);
+
   reg.sPreBeginRun.watch(this, &SpaceChargeServiceMicroBooNE::preBeginRun);
 }
 
@@ -37,7 +41,8 @@ void spacecharge::SpaceChargeServiceMicroBooNE::preBeginRun(const art::Run& run)
 //------------------------------------------------
 void spacecharge::SpaceChargeServiceMicroBooNE::reconfigure(fhicl::ParameterSet const& pset)
 {
-  fProp->Configure(pset);  
+  auto const *detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
+  fProp->Configure(pset,detprop);
   return;
 }
 
