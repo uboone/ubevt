@@ -12,6 +12,7 @@
 // LArSoft libraries
 #include "larevt/SpaceCharge/SpaceCharge.h"
 #include "larcoreobj/SimpleTypesAndConstants/geo_vectors.h"
+#include "lardataalg/DetectorInfo/DetectorProperties.h"
 
 // FHiCL libraries
 #include "fhiclcpp/ParameterSet.h"
@@ -158,7 +159,7 @@ namespace spacecharge {
       SpaceChargeMicroBooNE(SpaceChargeMicroBooNE const&) = delete;
       virtual ~SpaceChargeMicroBooNE() = default;
       
-      bool Configure(fhicl::ParameterSet const& pset);
+      bool Configure(fhicl::ParameterSet const& pset, detinfo::DetectorProperties const*);
       bool Update(uint64_t ts=0);
       
       bool EnableSimSpatialSCE() const override;

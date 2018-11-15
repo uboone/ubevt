@@ -13,7 +13,7 @@
 
 // LArSoft includes
 #include "ubevt/SpaceCharge/SpaceChargeMicroBooNE.h"
-#include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
+#include "lardataalg/DetectorInfo/DetectorProperties.h"
 
 // Framework includes
 #include "cetlib_except/exception.h"
@@ -57,18 +57,19 @@ spacecharge::SpaceChargeMicroBooNE::SpaceChargeMicroBooNE(
   fhicl::ParameterSet const& pset
 )
 {
-  Configure(pset);
+  //Configure(pset);
 }
 
 //------------------------------------------------
-bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& pset)
+bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& pset, 
+						   detinfo::DetectorProperties const* detprop)
 {  
   fEnableSimSpatialSCE = pset.get<bool>("EnableSimSpatialSCE");
   fEnableSimEfieldSCE = pset.get<bool>("EnableSimEfieldSCE");
   fEnableCalSpatialSCE = pset.get<bool>("EnableCalSpatialSCE");
   fEnableCalEfieldSCE = pset.get<bool>("EnableCalEfieldSCE");
    
-  auto const *detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
+  //auto const *detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
   fEfield = detprop->Efield();  
 
   if((fEnableSimSpatialSCE == true) || (fEnableSimEfieldSCE == true))
