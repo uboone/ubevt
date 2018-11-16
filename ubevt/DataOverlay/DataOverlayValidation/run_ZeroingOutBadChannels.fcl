@@ -67,7 +67,7 @@ outputs:
    fileName:    "ZeroingOutBadChannelsOutput_AdiPracticeFile_v2.root"
    dataTier:    "reco"
    compressionLevel: 1
-   outputCommands: ["keep *_*_*_*", "drop raw::RawDigits_nfspl1_raw_NFforBadChannles"]
+   outputCommands: ["keep *_*_*_*", "drop raw::RawDigits_driftWC_orig_NFforBadChannels"]
    }
 }
 
