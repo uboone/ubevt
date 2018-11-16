@@ -9,15 +9,20 @@
 
 // C++ language includes
 #include <string>
+#include <vector>
 
 // LArSoft includes
 #include "ubevt/SpaceCharge/SpaceChargeMicroBooNE.h"
+#include "lardataalg/DetectorInfo/DetectorProperties.h"
 
 // Framework includes
 #include "cetlib_except/exception.h"
 
 // ROOT includes
 #include "TFile.h"
+#include "TH3.h"
+#include "TTree.h"
+#include "TLeaf.h"
 
 
 namespace {
@@ -52,15 +57,20 @@ spacecharge::SpaceChargeMicroBooNE::SpaceChargeMicroBooNE(
   fhicl::ParameterSet const& pset
 )
 {
-  Configure(pset);
+  //Configure(pset);
 }
 
 //------------------------------------------------
-bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& pset)
+bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& pset, 
+						   detinfo::DetectorProperties const* detprop)
 {  
   fEnableSimSpatialSCE = pset.get<bool>("EnableSimSpatialSCE");
   fEnableSimEfieldSCE = pset.get<bool>("EnableSimEfieldSCE");
-  fEnableCorrSCE = pset.get<bool>("EnableCorrSCE");
+  fEnableCalSpatialSCE = pset.get<bool>("EnableCalSpatialSCE");
+  fEnableCalEfieldSCE = pset.get<bool>("EnableCalEfieldSCE");
+   
+  //auto const *detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
+  fEfield = detprop->Efield();  
 
   if((fEnableSimSpatialSCE == true) || (fEnableSimEfieldSCE == true))
   {
@@ -76,11 +86,24 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
     std::string fname;
     cet::search_path sp("FW_SEARCH_PATH");
     sp.find_file(fInputFilename,fname);
-
+    
     TFile infile(fname.c_str(), "READ");
     if(!infile.IsOpen()) throw cet::exception("SpaceChargeMicroBooNE") << "Could not find the space charge effect file '" << fname << "'!\n";
 
     switch (fRepresentationType) {
+      case SpaceChargeRepresentation_t::kVoxelized:
+        {
+        //Load in files
+        //TFile* fileSCE = new TFile("????");
+		TTree* treeD = (TTree*)infile.Get("SpaCEtree_fwdDisp"); //PICK DIRECTION?
+        TTree* treeE = (TTree*)infile.Get("SpaCEtree");
+        
+        //Build histograms
+        SCEhistograms = Build_TH3(treeD,treeE,"x_true","y_true","z_true","fwd");
+        //Histograms are Dx, Dy, Dz, dEx/E0, dEy/E0, dEz/E0
+        
+	break; //kVoxelized;
+        }
       case SpaceChargeRepresentation_t::kParametric:
         for(int i = 0; i < 5; i++)
         {
@@ -166,9 +189,27 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
     infile.Close();
   }
   
-  if(fEnableCorrSCE == true)
+  if((fEnableCalSpatialSCE == true) || (fEnableCalEfieldSCE == true))
   {
-    // Grab other parameters from pset  
+    fCalInputFilename = pset.get<std::string>("CalibrationInputFilename");
+
+    std::string fname;
+    cet::search_path sp("FW_SEARCH_PATH");
+    sp.find_file(fCalInputFilename,fname);
+    
+    TFile infile(fname.c_str(), "READ");
+    if(!infile.IsOpen()) throw cet::exception("SpaceChargeMicroBooNE") << "Could not find the space charge effect file '" << fname << "'!\n";
+    
+    //Load in trees
+    TTree* treeD = (TTree*)infile.Get("SpaCEtree_bkwdDisp");
+    TTree* treeE = (TTree*)infile.Get("SpaCEtree");
+    
+    //Build histograms
+    CalSCEhistograms = Build_TH3(treeD,treeE,"x_reco","y_reco","z_reco","bkwd");
+    //histograms are Dx, Dy, Dz, dEx/E0, dEy/E0, dEz/E0
+    
+    infile.Close();
+    
   }
 
 
@@ -247,21 +288,36 @@ bool spacecharge::SpaceChargeMicroBooNE::EnableSimEfieldSCE() const
 }
 
 //----------------------------------------------------------------------------
-/// Return boolean indicating whether or not to apply SCE corrections
-bool spacecharge::SpaceChargeMicroBooNE::EnableCorrSCE() const
+/// Return boolean indicating whether or not to apply SCE corrections from 
+/// calibration for spatial distortions
+bool spacecharge::SpaceChargeMicroBooNE::EnableCalSpatialSCE() const
 {
-  return fEnableCorrSCE;
+  return fEnableCalSpatialSCE;
+}
+
+//----------------------------------------------------------------------------
+/// Return boolean indicating whether or not to apply SCE corrections from 
+/// calibration for E field distortions
+bool spacecharge::SpaceChargeMicroBooNE::EnableCalEfieldSCE() const
+{
+  return fEnableCalEfieldSCE;
 }
 
 //----------------------------------------------------------------------------
 /// Primary working method of service that provides position offsets to be
 /// used in ionization electron drift
-geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetPosOffsets(geo::Point_t const& point) const
+geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetPosOffsets(geo::Point_t const& tmp_point) const
 {
   geo::Vector_t thePosOffsets;
+  geo::Point_t point = tmp_point;
   if (!EnableSimSpatialSCE()) return thePosOffsets;     // no correction, zero displacement
-  if(!IsInsideBoundaries(point)) return thePosOffsets;  // zero-initialised
+  if(IsTooFarFromBoundaries(point)) return thePosOffsets;  // zero-initialised
+  if(!IsInsideBoundaries(point)&&!IsTooFarFromBoundaries(point)) point = PretendAtBoundary(point);
   switch (fRepresentationType) {
+  
+    case SpaceChargeRepresentation_t::kVoxelized:
+      thePosOffsets = GetOffsetsVoxel(point,SCEhistograms.at(0),SCEhistograms.at(1),SCEhistograms.at(2));
+      break;
     
     case SpaceChargeRepresentation_t::kParametric:
       thePosOffsets = GetPosOffsetsParametric(point);
@@ -283,6 +339,103 @@ geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetPosOffsets(geo::Point_t con
   }
   thePosOffsets *= data_corr_scale*fSpatialOffsetScale;
   return thePosOffsets;
+}
+
+/// Primary working method of service that provides position offsets to be
+/// used in ionization electron drift for correction in reconstruction
+geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetCalPosOffsets(geo::Point_t const& tmp_point) const
+{
+  geo::Vector_t thePosOffsets;
+  geo::Point_t point = tmp_point;
+  if (!EnableCalSpatialSCE()) return thePosOffsets;     // no correction, zero displacement
+  if (IsTooFarFromBoundaries(point)) return thePosOffsets;  // zero-initialised
+  if (!IsInsideBoundaries(point)&&!IsTooFarFromBoundaries(point)) point = PretendAtBoundary(point);
+  
+  thePosOffsets = GetOffsetsVoxel(point,CalSCEhistograms.at(0),CalSCEhistograms.at(1),CalSCEhistograms.at(2));
+    
+  return thePosOffsets;
+}
+
+//----------------------------------------------------------------------------
+/// Provides position offsets using voxelized interpolation
+geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetOffsetsVoxel
+  (geo::Point_t const& point,TH3F* hX, TH3F* hY, TH3F* hZ) const
+{	
+  geo::Point_t transformedPoint = Transform(point);
+ 
+  return {
+  	hX->Interpolate(transformedPoint.X(),transformedPoint.Y(),transformedPoint.Z()),
+  	hY->Interpolate(transformedPoint.X(),transformedPoint.Y(),transformedPoint.Z()),
+  	hZ->Interpolate(transformedPoint.X(),transformedPoint.Y(),transformedPoint.Z())
+  	};
+  	
+ }
+ 
+/// Build 3D histograms for voxelized interpolation
+std::vector<TH3F*> spacecharge::SpaceChargeMicroBooNE::Build_TH3
+  (TTree* tree, TTree* eTree, std::string xvar, std::string yvar, std::string zvar, std::string posLeaf) const
+{
+
+  //Define the MicroBooNE detector 
+  //MAKE THESE VARIABLE CONFIGURABLE
+  double Lx = 2.5, Ly = 2.5, Lz = 10.0;
+  double numDivisions_x = 25.0;
+  double cell_size = Lx/numDivisions_x;
+  double numDivisions_y = TMath::Nint((Ly/Lx)*((Double_t)numDivisions_x));
+  double numDivisions_z = TMath::Nint((Lz/Lx)*((Double_t)numDivisions_x));
+
+  double E_numDivisions_x = 20.0;
+  double E_cell_size = Lx/E_numDivisions_x;
+  double E_numDivisions_y = TMath::Nint((Ly/Lx)*((Double_t)E_numDivisions_x));
+  double E_numDivisions_z = TMath::Nint((Lz/Lx)*((Double_t)E_numDivisions_x)); 
+
+  //initialized histograms for Dx, Dy, Dz, and electric field
+  TH3F* hDx = new TH3F("hDx", "", numDivisions_x+1, -0.5*cell_size, Lx+0.5*cell_size, numDivisions_y+1 ,-0.5*cell_size, Ly+0.5*cell_size, numDivisions_z+1, -0.5*cell_size, Lz+0.5*cell_size);
+  TH3F* hDy = new TH3F("hDy", "", numDivisions_x+1, -0.5*cell_size, Lx+0.5*cell_size, numDivisions_y+1, -0.5*cell_size, Ly+0.5*cell_size, numDivisions_z+1, -0.5*cell_size, Lz+0.5*cell_size);
+  TH3F* hDz = new TH3F("hDz", "", numDivisions_x+1, -0.5*cell_size, Lx+0.5*cell_size, numDivisions_y+1, -0.5*cell_size, Ly+0.5*cell_size, numDivisions_z+1, -0.5*cell_size, Lz+0.5*cell_size);
+  
+  TH3F* hEx = new TH3F("hEx", "", E_numDivisions_x+1, -0.5*E_cell_size, Lx+0.5*E_cell_size, E_numDivisions_y+1, -0.5*E_cell_size, Ly+0.5*E_cell_size, E_numDivisions_z+1, -0.5*E_cell_size, Lz+0.5*E_cell_size);
+  TH3F* hEy = new TH3F("hEy", "", E_numDivisions_x+1, -0.5*E_cell_size, Lx+0.5*E_cell_size, E_numDivisions_y+1, -0.5*E_cell_size, Ly+0.5*E_cell_size, E_numDivisions_z+1, -0.5*E_cell_size, Lz+0.5*E_cell_size);
+  TH3F* hEz = new TH3F("hEz", "", E_numDivisions_x+1, -0.5*E_cell_size, Lx+0.5*E_cell_size, E_numDivisions_y+1, -0.5*E_cell_size, Ly+0.5*E_cell_size, E_numDivisions_z+1, -0.5*E_cell_size, Lz+0.5*E_cell_size);
+ 
+  //For each event, read the tree and fill each histogram
+  for (int ii = 0; ii<tree->GetEntries(); ii++){
+
+    //Read the trees
+    tree->GetEntry(ii);
+    Double_t x = tree->GetBranch(xvar.c_str())->GetLeaf(Form("data_%sDisp",posLeaf.c_str()))->GetValue();
+    Double_t y = tree->GetBranch(yvar.c_str())->GetLeaf(Form("data_%sDisp",posLeaf.c_str()))->GetValue();
+    Double_t z = tree->GetBranch(zvar.c_str())->GetLeaf(Form("data_%sDisp",posLeaf.c_str()))->GetValue();
+    Double_t dx = tree->GetBranch("Dx")->GetLeaf(Form("data_%sDisp",posLeaf.c_str()))->GetValue();
+    Double_t dy = tree->GetBranch("Dy")->GetLeaf(Form("data_%sDisp",posLeaf.c_str()))->GetValue();
+    Double_t dz = tree->GetBranch("Dz")->GetLeaf(Form("data_%sDisp",posLeaf.c_str()))->GetValue();
+   
+    //Fill the histograms		
+    hDx->Fill(x,y,z,100.0*dx);
+    hDy->Fill(x,y,z,100.0*dy);
+    hDz->Fill(x,y,z,100.0*dz);
+  }
+  
+  //For each event, read the tree and fill each histogram
+  for (int ii = 0; ii<eTree->GetEntries(); ii++){
+
+		
+    eTree->GetEntry(ii);
+    Double_t x = eTree->GetBranch("xpoint")->GetLeaf("data")->GetValue();
+    Double_t y = eTree->GetBranch("ypoint")->GetLeaf("data")->GetValue();
+    Double_t z = eTree->GetBranch("zpoint")->GetLeaf("data")->GetValue();
+    Double_t Ex = eTree->GetBranch("Ex")->GetLeaf("data")->GetValue() / (100000.0*fEfield);
+    Double_t Ey = eTree->GetBranch("Ey")->GetLeaf("data")->GetValue() / (100000.0*fEfield);
+    Double_t Ez = eTree->GetBranch("Ez")->GetLeaf("data")->GetValue() / (100000.0*fEfield);
+   
+    //Fill the histograms	
+    hEx->Fill(x,y,z,Ex);
+    hEy->Fill(x,y,z,Ey);
+    hEz->Fill(x,y,z,Ez);
+  }
+  
+  return  {hDx, hDy, hDz, hEx, hEy, hEz};
+
 }
 
 //----------------------------------------------------------------------------
@@ -326,7 +479,7 @@ double spacecharge::SpaceChargeMicroBooNE::GetOnePosOffsetParametricX
   f4_x.SetParameters(parA[3]);
   f5_x.SetParameters(parA[4]);
 
-  double const aValNew = point.Y();
+  double const aValNew = point.Y()-1.25;
   double const parB[] = {
     f1_x.Eval(aValNew),
     f2_x.Eval(aValNew),
@@ -335,7 +488,7 @@ double spacecharge::SpaceChargeMicroBooNE::GetOnePosOffsetParametricX
     f5_x.Eval(aValNew)
   };
   
-  double const bValNew = point.X();
+  double const bValNew = point.X()-1.25;
   return 100.0*fFinal_x_poly_t::Eval(bValNew, parB);
 }
 
@@ -371,7 +524,7 @@ double spacecharge::SpaceChargeMicroBooNE::GetOnePosOffsetParametricY
   f5_y.SetParameters(parA[4]);
   f6_y.SetParameters(parA[5]);
   
-  double const aValNew = point.X();
+  double const aValNew = point.X()-1.25;
   
   double const parB[] = {
     f1_y.Eval(aValNew),
@@ -382,7 +535,7 @@ double spacecharge::SpaceChargeMicroBooNE::GetOnePosOffsetParametricY
     f6_y.Eval(aValNew)
   };
   
-  double const bValNew = point.Y();
+  double const bValNew = point.Y()-1.25;
   return 100.0*fFinal_y_poly_t::Eval(bValNew, parB);
 } // spacecharge::SpaceChargeMicroBooNE::GetOnePosOffsetParametricY()
 
@@ -414,7 +567,7 @@ double spacecharge::SpaceChargeMicroBooNE::GetOnePosOffsetParametricZ
   f3_z.SetParameters(parA[2]);
   f4_z.SetParameters(parA[3]);
   
-  double const aValNew = point.Y();
+  double const aValNew = point.Y()-1.25;
   double const parB[] = {
     f1_z.Eval(aValNew),
     f2_z.Eval(aValNew),
@@ -422,7 +575,7 @@ double spacecharge::SpaceChargeMicroBooNE::GetOnePosOffsetParametricZ
     f4_z.Eval(aValNew)
   };
   
-  double const bValNew = point.X();
+  double const bValNew = point.X()-1.25;
   return 100.0*fFinal_z_poly_t::Eval(bValNew, parB);
   
 } // spacecharge::SpaceChargeMicroBooNE::GetOnePosOffsetParametricZ()
@@ -431,16 +584,22 @@ double spacecharge::SpaceChargeMicroBooNE::GetOnePosOffsetParametricZ
 //----------------------------------------------------------------------------
 /// Primary working method of service that provides E field offsets to be
 /// used in charge/light yield calculation (e.g.)
-geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetEfieldOffsets(geo::Point_t const& point) const
+geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetEfieldOffsets(geo::Point_t const& tmp_point) const
 {
   geo::Vector_t theEfieldOffsets;
+  geo::Point_t point = tmp_point;
   if (!EnableSimEfieldSCE()) return theEfieldOffsets;      // no correction, zero distortion
-  if(!IsInsideBoundaries(point)) return theEfieldOffsets;  // zero-initialised
+  if(IsTooFarFromBoundaries(point)) return theEfieldOffsets;  // zero-initialised
+  if(!IsInsideBoundaries(point)&&!IsTooFarFromBoundaries(point)) point = PretendAtBoundary(point);
   
   switch (fRepresentationType) {
     
+    case SpaceChargeRepresentation_t::kVoxelized:
+      theEfieldOffsets = -1.0*GetOffsetsVoxel(point,SCEhistograms.at(3),SCEhistograms.at(4),SCEhistograms.at(5));
+      break;
+    
     case SpaceChargeRepresentation_t::kParametric:
-      theEfieldOffsets = -GetEfieldOffsetsParametric(point);
+      theEfieldOffsets = -1.0*GetEfieldOffsetsParametric(point);
       break;
     
     case SpaceChargeRepresentation_t::kUnknown:
@@ -448,6 +607,23 @@ geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetEfieldOffsets(geo::Point_t 
     
   } // switch
   
+  theEfieldOffsets *= fEfieldOffsetScale;
+
+  return theEfieldOffsets;
+}
+
+geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetCalEfieldOffsets(geo::Point_t const& tmp_point) const
+{
+  geo::Vector_t theEfieldOffsets;
+  geo::Point_t point = tmp_point;
+  if (!EnableCalEfieldSCE()) return theEfieldOffsets;      // no correction, zero distortion
+  if(IsTooFarFromBoundaries(point)) return theEfieldOffsets;  // zero-initialised
+  if(!IsInsideBoundaries(point)&&!IsTooFarFromBoundaries(point)) point = PretendAtBoundary(point);
+  
+  theEfieldOffsets = -1.0*GetOffsetsVoxel(point, CalSCEhistograms.at(3), CalSCEhistograms.at(4), CalSCEhistograms.at(5));
+  
+  std::cout<< "   in service: (" << point.X() << ", " << point.Y() << ", " << point.Z() << ") -> (" << theEfieldOffsets.X() << ", " << theEfieldOffsets.Y() << ", " << theEfieldOffsets.Z() << ")" << std::endl;
+
   theEfieldOffsets *= fEfieldOffsetScale;
 
   return theEfieldOffsets;
@@ -495,7 +671,7 @@ double spacecharge::SpaceChargeMicroBooNE::GetOneEfieldOffsetParametricX
   f4_Ex.SetParameters(parA[3]);
   f5_Ex.SetParameters(parA[4]);
   
-  double const aValNew = point.Y();
+  double const aValNew = point.Y()-1.25;
   double const parB[] = {
     f1_Ex.Eval(aValNew),
     f2_Ex.Eval(aValNew),
@@ -504,7 +680,7 @@ double spacecharge::SpaceChargeMicroBooNE::GetOneEfieldOffsetParametricX
     f5_Ex.Eval(aValNew)
   };
   
-  double const bValNew = point.X();
+  double const bValNew = point.X()-1.25;
   return fFinal_Ex_poly_t::Eval(bValNew, parB);
   
 } // spacecharge::SpaceChargeMicroBooNE::GetOneEfieldOffsetParametricX()
@@ -541,7 +717,7 @@ double spacecharge::SpaceChargeMicroBooNE::GetOneEfieldOffsetParametricY
   f5_Ey.SetParameters(parA[4]);
   f6_Ey.SetParameters(parA[5]);
 
-  double const aValNew = point.X();
+  double const aValNew = point.X()-1.25;
   double const parB[] = {
     f1_Ey.Eval(aValNew),
     f2_Ey.Eval(aValNew),
@@ -551,7 +727,7 @@ double spacecharge::SpaceChargeMicroBooNE::GetOneEfieldOffsetParametricY
     f6_Ey.Eval(aValNew)
   };
   
-  double const bValNew = point.Y();
+  double const bValNew = point.Y()-1.25;
   return fFinal_Ey_poly_t::Eval(bValNew, parB);
   
 } // spacecharge::SpaceChargeMicroBooNE::GetOneEfieldOffsetParametricY()
@@ -583,7 +759,7 @@ double spacecharge::SpaceChargeMicroBooNE::GetOneEfieldOffsetParametricZ
   f3_Ez.SetParameters(parA[2]);
   f4_Ez.SetParameters(parA[3]);
 
-  double const aValNew = point.Y();
+  double const aValNew = point.Y()-1.25;
   double const parB[] = {
     f1_Ez.Eval(aValNew),
     f2_Ez.Eval(aValNew),
@@ -591,7 +767,7 @@ double spacecharge::SpaceChargeMicroBooNE::GetOneEfieldOffsetParametricZ
     f4_Ez.Eval(aValNew)
   };
   
-  double const bValNew = point.X();
+  double const bValNew = point.X()-1.25;
   return fFinal_Ez_poly_t::Eval(bValNew, parB);
 } // spacecharge::SpaceChargeMicroBooNE::GetOneEfieldOffsetParametricZ()
 
@@ -602,7 +778,7 @@ double spacecharge::SpaceChargeMicroBooNE::TransformX(double xVal) const
 {
   double xValNew;
   xValNew = 2.50 - (2.50/2.56)*(xVal/100.0);
-  xValNew -= 1.25;
+  //xValNew -= 1.25;
 
   return xValNew;
 }
@@ -613,7 +789,7 @@ double spacecharge::SpaceChargeMicroBooNE::TransformY(double yVal) const
 {
   double yValNew;
   yValNew = (2.50/2.33)*((yVal/100.0)+1.165);
-  yValNew -= 1.25;
+  //yValNew -= 1.25;
 
   return yValNew;
 }
@@ -641,12 +817,37 @@ geo::Point_t spacecharge::SpaceChargeMicroBooNE::Transform
 bool spacecharge::SpaceChargeMicroBooNE::IsInsideBoundaries(geo::Point_t const& point) const
 {
   return !(
-       (point.X() <    0.0) || (point.X() >  260.0)
-    || (point.Y() < -120.0) || (point.Y() >  120.0)
-    || (point.Z() <    0.0) || (point.Z() > 1050.0)
+       (point.X() <    0.0) || (point.X() >  256.0)
+    || (point.Y() < -116.5) || (point.Y() >  116.5)
+    || (point.Z() <    0.0) || (point.Z() > 1037.0)
     );
 }
 
+bool spacecharge::SpaceChargeMicroBooNE::IsTooFarFromBoundaries(geo::Point_t const& point) const
+{
+  return (
+       (point.X() <    0.0) || (point.X() > 266.6)
+    || (point.Y() < -126.5) || (point.Y() > 126.5)
+    || (point.Z() <    -10) || (point.Z() > 1047.0)
+    );
+}
+
+geo::Point_t spacecharge::SpaceChargeMicroBooNE::PretendAtBoundary(geo::Point_t const& point) const
+{ 
+  double x = point.X(), y = point.Y(), z = point.Z();
+  
+  if      (point.X() <   0.0) x =   0.0;
+  else if (point.X() > 256.0) x = 256.0;
+  
+  if      (point.Y() < -116.5) y = -116.5;
+  else if (point.Y() >  116.5) y =  116.5;
+
+  if      (point.Z() <    0.0) z =    0.0;
+  else if (point.Z() > 1037.0) z = 1037.0;
+   
+  return {x,y,z};
+}
+  
 
 //----------------------------------------------------------------------------
 
@@ -655,8 +856,9 @@ spacecharge::SpaceChargeMicroBooNE::ParseRepresentationType
   (std::string repr_str)
 {
   
-  if (repr_str == "Parametric") return SpaceChargeRepresentation_t::kParametric;
-  else                          return SpaceChargeRepresentation_t::kUnknown;
+  if (repr_str == "Parametric")      return SpaceChargeRepresentation_t::kParametric;
+  else if (repr_str == "Voxelized") return SpaceChargeRepresentation_t::kVoxelized;
+  else                               return SpaceChargeRepresentation_t::kUnknown;
   
 } // spacecharge::SpaceChargeMicroBooNE::ParseRepresentationType()
 
