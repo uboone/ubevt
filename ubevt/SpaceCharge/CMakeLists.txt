@@ -1,17 +1,19 @@
-art_make( NO_PLUGINS
+art_make( BASENAME_ONLY
+
+		  MODULE_LIBRARIES
+              lardataobj_RecoBase
+              lardata_Utilities
+              lardataalg_DetectorInfo
+              larevt_SpaceCharge
+              ubevt_SpaceCharge
+              cetlib cetlib_except
+		  		
           
           LIB_LIBRARIES
-                        lardata_Utilities
-			larcorealg_Geometry
-                        ${MF_MESSAGELOGGER}
-                        cetlib cetlib_except
-			${FHICLCPP}
-                        ${ROOT_BASIC_LIB_LIST}
-			${Boost_SYSTEM_LIBRARY}
-                        ${GSL}
-	)
-simple_plugin(ShiftEdepSCE "module"
-              ubevt_SpaceCharge
+              lardataobj_RecoBase
+              lardata_Utilities
+              lardataalg_DetectorInfo
+              larevt_SpaceCharge
               ${ART_FRAMEWORK_CORE}
               ${ART_FRAMEWORK_PRINCIPAL}
               ${ART_FRAMEWORK_SERVICES_REGISTRY}
@@ -23,9 +25,16 @@ simple_plugin(ShiftEdepSCE "module"
 #              ${ART_FRAMEWORK_SERVICES_SYSTEM_FILECATALOGMETADATA_SERVICE}
               art_Utilities canvas
               ${MF_MESSAGELOGGER}
+              
               cetlib cetlib_except
               ${ROOT_BASIC_LIB_LIST}
-)
+                       	larcorealg_Geometry
+			${FHICLCPP}
+                        ${ROOT_BASIC_LIB_LIST}
+			${Boost_SYSTEM_LIBRARY}
+                        ${GSL}
+	)
+
 
 install_headers()
 install_fhicl()
