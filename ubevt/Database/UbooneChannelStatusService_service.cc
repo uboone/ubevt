@@ -75,7 +75,7 @@ namespace lariov{
   
   void UbooneChannelStatusService::PreProcessEvent(const art::Event& evt) {
     
-    fProvider.UpdateTimeStamp( fHelper.GetTimeStamp(evt, "Channel Status") );
+    fProvider.Update( fHelper.GetTimeStamp(evt, "Channel Status") );
 
     //Update noisy channels using raw digits
     if (fFindNoisyChannels) this->FindNoisyChannels(evt);
