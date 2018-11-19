@@ -49,6 +49,7 @@ private:
   std::string fRawDigitInstanceName;
   std::string fBadMaskLabel;
   std::string fBadMaskInstanceName;
+  bool        verbose;
 
   int         event_counter;
   int         bad_adc_counter;
@@ -67,6 +68,7 @@ lar::ZeroingOutBadChannels::ZeroingOutBadChannels(fhicl::ParameterSet const & p)
   fRawDigitInstanceName = p.get<std::string>("RawDigitInstanceName");
   fBadMaskLabel         = p.get<std::string>("BadMaskLabel");
   fBadMaskInstanceName  = p.get<std::string>("BadMaskInstanceName");
+  verbose               = p.get<bool>("verbose");
 
   event_counter         = 0;
   bad_adc_counter       = 0;
@@ -75,13 +77,17 @@ lar::ZeroingOutBadChannels::ZeroingOutBadChannels(fhicl::ParameterSet const & p)
 
 void lar::ZeroingOutBadChannels::produce(art::Event & e)
 {
-  std::cout << "Event #" << event_counter << std::endl;
+  if ( verbose ) 
+    std::cout << "Event #" << event_counter << std::endl;
+
   event_counter++;
 
-  // Print out the run, subrun, and event.
-  std::cout << "run = " << e.run() << "." << std::endl;
-  std::cout << "subrun = " << e.subRun() << "." << std::endl;
-  std::cout << "event = " << e.event() << "." << std::endl;
+  if ( verbose ) {
+    // Print out the run, subrun, and event.
+    std::cout << "run = " << e.run() << "." << std::endl;
+    std::cout << "subrun = " << e.subRun() << "." << std::endl;
+    std::cout << "event = " << e.event() << "." << std::endl;
+  }
 
   // Implementation of required member function here.
   // Read in the RawDigits of the overlay.                                                                                                                                                              
@@ -106,6 +112,15 @@ void lar::ZeroingOutBadChannels::produce(art::Event & e)
 
   // Declare the products that we will be outputing from this module.
   std::unique_ptr< std::vector<raw::RawDigit> > zeroed_RawDigit_v(new std::vector<raw::RawDigit>);
+
+  // Append the raw digits to the event and return if the RawDigits are empty.
+  if ( rawdigit_h->size() == 0 ) {
+
+    e.put(std::move(zeroed_RawDigit_v));
+
+    return;
+
+  }
 
   // Loop through the old RawDigits and set the new RawDigits equal to all of those values.
 
@@ -148,18 +163,9 @@ void lar::ZeroingOutBadChannels::produce(art::Event & e)
     // Increment bad_adc_counter.
     bad_adc_counter++;
 
-    std::cout << "channel = " << channel << "." << std::endl;
-    std::cout << "samples = " << samples << "." << std::endl;
-    std::cout << "compression = " << compression << "." << std::endl;
-    std::cout << "starting time tick = " << starting_time_tick << "." << std::endl;
-    std::cout << "ending time tick = " << ending_time_tick << "." << std::endl;
-
     // Loop through the time ticks to set the entries at the affected time ticks equal to 0.
     for ( size_t j = starting_time_tick; j < size_t(ending_time_tick); j++ ) {
 
-      if ( adc_counts.at( j ) > 0.0 && bad_adc_counter == 1 ) 
-	std::cout << "The value of 'adc_counts.at( " << j << " )' that I am setting equal to 0 is " << adc_counts.at( j ) << "." << std::endl;
-    
       adc_counts.at( j ) = 0;
     
     } // End of the loop over setting the time ticks to 0.
@@ -171,9 +177,11 @@ void lar::ZeroingOutBadChannels::produce(art::Event & e)
     zeroed_RawDigit_v->at( wire ) = new_raw_digit;
 
   } // End of the loop over the effected channels.
-  
+
   // Add the new raw digits to the event.
   e.put(std::move(zeroed_RawDigit_v));
+
+  return;
 
 }
 DEFINE_ART_MODULE(lar::ZeroingOutBadChannels)

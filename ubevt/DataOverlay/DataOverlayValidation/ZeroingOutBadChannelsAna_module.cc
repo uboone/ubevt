@@ -50,6 +50,7 @@ private:
 
   std::string    fRawDigitLabel;
   std::string    fRawDigitInstanceName;
+  bool           verbose;
 
   TTree*         raw_digit_analysis_tree;
 
@@ -71,7 +72,7 @@ lar::ZeroingOutBadChannelsAna::ZeroingOutBadChannelsAna(fhicl::ParameterSet cons
 {
   fRawDigitLabel               = p.get<std::string>("RawDigitLabel"    );
   fRawDigitInstanceName        = p.get<std::string>("RawDigitInstanceName"       );
-  
+  verbose                      = p.get<bool>("verbose"  );
 }
 
 void lar::ZeroingOutBadChannelsAna::beginJob() {
@@ -92,13 +93,17 @@ void lar::ZeroingOutBadChannelsAna::beginJob() {
 void lar::ZeroingOutBadChannelsAna::analyze(art::Event const & e)
 {
 
-  std::cout << "Event #" << event_count << "." << std::endl;
+  if ( verbose )
+    std::cout << "Event #" << event_count << "." << std::endl;
+  
   event_count++;
 
-  // Print out the run, subrun, and event.                                                                                                                                                      
-  std::cout << "run = " << e.run() << "." << std::endl;
-  std::cout << "subrun = " << e.subRun() << "." << std::endl;
-  std::cout << "event = " << e.event() << "." << std::endl;
+  if ( verbose ) {
+    // Print out the run, subrun, and event.                                                                                                                                                      
+    std::cout << "run = " << e.run() << "." << std::endl;
+    std::cout << "subrun = " << e.subRun() << "." << std::endl;
+    std::cout << "event = " << e.event() << "." << std::endl;
+  }
 
   // Implementation of required member function here.
   // Read in the RawDigits of the overlay.                                                                                                                                                                
