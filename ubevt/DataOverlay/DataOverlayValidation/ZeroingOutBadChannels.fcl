@@ -5,6 +5,7 @@ ZeroingOutBadChannels: {
  RawDigitInstanceName     : "orig"
  BadMaskLabel             : "nfbadchannel"
  BadMaskInstanceName      : "badmasks"
+ verbose                  : true
 
 }
 END_PROLOG

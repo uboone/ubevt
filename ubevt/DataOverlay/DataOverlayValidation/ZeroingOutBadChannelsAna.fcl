@@ -3,5 +3,6 @@ ZeroingOutBadChannelsAna: {
  module_type              : "ZeroingOutBadChannelsAna"  
  RawDigitLabel            : "zeroedoutchannels"
  RawDigitInstanceName     : ""
+ verbose                  : false
 }
 END_PROLOG
