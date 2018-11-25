@@ -13,6 +13,7 @@ art_make(
                         ${ART_FRAMEWORK_SERVICES_SYSTEM_FILECATALOGMETADATA_SERVICE}
                         art_Persistency_Common canvas
                         art_Utilities canvas
+			gallery
                         ${MF_MESSAGELOGGER}
                         ${BOOST_LIB}
                         ${FHICLCPP}
