@@ -113,7 +113,7 @@ microboone_pmtgain_provider:
 {
     DatabaseRetrievalAlg: @local::microboone_databaseretrievalalg   
     
-    UseDB: true
+    UseDB: false
     UseFile: false
     
     DefaultGain:       130.0
