@@ -64,10 +64,10 @@ outputs:
  out1:
  {
    module_type: RootOutput
-   fileName:    "ZeroingOutBadChannelsOutput_AdiPracticeFile_v2.root"
+   fileName:    "ZeroingOutBadChannels.root"
    dataTier:    "reco"
    compressionLevel: 1
-   outputCommands: ["keep *_*_*_*", "drop raw::RawDigits_nfspl1_raw_NFforBadChannles"]
+   outputCommands: ["keep *_*_*_*", "drop raw::RawDigits_driftWC_orig_NFforBadChannels"]
    }
 }
 
@@ -75,7 +75,6 @@ services.DetectorProperties.NumberTimeSamples:                             6400
 services.DetectorProperties.ReadOutWindowSize:                             6400
 services.DetectorClocksService.InheritClockConfig:                         false
 services.DetectorClocksService.TriggerOffsetTPC:                          -1.600e3
-
 
 ### Here we include the file giving us run/data dependent overrides
 
