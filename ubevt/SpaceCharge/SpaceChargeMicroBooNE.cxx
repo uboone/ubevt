@@ -92,7 +92,7 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
     TFile infile(fname.c_str(), "READ");
     if(!infile.IsOpen()) throw cet::exception("SpaceChargeMicroBooNE") << "Could not find the space charge effect file '" << fname << "'!\n";
 
-	std::cout << "Opened space charge file" << std::endl;
+	//std::cout << "Opened space charge file" << std::endl;
 
     switch (fRepresentationType) {
       case SpaceChargeRepresentation_t::kVoxelized:
@@ -106,7 +106,7 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
         SCEhistograms = Build_TH3(treeD,treeE,"x_true","y_true","z_true","fwd");
         //Histograms are Dx, Dy, Dz, dEx/E0, dEy/E0, dEz/E0
         
-        std::cout << "Built voxelized space charge histograms" << std::endl;
+        //std::cout << "Built voxelized space charge histograms" << std::endl;
         
 	break; //kVoxelized;
         }
@@ -188,7 +188,7 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
         g4_Ex[6] = makeInterpolator(infile, "deltaExOverE/g4_6");
         g5_Ex[6] = makeInterpolator(infile, "deltaExOverE/g5_6");
         
-        std::cout << "Built parametric space charge functions" << std::endl;
+        //std::cout << "Built parametric space charge functions" << std::endl;
         break; // kParametric
       case SpaceChargeRepresentation_t::kUnknown:
 	throw cet::exception("SpaceChargeMicroBooNE") << "Unknown space charge representation.";
@@ -200,7 +200,7 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
   if((fEnableCalSpatialSCE == true) || (fEnableCalEfieldSCE == true))
   {
   
-    std::cout << "Setting up for space charge calibration" << std::endl;
+    //std::cout << "Setting up for space charge calibration" << std::endl;
     
     fCalInputFilename = pset.get<std::string>("CalibrationInputFilename");
 
@@ -270,7 +270,7 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
       fDataSimCorrFunc_DataBottom.SetParameter(i_p,databottom_pars[i_p]);
   }
 
-  std::cout << "Finished setting up space charge" << std::endl;
+  //std::cout << "Finished setting up space charge" << std::endl;
   return true;
 }
 
@@ -321,7 +321,7 @@ bool spacecharge::SpaceChargeMicroBooNE::EnableCalEfieldSCE() const
 geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetPosOffsets(geo::Point_t const& tmp_point) const
 {
 
-	std::cout << "Calculating position space charge offsets!" << std::endl;
+  //std::cout << "Calculating position space charge offsets!" << std::endl;
   geo::Vector_t thePosOffsets;
   geo::Point_t point = tmp_point;
   if (!EnableSimSpatialSCE()) return thePosOffsets;     // no correction, zero displacement
@@ -353,7 +353,7 @@ geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetPosOffsets(geo::Point_t con
   }
   thePosOffsets *= data_corr_scale*fSpatialOffsetScale;
   
-  std::cout << "\tHere's the space charge position offsets: (" << tmp_point.X() << ", " << tmp_point.Y() << ", " << tmp_point.Z() << ") --> (" << thePosOffsets.X() << ", " << thePosOffsets.Y() << ", " << thePosOffsets.Z() << ")" << std::endl;
+  //std::cout << "\tHere's the space charge position offsets: (" << tmp_point.X() << ", " << tmp_point.Y() << ", " << tmp_point.Z() << ") --> (" << thePosOffsets.X() << ", " << thePosOffsets.Y() << ", " << thePosOffsets.Z() << ")" << std::endl;
   
   return thePosOffsets;
 }
@@ -639,7 +639,7 @@ geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetCalEfieldOffsets(geo::Point
   
   theEfieldOffsets = -1.0*GetOffsetsVoxel(point, CalSCEhistograms.at(3), CalSCEhistograms.at(4), CalSCEhistograms.at(5));
   
-  std::cout<< "   in service: (" << point.X() << ", " << point.Y() << ", " << point.Z() << ") -> (" << theEfieldOffsets.X() << ", " << theEfieldOffsets.Y() << ", " << theEfieldOffsets.Z() << ")" << std::endl;
+  //std::cout<< "   in service: (" << point.X() << ", " << point.Y() << ", " << point.Z() << ") -> (" << theEfieldOffsets.X() << ", " << theEfieldOffsets.Y() << ", " << theEfieldOffsets.Z() << ")" << std::endl;
 
   theEfieldOffsets *= fEfieldOffsetScale;
 
