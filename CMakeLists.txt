@@ -45,6 +45,7 @@ find_ups_product( larcorealg )
 find_ups_product( larcoreobj )
 find_ups_product( lardataobj )
 find_ups_product( lardataalg )
+find_ups_product( lardata )
 find_ups_product( cetbuildtools )
 find_ups_boost( v1_53_0 )
 find_ups_product( canvas )
@@ -53,8 +54,12 @@ find_ups_product( ifdh_art v1_00_00 )
 find_ups_product( larevt v1_00_00 )
 find_ups_product( gsl v1_00_00 )
 find_ups_product( art v1_00_00 )
+find_ups_product(lardata)
 find_ups_product(larcore)
 find_ups_product(nutools)
+
+find_ups_product(gallery)
+
 cet_find_library( GSL NAMES gsl PATHS ENV GSL_LIB NO_DEFAULT_PATH )
 
 # macros for dictionary and simple_plugin

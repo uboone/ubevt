@@ -8,6 +8,7 @@ art_make( BASENAME_ONLY
 			larevt_CalibrationDBI_Providers
 			larcorealg_Geometry
 			${LIBWDA}
+                        ${MF_MESSAGELOGGER}
 	                ${FHICLCPP}
 			cetlib cetlib_except
                         ${Boost_SYSTEM_LIBRARY}

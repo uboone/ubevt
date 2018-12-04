@@ -7,6 +7,7 @@
 // art/LArSoft libraries
 #include "cetlib_except/exception.h"
 #include "larcore/Geometry/Geometry.h"
+#include "messagefacility/MessageLogger/MessageLogger.h"
 
 
 #include <fstream>
@@ -15,7 +16,9 @@ namespace lariov {
 
   //constructor      
   UboonePmtGainProvider::UboonePmtGainProvider(fhicl::ParameterSet const& p) :
-    DatabaseRetrievalAlg(p.get<fhicl::ParameterSet>("DatabaseRetrievalAlg")) {	
+    DatabaseRetrievalAlg(p.get<fhicl::ParameterSet>("DatabaseRetrievalAlg")),
+    fEventTimeStamp(0),
+    fCurrentTimeStamp(0) {
     
     this->Reconfigure(p);
   }
@@ -146,55 +149,90 @@ namespace lariov {
     }
   }
 
+  // This method saves the time stamp of the latest event.
+
+  void UboonePmtGainProvider::UpdateTimeStamp(DBTimeStamp_t ts) {
+    mf::LogInfo("UboonePmtGainProvider") << "UboonePmtGainProvider::UpdateTimeStamp called.";
+    fEventTimeStamp = ts;
+  }
+
+  // Maybe update method cached data (public non-const version).
+
   bool UboonePmtGainProvider::Update(DBTimeStamp_t ts) {
     
-    if (fDataSource != DataSource::Database) return false;
+    fEventTimeStamp = ts;
+    return DBUpdate(ts);
+  }
+
+  // Maybe update method cached data (private const version using current event time).
+
+  bool UboonePmtGainProvider::DBUpdate() const {
+    return DBUpdate(fEventTimeStamp);
+  }
+
+  // Maybe update method cached data (private const version).
+  // This is the function that does the actual work of updating data from database.
+
+  bool UboonePmtGainProvider::DBUpdate(DBTimeStamp_t ts) const {
+
+    bool result = false;
+    
+    if (fDataSource == DataSource::Database && ts != fCurrentTimeStamp) {
       
-    if (!this->UpdateFolder(ts)) return false;
+      mf::LogInfo("UboonePmtGainProvider") << "UboonePmtGainProvider::DBUpdate called with new timestamp.";
 
-    //DBFolder was updated, so now update the Snapshot
-    fData.Clear();
-    fData.SetIoV(this->Begin(), this->End());
+      fCurrentTimeStamp = ts;     
 
-    std::vector<DBChannelID_t> channels;
-    fFolder->GetChannelList(channels);
-    for (auto it = channels.begin(); it != channels.end(); ++it) {
+      // Call non-const base class method.
 
-      double gain, gain_err, amp_gain, amp_gain_err, ped_mean, ped_mean_err, ped_rms, ped_rms_err;
-      std::string gain_fit_status, amp_gain_fit_status;
-      fFolder->GetNamedChannelData(*it, "gain",              gain);
-      fFolder->GetNamedChannelData(*it, "gainerror",         gain_err); 
-      fFolder->GetNamedChannelData(*it, "gainfitstatus",     gain_fit_status);
-      fFolder->GetNamedChannelData(*it, "ampgain",           amp_gain);
-      fFolder->GetNamedChannelData(*it, "ampgainerror",      amp_gain_err); 
-      fFolder->GetNamedChannelData(*it, "ampgainfitstatus",  amp_gain_fit_status);
-      fFolder->GetNamedChannelData(*it, "baselinemean",      ped_mean);
-      fFolder->GetNamedChannelData(*it, "baselinemeanerror", ped_mean_err); 
-      fFolder->GetNamedChannelData(*it, "baselinerms",       ped_rms);
-      fFolder->GetNamedChannelData(*it, "baselinermserror",  ped_rms_err); 
+      result = const_cast<UboonePmtGainProvider*>(this)->UpdateFolder(ts);
+      if(result) {
+	//DBFolder was updated, so now update the Snapshot
+	fData.Clear();
+	fData.SetIoV(this->Begin(), this->End());
+
+	std::vector<DBChannelID_t> channels;
+	fFolder->GetChannelList(channels);
+	for (auto it = channels.begin(); it != channels.end(); ++it) {
+
+	  double gain, gain_err, amp_gain, amp_gain_err, ped_mean, ped_mean_err, ped_rms, ped_rms_err;
+	  std::string gain_fit_status, amp_gain_fit_status;
+	  fFolder->GetNamedChannelData(*it, "gain",              gain);
+	  fFolder->GetNamedChannelData(*it, "gainerror",         gain_err); 
+	  fFolder->GetNamedChannelData(*it, "gainfitstatus",     gain_fit_status);
+	  fFolder->GetNamedChannelData(*it, "ampgain",           amp_gain);
+	  fFolder->GetNamedChannelData(*it, "ampgainerror",      amp_gain_err); 
+	  fFolder->GetNamedChannelData(*it, "ampgainfitstatus",  amp_gain_fit_status);
+	  fFolder->GetNamedChannelData(*it, "baselinemean",      ped_mean);
+	  fFolder->GetNamedChannelData(*it, "baselinemeanerror", ped_mean_err); 
+	  fFolder->GetNamedChannelData(*it, "baselinerms",       ped_rms);
+	  fFolder->GetNamedChannelData(*it, "baselinermserror",  ped_rms_err); 
       
-      PmtGain pg(*it);
-      CalibrationExtraInfo extra_info("PmtGain");
-      extra_info.AddOrReplaceStringData("gain_fit_status",gain_fit_status);
-      extra_info.AddOrReplaceFloatData("amplitude_gain",amp_gain);
-      extra_info.AddOrReplaceFloatData("amplitude_gain_err",amp_gain_err);
-      extra_info.AddOrReplaceStringData("amplitude_gain_fit_status",amp_gain_fit_status);
-      extra_info.AddOrReplaceFloatData("pedestal_mean",ped_mean);
-      extra_info.AddOrReplaceFloatData("pedestal_mean_err",ped_mean_err);
-      extra_info.AddOrReplaceFloatData("pedestal_rms",ped_rms);
-      extra_info.AddOrReplaceFloatData("pedestal_rms_err",ped_rms_err);
+	  PmtGain pg(*it);
+	  CalibrationExtraInfo extra_info("PmtGain");
+	  extra_info.AddOrReplaceStringData("gain_fit_status",gain_fit_status);
+	  extra_info.AddOrReplaceFloatData("amplitude_gain",amp_gain);
+	  extra_info.AddOrReplaceFloatData("amplitude_gain_err",amp_gain_err);
+	  extra_info.AddOrReplaceStringData("amplitude_gain_fit_status",amp_gain_fit_status);
+	  extra_info.AddOrReplaceFloatData("pedestal_mean",ped_mean);
+	  extra_info.AddOrReplaceFloatData("pedestal_mean_err",ped_mean_err);
+	  extra_info.AddOrReplaceFloatData("pedestal_rms",ped_rms);
+	  extra_info.AddOrReplaceFloatData("pedestal_rms_err",ped_rms_err);
            
-      pg.SetGain( (float)gain );
-      pg.SetGainErr( (float)gain_err );
-      pg.SetExtraInfo(extra_info);
+	  pg.SetGain( (float)gain );
+	  pg.SetGainErr( (float)gain_err );
+	  pg.SetExtraInfo(extra_info);
 
-      fData.AddOrReplaceRow(pg);
+	  fData.AddOrReplaceRow(pg);
+	}
+      }
     }
 
-    return true;
+    return result;
   }
   
   const PmtGain& UboonePmtGainProvider::PmtGainObject(DBChannelID_t ch) const { 
+    DBUpdate();
     return fData.GetRow(ch);
   }
       

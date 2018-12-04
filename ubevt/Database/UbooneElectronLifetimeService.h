@@ -24,7 +24,7 @@ namespace lariov{
       UbooneElectronLifetimeService(fhicl::ParameterSet const& pset, art::ActivityRegistry& reg);
       
       void PreProcessEvent(const art::Event& evt, art::ScheduleContext) {
-        fProvider.Update( (DBTimeStamp_t)evt.run() );
+        fProvider.UpdateTimeStamp( (DBTimeStamp_t)evt.run() );
       }
      
     private:
