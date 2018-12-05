@@ -310,7 +310,7 @@ mix::SimInfoOverlayFilter::FillCollectionMap(std::vector<art::InputTag> const& l
 
   for(auto label : labels){
     auto & out_ptrvec = colmap[label.instance()];
-    art::PtrMaker<T> makeArtPtr(e, *this,label.instance());
+    art::PtrMaker<T> makeArtPtr(e, label.instance());
 
     gallery::Handle< std::vector<T> > handle;
     if(!gEvent.getByLabel< std::vector<T> >(label,handle)) continue;
