@@ -7,12 +7,15 @@ art_make(
                         ${ART_FRAMEWORK_CORE}
 			${ART_FRAMEWORK_IO_PRODUCTMIX}
 			${ART_FRAMEWORK_IO_ROOT}
+                        art_Framework_IO_Root_detail_sources
 			${ART_FRAMEWORK_MODULES}
                         ${ART_FRAMEWORK_PRINCIPAL}
                         ${ART_FRAMEWORK_SERVICES_REGISTRY}
                         ${ART_FRAMEWORK_SERVICES_SYSTEM_FILECATALOGMETADATA_SERVICE}
-                        art_Persistency_Common canvas
-                        art_Utilities canvas
+                        art_Persistency_Provenance
+                        art_Persistency_Common
+                        art_Utilities
+                        canvas
 			gallery
                         ${MF_MESSAGELOGGER}
                         ${BOOST_LIB}
