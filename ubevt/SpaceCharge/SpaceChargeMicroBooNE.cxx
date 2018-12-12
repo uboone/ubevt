@@ -321,7 +321,7 @@ bool spacecharge::SpaceChargeMicroBooNE::EnableCalEfieldSCE() const
 geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetPosOffsets(geo::Point_t const& tmp_point) const
 {
 
-	std::cout << "Calculating position space charge offsets!" << std::endl;
+	//std::cout << "Calculating position space charge offsets!" << std::endl;
   geo::Vector_t thePosOffsets;
   geo::Point_t point = tmp_point;
   if (!EnableSimSpatialSCE()) return thePosOffsets;     // no correction, zero displacement
@@ -353,7 +353,7 @@ geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetPosOffsets(geo::Point_t con
   }
   thePosOffsets *= data_corr_scale*fSpatialOffsetScale;
   
-  std::cout << "\tHere's the space charge position offsets: (" << tmp_point.X() << ", " << tmp_point.Y() << ", " << tmp_point.Z() << ") --> (" << thePosOffsets.X() << ", " << thePosOffsets.Y() << ", " << thePosOffsets.Z() << ")" << std::endl;
+  //std::cout << "\tHere's the space charge position offsets: (" << tmp_point.X() << ", " << tmp_point.Y() << ", " << tmp_point.Z() << ") --> (" << thePosOffsets.X() << ", " << thePosOffsets.Y() << ", " << thePosOffsets.Z() << ")" << std::endl;
   
   return thePosOffsets;
 }
@@ -639,7 +639,7 @@ geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetCalEfieldOffsets(geo::Point
   
   theEfieldOffsets = -1.0*GetOffsetsVoxel(point, CalSCEhistograms.at(3), CalSCEhistograms.at(4), CalSCEhistograms.at(5));
   
-  std::cout<< "   in service: (" << point.X() << ", " << point.Y() << ", " << point.Z() << ") -> (" << theEfieldOffsets.X() << ", " << theEfieldOffsets.Y() << ", " << theEfieldOffsets.Z() << ")" << std::endl;
+  //std::cout<< "   in service: (" << point.X() << ", " << point.Y() << ", " << point.Z() << ") -> (" << theEfieldOffsets.X() << ", " << theEfieldOffsets.Y() << ", " << theEfieldOffsets.Z() << ")" << std::endl;
 
   theEfieldOffsets *= fEfieldOffsetScale;
 
@@ -834,9 +834,9 @@ geo::Point_t spacecharge::SpaceChargeMicroBooNE::Transform
 bool spacecharge::SpaceChargeMicroBooNE::IsInsideBoundaries(geo::Point_t const& point) const
 {
   return !(
-       (point.X() <    0.0) || (point.X() >  256.0)
-    || (point.Y() < -116.5) || (point.Y() >  116.5)
-    || (point.Z() <    0.0) || (point.Z() > 1037.0)
+       (point.X() <=    0.0) || (point.X() >=  256.0)
+    || (point.Y() <= -116.5) || (point.Y() >=  116.5)
+    || (point.Z() <=    0.0) || (point.Z() >= 1037.0)
     );
 }
 
@@ -853,14 +853,14 @@ geo::Point_t spacecharge::SpaceChargeMicroBooNE::PretendAtBoundary(geo::Point_t 
 { 
   double x = point.X(), y = point.Y(), z = point.Z();
   
-  if      (point.X() <   0.0) x =   0.0;
-  else if (point.X() > 256.0) x = 256.0;
+  if      (point.X() <   0.0) x =   0.1;
+  else if (point.X() > 256.0) x = 255.9;
   
-  if      (point.Y() < -116.5) y = -116.5;
-  else if (point.Y() >  116.5) y =  116.5;
+  if      (point.Y() < -116.5) y = -116.49;
+  else if (point.Y() >  116.5) y =  116.49;
 
-  if      (point.Z() <    0.0) z =    0.0;
-  else if (point.Z() > 1037.0) z = 1037.0;
+  if      (point.Z() <    0.0) z =    0.1;
+  else if (point.Z() > 1037.0) z = 1036.9;
    
   return {x,y,z};
 }
