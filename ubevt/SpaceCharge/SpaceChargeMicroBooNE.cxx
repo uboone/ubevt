@@ -321,11 +321,7 @@ bool spacecharge::SpaceChargeMicroBooNE::EnableCalEfieldSCE() const
 geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetPosOffsets(geo::Point_t const& tmp_point) const
 {
 
-<<<<<<< HEAD
 	//std::cout << "Calculating position space charge offsets!" << std::endl;
-=======
-  //std::cout << "Calculating position space charge offsets!" << std::endl;
->>>>>>> 773df68f7cc8bbd15281e3687f5f461a289ef00c
   geo::Vector_t thePosOffsets;
   geo::Point_t point = tmp_point;
   if (!EnableSimSpatialSCE()) return thePosOffsets;     // no correction, zero displacement
