@@ -56,7 +56,7 @@ namespace lariov{
 
     // Callbacks.
       
-    void PreProcessEvent(const art::Event& evt); 
+    void PreProcessEvent(const art::Event& evt, art::ScheduleContext);
      
   private:
 
@@ -108,7 +108,7 @@ namespace lariov{
   
   // Callback.  
 
-  void WireCellChannelStatusService::PreProcessEvent(const art::Event& evt) {
+  void WireCellChannelStatusService::PreProcessEvent(const art::Event& evt, art::ScheduleContext) {
 
     // Update number of channels.
 
