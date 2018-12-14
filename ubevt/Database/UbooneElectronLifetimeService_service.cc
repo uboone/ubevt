@@ -9,7 +9,6 @@ namespace lariov{
   : fProvider(pset.get<fhicl::ParameterSet>("ElectronLifetimeProvider"))
   {
     //register callback to update local database cache before each event is processed
-    //reg.sPreProcessEvent.watch(&UbooneElectronLifetimeService::PreProcessEvent, *this);
     reg.sPreProcessEvent.watch(this, &UbooneElectronLifetimeService::PreProcessEvent);
   }
 
