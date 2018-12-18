@@ -834,9 +834,9 @@ geo::Point_t spacecharge::SpaceChargeMicroBooNE::Transform
 bool spacecharge::SpaceChargeMicroBooNE::IsInsideBoundaries(geo::Point_t const& point) const
 {
   return !(
-       (point.X() <=    0.0) || (point.X() >=  256.0)
-    || (point.Y() <= -116.5) || (point.Y() >=  116.5)
-    || (point.Z() <=    0.0) || (point.Z() >= 1037.0)
+       (point.X() <    0.001) || (point.X() >  255.999)
+    || (point.Y() < -116.499) || (point.Y() >  116.499)
+    || (point.Z() <    0.001) || (point.Z() > 1036.999)
     );
 }
 
@@ -853,14 +853,14 @@ geo::Point_t spacecharge::SpaceChargeMicroBooNE::PretendAtBoundary(geo::Point_t 
 { 
   double x = point.X(), y = point.Y(), z = point.Z();
   
-  if      (point.X() <   0.0) x =   0.001;
-  else if (point.X() > 256.0) x = 255.999;
+  if      (point.X() <   0.001)   x =   0.001;
+  else if (point.X() >   255.999) x = 255.999;
   
-  if      (point.Y() < -116.5) y = -116.499;
-  else if (point.Y() >  116.5) y =  116.499;
+  if      (point.Y() < -116.499) y = -116.499;
+  else if (point.Y() >  116.499) y =  116.499;
 
-  if      (point.Z() <    0.0) z =    0.0001;
-  else if (point.Z() > 1037.0) z = 1036.999;
+  if      (point.Z() <    0.001) z =    0.001;
+  else if (point.Z() > 1036.999) z = 1036.999;
    
   return {x,y,z};
 }
