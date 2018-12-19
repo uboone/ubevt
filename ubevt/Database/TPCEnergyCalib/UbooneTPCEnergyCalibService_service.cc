@@ -4,6 +4,7 @@
 #include "art/Framework/Services/Registry/ServiceMacros.h"
 #include "art/Framework/Services/Registry/ActivityRegistry.h"
 #include "art/Framework/Principal/Event.h"
+#include "art/Persistency/Provenance/ScheduleContext.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "TPCEnergyCalibService.h"
 #include "UbooneTPCEnergyCalibProvider.h"
@@ -22,9 +23,8 @@ namespace lariov{
     public:
     
       UbooneTPCEnergyCalibService(fhicl::ParameterSet const& pset, art::ActivityRegistry& reg);
-      ~UbooneTPCEnergyCalibService(){}
       
-      void PreProcessEvent(const art::Event& evt);
+      void PreProcessEvent(const art::Event& evt, art::ScheduleContext);
      
     private:
     
@@ -54,9 +54,9 @@ namespace lariov{
     reg.sPreProcessEvent.watch(this, &UbooneTPCEnergyCalibService::PreProcessEvent);
   }
   
-  void UbooneTPCEnergyCalibService::PreProcessEvent(const art::Event& evt) {
+  void UbooneTPCEnergyCalibService::PreProcessEvent(const art::Event& evt, art::ScheduleContext) {
     
-    fProvider.Update( fHelper.GetTimeStamp(evt, "TPC Energy Calibrations") );
+    fProvider.UpdateTimeStamp( fHelper.GetTimeStamp(evt, "TPC Energy Calibrations") );
   } 
 
 }//end namespace lariov

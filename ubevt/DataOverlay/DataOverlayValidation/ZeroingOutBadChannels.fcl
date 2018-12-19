@@ -1,10 +1,11 @@
 BEGIN_PROLOG
 ZeroingOutBadChannels: {
  module_type              : "ZeroingOutBadChannels"  
- RawDigitLabel            : "daqnonoise"
- RawDigitInstanceName     : ""
+ RawDigitLabel            : "driftWC"
+ RawDigitInstanceName     : "orig"
  BadMaskLabel             : "nfbadchannel"
  BadMaskInstanceName      : "badmasks"
+ verbose                  : true
 
 }
 END_PROLOG

@@ -54,7 +54,14 @@ void mix::RawDigitMixer::Mix(std::vector<raw::RawDigit> const& mcVector,
 
     size_t i_output = it_ch->second;
 
-    fRDAdderAlg.SetPedestalInputs(rd.GetPedestal(),0.0);
+    //////////////////////////////////////////////HARD coding pedestal values which should be fixed and set inside raw digits
+    double simPedestal = 1.;
+    if (rd.Channel()<2400) simPedestal = 1842.75;
+    else if (rd.Channel() >= 2400 && rd.Channel() < 4800 ) simPedestal = 1842.75;
+    else if (rd.Channel() >= 4800 ) simPedestal = 409.5;
+    fRDAdderAlg.SetPedestalInputs(simPedestal,0.0);
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //fRDAdderAlg.SetPedestalInputs(rd.GetPedestal(),0.0);
     fRDAdderAlg.SetScaleInputs(scale_map.at(rd.Channel()),1.0);
     
     //If the sizes are not the same...

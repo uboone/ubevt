@@ -4,6 +4,7 @@
 #include "art/Framework/Services/Registry/ServiceMacros.h"
 #include "art/Framework/Services/Registry/ActivityRegistry.h"
 #include "art/Framework/Principal/Event.h"
+#include "art/Persistency/Provenance/ScheduleContext.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "larevt/CalibrationDBI/Interface/ElectronLifetimeService.h"
 #include "UbooneElectronLifetimeProvider.h"
@@ -21,10 +22,9 @@ namespace lariov{
     public:
     
       UbooneElectronLifetimeService(fhicl::ParameterSet const& pset, art::ActivityRegistry& reg);
-      ~UbooneElectronLifetimeService(){}
       
-      void PreProcessEvent(const art::Event& evt) {
-        fProvider.Update( (DBTimeStamp_t)evt.run() );
+      void PreProcessEvent(const art::Event& evt, art::ScheduleContext) {
+        fProvider.UpdateTimeStamp( (DBTimeStamp_t)evt.run() );
       }
      
     private:

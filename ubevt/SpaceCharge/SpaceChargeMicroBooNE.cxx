@@ -16,7 +16,9 @@
 #include "lardataalg/DetectorInfo/DetectorProperties.h"
 
 // Framework includes
+#include "canvas/Utilities/Exception.h"
 #include "cetlib_except/exception.h"
+#include "messagefacility/MessageLogger/MessageLogger.h"
 
 // ROOT includes
 #include "TFile.h"
@@ -375,17 +377,32 @@ geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetCalPosOffsets(geo::Point_t 
 
 //----------------------------------------------------------------------------
 /// Provides position offsets using voxelized interpolation
+///
+/// FIXME: The try-catch is a kludge until appropriate handling can be
+/// developed for situations in which the transformed point lies
+/// outside of the bounds of interpolation.
 geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetOffsetsVoxel
   (geo::Point_t const& point,TH3F* hX, TH3F* hY, TH3F* hZ) const
-{	
+try {
   geo::Point_t transformedPoint = Transform(point);
- 
   return {
   	hX->Interpolate(transformedPoint.X(),transformedPoint.Y(),transformedPoint.Z()),
   	hY->Interpolate(transformedPoint.X(),transformedPoint.Y(),transformedPoint.Z()),
   	hZ->Interpolate(transformedPoint.X(),transformedPoint.Y(),transformedPoint.Z())
   	};
+}
+catch (art::Exception const& e) {
   	
+  if (e.categoryCode() == art::errors::FatalRootError) {
+    mf::LogAbsolute("RootError") << "BEGIN SUPPRESSED ERROR\n"
+                                 << e.what()
+                                 << "END SUPPRESSED ERROR";
+    return geo::Vector_t{};
+  }
+  throw;
+}
+catch (...) {
+  throw;
  }
  
 /// Build 3D histograms for voxelized interpolation

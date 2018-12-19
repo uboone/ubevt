@@ -4,6 +4,7 @@
 #include "art/Framework/Services/Registry/ServiceMacros.h"
 #include "art/Framework/Services/Registry/ActivityRegistry.h"
 #include "art/Framework/Principal/Event.h"
+#include "art/Persistency/Provenance/ScheduleContext.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "larevt/CalibrationDBI/Interface/PmtGainService.h"
 #include "UboonePmtGainProvider.h"
@@ -22,9 +23,8 @@ namespace lariov{
     public:
     
       UboonePmtGainService(fhicl::ParameterSet const& pset, art::ActivityRegistry& reg);
-      ~UboonePmtGainService(){}
       
-      void PreProcessEvent(const art::Event& evt);
+      void PreProcessEvent(const art::Event& evt, art::ScheduleContext);
      
     private:
     
@@ -55,9 +55,9 @@ namespace lariov{
   }
   
   
-  void UboonePmtGainService::PreProcessEvent(const art::Event& evt) {
+  void UboonePmtGainService::PreProcessEvent(const art::Event& evt, art::ScheduleContext) {
     
-    fProvider.Update( fHelper.GetTimeStamp(evt, "PMT Gain") );
+    fProvider.UpdateTimeStamp( fHelper.GetTimeStamp(evt, "PMT Gain") );
   } 
   
 }//end namespace lariov

@@ -4,6 +4,7 @@
 #include "art/Framework/Services/Registry/ServiceMacros.h"
 #include "art/Framework/Services/Registry/ActivityRegistry.h"
 #include "art/Framework/Principal/Event.h"
+#include "art/Persistency/Provenance/ScheduleContext.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "larevt/CalibrationDBI/Interface/DetPedestalService.h"
 #include "larevt/CalibrationDBI/Providers/DetPedestalRetrievalAlg.h"
@@ -22,9 +23,8 @@ namespace lariov{
     public:
     
       UbooneDetPedestalService(fhicl::ParameterSet const& pset, art::ActivityRegistry& reg);
-      ~UbooneDetPedestalService(){}
       
-      void PreProcessEvent(const art::Event& evt);
+      void PreProcessEvent(const art::Event& evt, art::ScheduleContext);
      
     private:
     
@@ -52,12 +52,12 @@ namespace lariov{
         
   }
 
-  void UbooneDetPedestalService::PreProcessEvent(const art::Event& evt) {
+  void UbooneDetPedestalService::PreProcessEvent(const art::Event& evt, art::ScheduleContext) {
     
     if (evt.isRealData() && evt.run() < 183) {
-      fProvider.Update(1430000000000000000);
+      fProvider.UpdateTimeStamp(1430000000000000000);
     }
-    else fProvider.Update(fHelper.GetTimeStamp(evt, "Detector Pedestals"));
+    else fProvider.UpdateTimeStamp(fHelper.GetTimeStamp(evt, "Detector Pedestals"));
   }
     
 }//end namespace lariov

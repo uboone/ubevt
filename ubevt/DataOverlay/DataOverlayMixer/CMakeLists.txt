@@ -17,7 +17,9 @@ art_make(
                         ${ART_FRAMEWORK_PRINCIPAL}
                         ${ART_FRAMEWORK_SERVICES_REGISTRY}
                         ${ART_FRAMEWORK_SERVICES_SYSTEM_FILECATALOGMETADATA_SERVICE}
-                        art_Persistency_Common canvas
+                        art_Persistency_Common
+			art_Persistency_Provenance
+			art_Framework_IO_Root_detail_sources
                         art_Utilities canvas
 			ifdh
                         ${MF_MESSAGELOGGER}
@@ -48,7 +50,9 @@ art_make(
                         ${ART_FRAMEWORK_SERVICES_SYSTEM_FILECATALOGMETADATA_SERVICE}
 			ubevt_Utilities
                         art_Persistency_Common
+			art_Persistency_Provenance
                         art_Utilities
+			art_Framework_IO_Root_detail_sources
 			canvas
 			ifdh
                         ${MF_MESSAGELOGGER}
@@ -71,6 +75,8 @@ art_make(
                         ${ART_FRAMEWORK_SERVICES_REGISTRY}
                         ${ART_FRAMEWORK_SERVICES_OPTIONAL}
                         ${ART_FRAMEWORK_SERVICES_OPTIONAL_TFILESERVICE_SERVICE}
+			art_Persistency_Provenance
+			art_Framework_IO_Root_detail_sources
 			${BOOST_LIB}
                         ${FHICLCPP}
                         cetlib cetlib_except
@@ -84,6 +90,5 @@ install_fhicl()
 #			ub_RawDigitAdderAna
 #
 #			${ART_FRAMEWORK_IO_SOURCES}
-#                        art_Persistency_Provenance canvas
 #                        
 #                        ${ROOT_BASIC_LIB_LIST}

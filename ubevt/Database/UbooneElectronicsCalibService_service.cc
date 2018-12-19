@@ -22,9 +22,8 @@ namespace lariov{
     public:
     
       UbooneElectronicsCalibService(fhicl::ParameterSet const& pset, art::ActivityRegistry& reg);
-      ~UbooneElectronicsCalibService(){}
       
-      void PreProcessEvent(const art::Event& evt);
+      void PreProcessEvent(const art::Event& evt, art::ScheduleContext);
      
     private:
     
@@ -54,9 +53,9 @@ namespace lariov{
     reg.sPreProcessEvent.watch(this, &UbooneElectronicsCalibService::PreProcessEvent);
   }
   
-  void UbooneElectronicsCalibService::PreProcessEvent(const art::Event& evt) {
+  void UbooneElectronicsCalibService::PreProcessEvent(const art::Event& evt, art::ScheduleContext) {
     
-    fProvider.Update( fHelper.GetTimeStamp(evt, "ASIC Calibrations") );
+    fProvider.UpdateTimeStamp( fHelper.GetTimeStamp(evt, "ASIC Calibrations") );
   } 
 
 }//end namespace lariov
