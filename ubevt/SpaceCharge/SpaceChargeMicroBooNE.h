@@ -12,6 +12,7 @@
 // LArSoft libraries
 #include "larevt/SpaceCharge/SpaceCharge.h"
 #include "larcoreobj/SimpleTypesAndConstants/geo_vectors.h"
+#include "larcorealg/CoreUtils/ProviderPack.h"
 #include "lardataalg/DetectorInfo/DetectorProperties.h"
 
 // FHiCL libraries
@@ -31,6 +32,7 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <set>
 #include <algorithm> // std::copy_n()
 
 
@@ -149,6 +151,11 @@ namespace spacecharge {
  
     public:
 
+      /// List of service providers we depend on.
+      using providers_type = lar::ProviderPack<
+        detinfo::DetectorProperties
+        >;
+      
       typedef enum {
         kVoxelized,
         kParametric,
@@ -156,6 +163,16 @@ namespace spacecharge {
       } SpaceChargeRepresentation_t;
     
       explicit SpaceChargeMicroBooNE(fhicl::ParameterSet const& pset);
+      
+      /**
+       * @brief Constructs the provider and sets up the dependencies.
+       * @param pset FHiCL parameter set for provider configuration
+       * @param providers pack of providers `SpaceChargeMicroBooNE` depends on
+       * @see Configure()
+       */
+      SpaceChargeMicroBooNE
+        (fhicl::ParameterSet const& pset, providers_type providers);
+      
       SpaceChargeMicroBooNE(SpaceChargeMicroBooNE const&) = delete;
       virtual ~SpaceChargeMicroBooNE() = default;
       

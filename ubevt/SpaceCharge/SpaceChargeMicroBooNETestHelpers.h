@@ -43,7 +43,10 @@ namespace testing {
   struct ProviderSetupClass<spacecharge::SpaceChargeMicroBooNE> {
     
     static std::unique_ptr<spacecharge::SpaceChargeMicroBooNE> setup
-      (fhicl::ParameterSet const& pset)
+      (
+        fhicl::ParameterSet const& pset,
+        spacecharge::SpaceChargeMicroBooNE::providers_type const& providers
+      )
       {
         // some feedback about whether we are using the right configuration;
         // remember that art calls the implementation of a service interface
@@ -70,9 +73,10 @@ namespace testing {
         }
         
         //
-        // create the new DetectorClocksStandard service provider
+        // create the new SpaceChargeMicroBooNE service provider
         //
-        return std::make_unique<spacecharge::SpaceChargeMicroBooNE>(pset);
+        return std::make_unique<spacecharge::SpaceChargeMicroBooNE>
+          (pset, providers);
       } // setup()
     
   }; // ProviderSetupClass<SpaceChargeMicroBooNE>
@@ -108,9 +112,12 @@ namespace testing {
   struct SimpleEnvironmentSetupClass<spacecharge::SpaceChargeMicroBooNE, TestEnv> {
     static spacecharge::SpaceChargeMicroBooNE* setup(TestEnv& env)
       {
-        return SimpleEnvironmentStandardSetupByName
-          <spacecharge::SpaceChargeMicroBooNE, spacecharge::SpaceCharge, TestEnv>
-          (env, "SpaceChargeService");
+        return env.template SetupProviderFor
+          <spacecharge::SpaceCharge, spacecharge::SpaceChargeMicroBooNE>
+          (
+            env.ServiceParameters("SpaceChargeService"),
+            env.template ProviderPackFor<spacecharge::SpaceChargeMicroBooNE>()
+          );
       }
   };
   
