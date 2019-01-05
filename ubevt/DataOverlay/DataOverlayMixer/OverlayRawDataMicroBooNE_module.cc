@@ -31,9 +31,13 @@
 #include "ubevt/Utilities/PMTRemapProvider.h"
 
 #include "DataOverlay/RawDigitMixer.h"
+#include "DataOverlay/CRTMixer.h"
 #include "lardataobj/RawData/RawDigit.h"
 #include "lardataobj/RawData/TriggerData.h"
 #include "larcoreobj/SimpleTypesAndConstants/RawTypes.h"
+
+#include "ubobj/CRT/CRTSimData.hh"
+#include "ubobj/CRT/CRTHit.hh"
 
 #include "DataOverlay/OpDetWaveformMixer.h"
 #include "lardataobj/RawData/OpDetWaveform.h"
@@ -53,6 +57,7 @@ class OverlayRawDataMicroBooNE : public art::EDProducer {
     // Declare member data here.
     RawDigitMixer              fRDMixer;
     OpDetWaveformMixer         fODMixer;
+    CRTMixer                   fCRTMixer;
 
     short                fDefaultRawDigitSatPoint;
     short                fDefaultOpDetSatPoint;
@@ -64,6 +69,8 @@ class OverlayRawDataMicroBooNE : public art::EDProducer {
     std::string          fRawDigitMCModuleLabel;
     std::string          fOpDetMCModuleLabel;
     std::string          fTriggerMCModuleLabel;
+    std::string          fCRTMCModuleLabel;
+    std::string          fCRTDataModuleLabel;
 
     float                fDefaultMCRawDigitScale;
     float                fDefaultMCOpDetScale;
@@ -78,6 +85,8 @@ class OverlayRawDataMicroBooNE : public art::EDProducer {
     std::unordered_map<raw::Channel_t,float> fMCOpDetLowGainScaleMap;
 
     bool MixRawDigits( const art::Event& evt, std::vector<raw::RawDigit> & output);
+
+    bool MixCRTHits( const art::Event& evt, std::vector<crt::CRTHit> & output);
     
     bool MixTriggerData( const art::Event& evt, std::vector<raw::Trigger> & output);
 
@@ -93,6 +102,7 @@ mix::OverlayRawDataMicroBooNE::OverlayRawDataMicroBooNE(fhicl::ParameterSet cons
   :
   fRDMixer(false), //print warnings turned off
   fODMixer(false), //print warnings turned off
+  fCRTMixer(false), //print warnings turned off
 
   fDefaultRawDigitSatPoint(p.get<short>("DefaultRawDigitSaturationPoint",4096)),
   fDefaultOpDetSatPoint(p.get<short>("DefaultOpDetSaturationPoint",4096)),
@@ -103,6 +113,8 @@ mix::OverlayRawDataMicroBooNE::OverlayRawDataMicroBooNE(fhicl::ParameterSet cons
   fRawDigitMCModuleLabel(p.get<std::string>("RawDigitMCModuleLabel")),
   fOpDetMCModuleLabel(p.get<std::string>("OpDetMCModuleLabel")),
   fTriggerMCModuleLabel(p.get<std::string>("TriggerMCModuleLabel")),
+  fCRTMCModuleLabel(p.get<std::string>("CRTMCModuleLabel")),
+  fCRTDataModuleLabel(p.get<std::string>("CRTDataModuleLabel")),
   fDefaultMCRawDigitScale(p.get<float>("DefaultMCRawDigitScale",1)),
   fDefaultMCOpDetScale(p.get<float>("DefaultMCOpDetScale",1))
 {
@@ -111,6 +123,7 @@ mix::OverlayRawDataMicroBooNE::OverlayRawDataMicroBooNE(fhicl::ParameterSet cons
   fODMixer.SetMinSampleSize(fOpDetMinSampleSize);
   
   produces< std::vector<raw::RawDigit> >();
+  produces< std::vector<crt::CRTHit> >();
   produces< std::vector<raw::OpDetWaveform> >("OpdetBeamHighGain");
   produces< std::vector<raw::OpDetWaveform> >("OpdetBeamLowGain");
   produces< std::vector<raw::Trigger> >();
@@ -120,12 +133,14 @@ void mix::OverlayRawDataMicroBooNE::produce(art::Event& evt) {
 
   //make output containers 
   std::unique_ptr<std::vector<raw::RawDigit> >     rawdigits(new std::vector<raw::RawDigit>);
+  std::unique_ptr<std::vector<crt::CRTHit> >       crthits(new std::vector<crt::CRTHit>);
   std::unique_ptr<std::vector<raw::OpDetWaveform> > opdet_hg(new std::vector<raw::OpDetWaveform>);
   std::unique_ptr<std::vector<raw::OpDetWaveform> > opdet_lg(new std::vector<raw::OpDetWaveform>);
   std::unique_ptr<std::vector<raw::Trigger> > triggerdata(new std::vector<raw::Trigger>);
   
   //get output digits
   MixRawDigits(evt, *rawdigits);
+  MixCRTHits(evt, *crthits);
   MixOpDetWaveforms_HighGain(evt, *opdet_hg);
   MixOpDetWaveforms_LowGain(evt, *opdet_lg);
   MixTriggerData(evt, *triggerdata);
@@ -172,6 +187,25 @@ bool mix::OverlayRawDataMicroBooNE::MixRawDigits( const art::Event& event, std::
   fRDMixer.Mix(*mcDigitHandle,fMCRawDigitScaleMap);
   fRDMixer.FillRawDigitOutput(output);
   
+  return true;
+}
+
+bool mix::OverlayRawDataMicroBooNE::MixCRTHits( const art::Event& event, std::vector<crt::CRTHit> & output) {
+
+  output.clear();
+
+  std::unique_ptr<std::vector<crt::CRTHit>> dummyInput(new std::vector<crt::CRTHit>);
+
+
+  art::Handle< std::vector<crt::CRTHit> > mcCRTHandle;
+  event.getByLabel( fCRTMCModuleLabel,mcCRTHandle);
+
+  art::Handle< std::vector<crt::CRTHit> > dataCRTHandle;
+  event.getByLabel( fCRTDataModuleLabel,dataCRTHandle);
+
+  std::vector<crt::CRTHit> const& mcCRTInputVec = (mcCRTHandle.isValid())? *mcCRTHandle : *dummyInput;
+
+  fCRTMixer.Mix(mcCRTInputVec,*dataCRTHandle,output);
   return true;
 }
 
