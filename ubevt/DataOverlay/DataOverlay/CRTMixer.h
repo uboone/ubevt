@@ -49,6 +49,7 @@ public:
   void Mix(std::vector<crt::CRTHit> const& mcVector,
            std::vector<crt::CRTHit> const& dataVector,
            std::vector<crt::CRTHit> & outputVector);  
+  bool Mask(crt::CRTHit simCRThit);
   //void SetSaturationPoint(short x)
   //{ fRDAdderAlg.SetSaturationPoint(x); }
   
