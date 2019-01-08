@@ -115,7 +115,7 @@ void lar::MaskingOutUnavailableCRT::produce(art::Event & e)
   for(auto const& od : crthits) {
     // The differnt CRT comissioning periods are hardcoded here and should. 
     // Infor should be placed in a future database and this piece of code be modified.  
-    if (runnumber < 11049 ) continue; //first period - no CRT
+    if (runnumber < 14117 ) continue; //first period - no CRT
     //else if (runnumber < 20000) {   //second period - only 0,1,2 planes
     //    if (od.plane > 3) masked_crthits_v->emplace_back( od );
     //}
