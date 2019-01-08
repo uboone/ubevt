@@ -3,7 +3,7 @@
 // Plugin Type: producer (art v2_11_03)
 // File:        MaskingOutUnavailableCRT_module.cc
 //
-// Generated at Fri Nov  2 13:48:18 2018 by Christopher Barnes using cetskelgen
+// Generated at Fri Nov  2 13:48:18 2018 by Adi Ashkenazi 
 // from cetlib version v3_03_01.
 ////////////////////////////////////////////////////////////////////////
 
@@ -115,11 +115,8 @@ void lar::MaskingOutUnavailableCRT::produce(art::Event & e)
   for(auto const& od : crthits) {
     // The differnt CRT comissioning periods are hardcoded here and should. 
     // Infor should be placed in a future database and this piece of code be modified.  
-    if (runnumber < 14117 ) continue; //first period - no CRT
-    //else if (runnumber < 20000) {   //second period - only 0,1,2 planes
-    //    if (od.plane > 3) masked_crthits_v->emplace_back( od );
-    //}
-                                      //third period - full comissioning 
+    if (runnumber < 11049 ) continue; // before full comissioning of the CRT
+                                      
     masked_crthits_v->emplace_back( od );
     
     
