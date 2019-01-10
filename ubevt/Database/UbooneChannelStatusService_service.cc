@@ -9,6 +9,7 @@
 #include "larevt/CalibrationDBI/Providers/SIOVChannelStatusProvider.h"
 #include "UbooneCalibrationServiceHelper.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h" 
+#include "art/Persistency/Provenance/ScheduleContext.h"
 #include "larcore/Geometry/Geometry.h"
 
 #include "lardataobj/RawData/RawDigit.h"
@@ -29,7 +30,7 @@ namespace lariov{
       UbooneChannelStatusService(fhicl::ParameterSet const& pset, art::ActivityRegistry& reg);
       ~UbooneChannelStatusService(){}
       
-      void PreProcessEvent(const art::Event& evt); 
+      void PreProcessEvent(const art::Event& evt, art::ScheduleContext);
      
     private:
     
@@ -73,9 +74,9 @@ namespace lariov{
   }
   
   
-  void UbooneChannelStatusService::PreProcessEvent(const art::Event& evt) {
+  void UbooneChannelStatusService::PreProcessEvent(const art::Event& evt, art::ScheduleContext) {
     
-    fProvider.Update( fHelper.GetTimeStamp(evt, "Channel Status") );
+    fProvider.UpdateTimeStamp( fHelper.GetTimeStamp(evt, "Channel Status") );
 
     //Update noisy channels using raw digits
     if (fFindNoisyChannels) this->FindNoisyChannels(evt);
