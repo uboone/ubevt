@@ -203,13 +203,17 @@ bool mix::OverlayRawDataMicroBooNE::MixCRTHits( const art::Event& event, std::ve
 
   std::unique_ptr<std::vector<crt::CRTHit>> dummyInput(new std::vector<crt::CRTHit>);
 
-
   art::Handle< std::vector<crt::CRTHit> > mcCRTHandle;
   event.getByLabel( fCRTMCModuleLabel,mcCRTHandle);
 
   art::Handle< std::vector<crt::CRTHit> > dataCRTHandle;
   event.getByLabel( fCRTDataModuleLabel,dataCRTHandle);
 
+  if(!dataCRTHandle.isValid()) {
+    std::cout<<"NO CRT INFO in the input data file - NO CRT MIXING DONE!"<<std::endl;
+    return false;
+  }
+  
   std::vector<crt::CRTHit> const& mcCRTInputVec = (mcCRTHandle.isValid())? *mcCRTHandle : *dummyInput;
 
   fCRTMixer.Mix(mcCRTInputVec,*dataCRTHandle,output);
