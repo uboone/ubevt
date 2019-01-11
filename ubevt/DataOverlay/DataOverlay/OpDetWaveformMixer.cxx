@@ -43,7 +43,7 @@ void mix::OpDetWaveformMixer::Mix(std::vector<raw::OpDetWaveform> const& mcVecto
 
     if(od.size() < fMinSampleSize) continue;
 
-    auto it_ch = fChannelIndexMap.find(od.ChannelNumber()%100);
+    auto it_ch = fChannelIndexMap.find(od.ChannelNumber());
 
     //if this channel is not in the data, skip this channel!
     if(it_ch==fChannelIndexMap.end())
@@ -53,7 +53,8 @@ void mix::OpDetWaveformMixer::Mix(std::vector<raw::OpDetWaveform> const& mcVecto
 
     fRDAdderAlg.SetPedestalInputs(2048,0.0); //HARDCODED PEDESTAL AT 2048!!!!!!!
     fRDAdderAlg.SetScaleInputs(scale_map.at(od.ChannelNumber())%100,1.0);
-    
+   
+    std::cout<<"Applying the PMT gain for channel "<<od.ChannelNumber()<<" gain : "<<scale_map.at(od.ChannelNumber())%100<<std::endl; 
     //If the sizes are not the same...
     if(od.size() != outputVector[i_output].size()){
 

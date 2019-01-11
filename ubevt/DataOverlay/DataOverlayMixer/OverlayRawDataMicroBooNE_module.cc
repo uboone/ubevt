@@ -262,7 +262,7 @@ bool mix::OverlayRawDataMicroBooNE::MixOpDetWaveforms_HighGain( const art::Event
   art::Handle< std::vector<raw::OpDetWaveform> > dataOpDetHandle_HighGain;
   event.getByLabel(fOpDetDataModuleLabel,"OpdetBeamHighGain",dataOpDetHandle_HighGain);  
 
-  GenerateMCOpDetHighGainScaleMap(*dataOpDetHandle_HighGain); 
+  //GenerateMCOpDetHighGainScaleMap(*dataOpDetHandle_HighGain); 
   fODMixer.DeclareData(*dataOpDetHandle_HighGain,output);
   //fODMixer.Mix(*mcOpDetHandle_HighGain, fMCOpDetHighGainScaleMap, output);
   //fODMixer.Mix(*corr_mcOpDetHandle_HighGain, fMCOpDetHighGainScaleMap, output);
@@ -284,7 +284,7 @@ bool mix::OverlayRawDataMicroBooNE::MixOpDetWaveforms_LowGain( const art::Event&
   art::Handle< std::vector<raw::OpDetWaveform> > dataOpDetHandle_LowGain;
   event.getByLabel(fOpDetDataModuleLabel,"OpdetBeamLowGain",dataOpDetHandle_LowGain);  
 
-  GenerateMCOpDetLowGainScaleMap(*dataOpDetHandle_LowGain); 
+  //GenerateMCOpDetLowGainScaleMap(*dataOpDetHandle_LowGain); 
   fODMixer.DeclareData(*dataOpDetHandle_LowGain,output);
   //fODMixer.Mix(*mcOpDetHandle_LowGain, fMCOpDetLowGainScaleMap, output);
   //fODMixer.Mix(*corr_mcOpDetHandle_LowGain, fMCOpDetLowGainScaleMap, output);
