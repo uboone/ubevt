@@ -41,6 +41,8 @@
 
 #include "DataOverlay/OpDetWaveformMixer.h"
 #include "lardataobj/RawData/OpDetWaveform.h"
+#include "larevt/CalibrationDBI/Interface/PmtGainService.h"
+#include "larevt/CalibrationDBI/Interface/PmtGainProvider.h"
 
 namespace mix {
 
@@ -77,6 +79,9 @@ class OverlayRawDataMicroBooNE : public art::EDProducer {
 
     void GenerateMCRawDigitScaleMap(std::vector<raw::RawDigit> const&);
     std::unordered_map<raw::ChannelID_t,float> fMCRawDigitScaleMap;
+
+    void GenerateMCOpDetGainScaleMap();
+    std::unordered_map<raw::Channel_t,float> fMCOpDetGainScaleMap;
 
     void GenerateMCOpDetHighGainScaleMap(std::vector<raw::OpDetWaveform> const&);
     std::unordered_map<raw::Channel_t,float> fMCOpDetHighGainScaleMap;
@@ -141,6 +146,7 @@ void mix::OverlayRawDataMicroBooNE::produce(art::Event& evt) {
   //get output digits
   MixRawDigits(evt, *rawdigits);
   MixCRTHits(evt, *crthits);
+  GenerateMCOpDetGainScaleMap(); // Right now the gain scale map is the same for low and high gain readout and it is obtained before mixing any of them
   MixOpDetWaveforms_HighGain(evt, *opdet_hg);
   MixOpDetWaveforms_LowGain(evt, *opdet_lg);
   MixTriggerData(evt, *triggerdata);
@@ -150,6 +156,7 @@ void mix::OverlayRawDataMicroBooNE::produce(art::Event& evt) {
   evt.put(std::move(rawdigits));
   evt.put(std::move(opdet_hg),"OpdetBeamHighGain");
   evt.put(std::move(opdet_lg),"OpdetBeamLowGain");
+  evt.put(std::move(crthits));
   evt.put(std::move(triggerdata));
 }
 
@@ -209,6 +216,21 @@ bool mix::OverlayRawDataMicroBooNE::MixCRTHits( const art::Event& event, std::ve
   return true;
 }
 
+void mix::OverlayRawDataMicroBooNE::GenerateMCOpDetGainScaleMap(){
+  //right now, same scales are given to the high and low gain readouts 
+  //and, loop through the channels one by one to get the right channel number
+  //note: we will put here access to the channel database to determine dead channels
+  fMCOpDetGainScaleMap.clear();
+  //art::ServiceHandle<geo::Geometry> geo;
+  const lariov::PmtGainProvider& gain_provider = art::ServiceHandle<lariov::PmtGainService>()->GetProvider();
+  //for (unsigned int i=0; i!= geo->NOpDets(); ++i) {
+  for (unsigned int i=0; i<32 ; i++) {
+    //if (geo->IsValidOpChannel(i) && i<32) {
+        fMCOpDetGainScaleMap[i] = gain_provider.ExtraInfo(i).GetFloatData("amplitude_gain");
+    //}
+  }
+}
+
 void mix::OverlayRawDataMicroBooNE::GenerateMCOpDetHighGainScaleMap(std::vector<raw::OpDetWaveform> const& dataVector){
   //right now, assume the number of channels is the number in the collection
   //and, loop through the channels one by one to get the right channel number
@@ -243,7 +265,8 @@ bool mix::OverlayRawDataMicroBooNE::MixOpDetWaveforms_HighGain( const art::Event
   GenerateMCOpDetHighGainScaleMap(*dataOpDetHandle_HighGain); 
   fODMixer.DeclareData(*dataOpDetHandle_HighGain,output);
   //fODMixer.Mix(*mcOpDetHandle_HighGain, fMCOpDetHighGainScaleMap, output);
-  fODMixer.Mix(*corr_mcOpDetHandle_HighGain, fMCOpDetHighGainScaleMap, output);
+  //fODMixer.Mix(*corr_mcOpDetHandle_HighGain, fMCOpDetHighGainScaleMap, output);
+  fODMixer.Mix(*corr_mcOpDetHandle_HighGain, fMCOpDetGainScaleMap, output);
   
   return true;
 }
@@ -264,7 +287,8 @@ bool mix::OverlayRawDataMicroBooNE::MixOpDetWaveforms_LowGain( const art::Event&
   GenerateMCOpDetLowGainScaleMap(*dataOpDetHandle_LowGain); 
   fODMixer.DeclareData(*dataOpDetHandle_LowGain,output);
   //fODMixer.Mix(*mcOpDetHandle_LowGain, fMCOpDetLowGainScaleMap, output);
-  fODMixer.Mix(*corr_mcOpDetHandle_LowGain, fMCOpDetLowGainScaleMap, output);
+  //fODMixer.Mix(*corr_mcOpDetHandle_LowGain, fMCOpDetLowGainScaleMap, output);
+  fODMixer.Mix(*corr_mcOpDetHandle_LowGain, fMCOpDetGainScaleMap, output);
   
   return true;
 }
