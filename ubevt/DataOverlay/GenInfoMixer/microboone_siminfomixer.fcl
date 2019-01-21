@@ -1,0 +1,25 @@
+BEGIN_PROLOG
+
+microboone_siminfomixer:
+{
+  module_type : SimInfoOverlayFilter
+  SimInputFileNames : [ "genfile.root.local" ]
+  MCTruthInputModuleLabels: ["generator::GenieGenFiltered"]
+  MCFluxInputModuleLabels: ["generator::GenieGenFiltered"]
+  GTruthInputModuleLabels: ["generator::GenieGenFiltered"]
+  BeamGateInputModuleLabels: ["generator::GenieGenFiltered"]
+  MCTruthMCFluxAssnsInputModuleLabels: ["generator::GenieGenFiltered"]
+  MCTruthGTruthAssnsInputModuleLabels: ["generator::GenieGenFiltered"]
+  Verbosity: -1
+  FillPOTInfo: true
+  POTSummaryTag: "generator::GenieGenFiltered"
+  detail : {}
+}
+
+microboone_subrunpotinevent:
+{
+  module_type : SubRunPOTInEvent
+  InputTag: "generator"
+}
+
+END_PROLOG
