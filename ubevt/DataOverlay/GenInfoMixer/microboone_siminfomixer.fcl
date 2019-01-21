@@ -19,7 +19,7 @@ microboone_siminfomixer:
 microboone_subrunpotinevent:
 {
   module_type : SubRunPOTInEvent
-  InputTag: "generator"
+  InputTag: "generator:SubRunPOT"
 }
 
 END_PROLOG

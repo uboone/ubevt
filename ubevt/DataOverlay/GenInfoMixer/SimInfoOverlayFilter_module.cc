@@ -204,7 +204,7 @@ mix::SimInfoOverlayFilter::SimInfoOverlayFilter(fhicl::ParameterSet const & p)
     fPOTSum_totspills = 0.0;
     fPOTSum_goodspills = 0.0;
 
-    this->produces<sumdata::POTSummary>();
+    this->produces<sumdata::POTSummary,art::InSubRun>();
   }
 
 }
