@@ -67,13 +67,13 @@ mix::SubRunPOTInEvent::SubRunPOTInEvent(fhicl::ParameterSet const& p)
 {
   fInputTag = p.get<art::InputTag>("InputTag");
 
-  this->produces<sumdata::POTSummary>("SubRunPOT");
+  produces<sumdata::POTSummary>("SubRunPOT");
 }
 
 void mix::SubRunPOTInEvent::produce(art::Event& e)
 {
   std::unique_ptr<sumdata::POTSummary> srpot_ptr(new sumdata::POTSummary(fSubRunPOT));
-  e.put(std::move(srpot_ptr));
+  e.put(std::move(srpot_ptr),"SubRunPOT");
 }
 
 void mix::SubRunPOTInEvent::beginSubRun(art::SubRun& sr)
