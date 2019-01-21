@@ -4,6 +4,7 @@ art_make(
 	MODULE_LIBRARIES
                         lardataobj_Simulation
 			nusimdata_SimulationBase
+			larcoreobj_SummaryData
                         ${ART_FRAMEWORK_CORE}
 			${ART_FRAMEWORK_IO_PRODUCTMIX}
 			${ART_FRAMEWORK_IO_ROOT}
