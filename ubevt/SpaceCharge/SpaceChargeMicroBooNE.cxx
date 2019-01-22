@@ -10,6 +10,7 @@
 // C++ language includes
 #include <string>
 #include <vector>
+#include <cassert>
 
 // LArSoft includes
 #include "ubevt/SpaceCharge/SpaceChargeMicroBooNE.h"
@@ -62,10 +63,19 @@ spacecharge::SpaceChargeMicroBooNE::SpaceChargeMicroBooNE(
   //Configure(pset);
 }
 
+//-----------------------------------------------
+spacecharge::SpaceChargeMicroBooNE::SpaceChargeMicroBooNE
+  (fhicl::ParameterSet const& pset, providers_type providers)
+{
+  Configure(pset, providers.get<detinfo::DetectorProperties>());
+}
+
 //------------------------------------------------
 bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& pset, 
 						   detinfo::DetectorProperties const* detprop)
 {  
+  assert(detprop); // detector properties service provider is required
+  
   fEnableSimSpatialSCE = pset.get<bool>("EnableSimSpatialSCE");
   fEnableSimEfieldSCE = pset.get<bool>("EnableSimEfieldSCE");
   fEnableCalSpatialSCE = pset.get<bool>("EnableCalSpatialSCE");

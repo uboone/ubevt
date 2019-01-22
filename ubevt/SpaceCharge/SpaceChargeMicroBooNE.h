@@ -12,6 +12,7 @@
 // LArSoft libraries
 #include "larevt/SpaceCharge/SpaceCharge.h"
 #include "larcoreobj/SimpleTypesAndConstants/geo_vectors.h"
+#include "larcorealg/CoreUtils/ProviderPack.h"
 #include "lardataalg/DetectorInfo/DetectorProperties.h"
 
 // FHiCL libraries
@@ -31,6 +32,7 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <set>
 #include <algorithm> // std::copy_n()
 
 
@@ -149,6 +151,11 @@ namespace spacecharge {
  
     public:
 
+      /// List of service providers we depend on.
+      using providers_type = lar::ProviderPack<
+        detinfo::DetectorProperties
+        >;
+      
       typedef enum {
         kVoxelized,
         kParametric,
@@ -156,6 +163,16 @@ namespace spacecharge {
       } SpaceChargeRepresentation_t;
     
       explicit SpaceChargeMicroBooNE(fhicl::ParameterSet const& pset);
+      
+      /**
+       * @brief Constructs the provider and sets up the dependencies.
+       * @param pset FHiCL parameter set for provider configuration
+       * @param providers pack of providers `SpaceChargeMicroBooNE` depends on
+       * @see Configure()
+       */
+      SpaceChargeMicroBooNE
+        (fhicl::ParameterSet const& pset, providers_type providers);
+      
       SpaceChargeMicroBooNE(SpaceChargeMicroBooNE const&) = delete;
       virtual ~SpaceChargeMicroBooNE() = default;
       
@@ -165,17 +182,17 @@ namespace spacecharge {
       bool EnableSimSpatialSCE() const override;
       bool EnableSimEfieldSCE() const override;
 
-      bool EnableCalSpatialSCE() const;// override; wes, 13Nov2018, not overriding for now
-      bool EnableCalEfieldSCE() const;// override; wes, 13Nov2018, not overriding for now  
+      bool EnableCalSpatialSCE() const override;// override; wes, 13Nov2018, not overriding for now
+      bool EnableCalEfieldSCE() const override;// override; wes, 13Nov2018, not overriding for now  
 
       //put in by wes 13Nov2018. hope it's right
       bool EnableCorrSCE() const override {return (EnableCalSpatialSCE()||EnableCalEfieldSCE()) ;}
 
       geo::Vector_t GetPosOffsets(geo::Point_t const& point) const override;
-      geo::Vector_t GetCalPosOffsets(geo::Point_t const& point) const;// override; wes, 13Nov2018, not overriding for now  
+      geo::Vector_t GetCalPosOffsets(geo::Point_t const& point) const override;// override; wes, 13Nov2018, not overriding for now  
 
       geo::Vector_t GetEfieldOffsets(geo::Point_t const& point) const override;
-      geo::Vector_t GetCalEfieldOffsets(geo::Point_t const& tmp_point) const;
+      geo::Vector_t GetCalEfieldOffsets(geo::Point_t const& tmp_point) const override;
       
     protected:
 
