@@ -10,6 +10,7 @@
 // C++ language includes
 #include <string>
 #include <vector>
+#include <cassert>
 
 // LArSoft includes
 #include "ubevt/SpaceCharge/SpaceChargeMicroBooNE.h"
@@ -60,10 +61,19 @@ spacecharge::SpaceChargeMicroBooNE::SpaceChargeMicroBooNE(
   //Configure(pset);
 }
 
+//-----------------------------------------------
+spacecharge::SpaceChargeMicroBooNE::SpaceChargeMicroBooNE
+  (fhicl::ParameterSet const& pset, providers_type providers)
+{
+  Configure(pset, providers.get<detinfo::DetectorProperties>());
+}
+
 //------------------------------------------------
 bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& pset, 
 						   detinfo::DetectorProperties const* detprop)
 {  
+  assert(detprop); // detector properties service provider is required
+  
   fEnableSimSpatialSCE = pset.get<bool>("EnableSimSpatialSCE");
   fEnableSimEfieldSCE = pset.get<bool>("EnableSimEfieldSCE");
   fEnableCalSpatialSCE = pset.get<bool>("EnableCalSpatialSCE");
@@ -902,9 +912,9 @@ geo::Point_t spacecharge::SpaceChargeMicroBooNE::Transform
 bool spacecharge::SpaceChargeMicroBooNE::IsInsideBoundaries(geo::Point_t const& point) const
 {
   return !(
-       (point.X() <     0.001) || (point.X() >   255.999)
-    || (point.Y() <  -116.499) || (point.Y() >   116.499)
-    || (point.Z() <     0.001) || (point.Z() >  1036.999)
+       (point.X() <    0.001) || (point.X() >  255.999)
+    || (point.Y() < -116.499) || (point.Y() >  116.499)
+    || (point.Z() <    0.001) || (point.Z() > 1036.999)
     );
 }
 
@@ -921,8 +931,8 @@ geo::Point_t spacecharge::SpaceChargeMicroBooNE::PretendAtBoundary(geo::Point_t 
 { 
   double x = point.X(), y = point.Y(), z = point.Z();
   
-  if      (point.X() <   0.001) x =   0.001;
-  else if (point.X() > 255.999) x = 255.999;
+  if      (point.X() <   0.001)   x =   0.001;
+  else if (point.X() >   255.999) x = 255.999;
   
   if      (point.Y() < -116.499) y = -116.499;
   else if (point.Y() >  116.499) y =  116.499;
