@@ -659,7 +659,7 @@ void util::SignalShapingServiceMicroBooNE::SetFieldResponse()
 void util::SignalShapingServiceMicroBooNE::SetElectResponse()
 {
  
-  LOG_DEBUG("SignalShapingMicroBooNE") << "Setting MicroBooNE electronics response function...";
+  MF_LOG_DEBUG("SignalShapingMicroBooNE") << "Setting MicroBooNE electronics response function...";
 
   art::ServiceHandle<geo::Geometry> geo;
 
@@ -747,7 +747,7 @@ void util::SignalShapingServiceMicroBooNE::SetElectResponse()
     
   }//end loop over channels
 
-  LOG_DEBUG("SignalShapingMicroBooNE") << " Done.";
+  MF_LOG_DEBUG("SignalShapingMicroBooNE") << " Done.";
 
   return;
 }
