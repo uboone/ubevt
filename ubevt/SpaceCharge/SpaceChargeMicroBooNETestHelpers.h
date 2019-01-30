@@ -59,7 +59,7 @@ namespace testing {
             ServiceImplName.erase(0, iSlash + 1);
           
           if (ServiceImplName == "SpaceChargeServiceMicroBooNE") {
-            LOG_TRACE("setupProvider")
+            MF_LOG_TRACE("setupProvider")
               << "Verified service implementation for SpaceChargeService: '"
               << ServiceImplPath << "'";
           }
