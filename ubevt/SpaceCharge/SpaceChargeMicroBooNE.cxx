@@ -17,9 +17,7 @@
 #include "lardataalg/DetectorInfo/DetectorProperties.h"
 
 // Framework includes
-#include "canvas/Utilities/Exception.h"
 #include "cetlib_except/exception.h"
-#include "messagefacility/MessageLogger/MessageLogger.h"
 
 // ROOT includes
 #include "TFile.h"
@@ -86,6 +84,8 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
 
   if((fEnableSimSpatialSCE == true) || (fEnableSimEfieldSCE == true))
   {
+  
+  	//std::cout << "Starting up the space charge service!" << std::endl;
     auto const reprTypeString = pset.get<std::string>("RepresentationType");
     fRepresentationType = ParseRepresentationType(reprTypeString);
     if (fRepresentationType == SpaceChargeRepresentation_t::kUnknown) {
@@ -102,7 +102,27 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
     TFile infile(fname.c_str(), "READ");
     if(!infile.IsOpen()) throw cet::exception("SpaceChargeMicroBooNE") << "Could not find the space charge effect file '" << fname << "'!\n";
 
+	//std::cout << "Opened space charge file" << std::endl;
+
     switch (fRepresentationType) {
+      case SpaceChargeRepresentation_t::kTH3:
+        {
+        //Load in files
+        TH3F* hDx = (TH3F*)infile.Get("hDx");
+        TH3F* hDy = (TH3F*)infile.Get("hDy");
+        TH3F* hDz = (TH3F*)infile.Get("hDz");
+        TH3F* hEx = (TH3F*)infile.Get("hEx");
+        TH3F* hEy = (TH3F*)infile.Get("hEy");
+        TH3F* hEz = (TH3F*)infile.Get("hEz");
+        
+        //td::cout << "Got all the space charge histograms" << std::endl;
+        
+        SCEhistograms = {hDx, hDy, hDz, hEx, hEy, hEz};
+        
+        //std::cout << "Built space charge histogram vector" << std::endl;
+        break;
+        
+    	} //kTH3
       case SpaceChargeRepresentation_t::kVoxelized:
         {
         //Load in files
@@ -113,6 +133,8 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
         //Build histograms
         SCEhistograms = Build_TH3(treeD,treeE,"x_true","y_true","z_true","fwd");
         //Histograms are Dx, Dy, Dz, dEx/E0, dEy/E0, dEz/E0
+        
+        //std::cout << "Built voxelized space charge histograms" << std::endl;
         
 	break; //kVoxelized;
         }
@@ -193,6 +215,8 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
         g3_Ex[6] = makeInterpolator(infile, "deltaExOverE/g3_6");
         g4_Ex[6] = makeInterpolator(infile, "deltaExOverE/g4_6");
         g5_Ex[6] = makeInterpolator(infile, "deltaExOverE/g5_6");
+        
+        //std::cout << "Built parametric space charge functions" << std::endl;
         break; // kParametric
       case SpaceChargeRepresentation_t::kUnknown:
 	throw cet::exception("SpaceChargeMicroBooNE") << "Unknown space charge representation.";
@@ -203,6 +227,16 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
   
   if((fEnableCalSpatialSCE == true) || (fEnableCalEfieldSCE == true))
   {
+  
+    //std::cout << "Setting up for space charge calibration" << std::endl;
+    auto const reprTypeString = pset.get<std::string>("RepresentationType");
+    fRepresentationType = ParseRepresentationType(reprTypeString);
+    if (fRepresentationType == SpaceChargeRepresentation_t::kUnknown) {
+      throw cet::exception("SpaceChargeMicroBooNE")
+        << "Unknown space charge representation type: '" << reprTypeString
+        << "'\n";
+    }
+    
     fCalInputFilename = pset.get<std::string>("CalibrationInputFilename");
 
     std::string fname;
@@ -212,13 +246,45 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
     TFile infile(fname.c_str(), "READ");
     if(!infile.IsOpen()) throw cet::exception("SpaceChargeMicroBooNE") << "Could not find the space charge effect file '" << fname << "'!\n";
     
+    switch (fRepresentationType) {
+      case SpaceChargeRepresentation_t::kTH3:
+        {
+        //Load in files
+        TH3F* hDx = (TH3F*)infile.Get("hDx");
+        TH3F* hDy = (TH3F*)infile.Get("hDy");
+        TH3F* hDz = (TH3F*)infile.Get("hDz");
+        TH3F* hEx = (TH3F*)infile.Get("hEx");
+        TH3F* hEy = (TH3F*)infile.Get("hEy");
+        TH3F* hEz = (TH3F*)infile.Get("hEz");
+        
+        //std::cout << "Got all the space charge histograms" << std::endl;
+        
+        CalSCEhistograms = {hDx, hDy, hDz, hEx, hEy, hEz};
+        
+        //std::cout << "Built space charge histogram vector" << std::endl;
+        break;
+    	} //kTH3
+      case SpaceChargeRepresentation_t::kVoxelized:
+        {
     //Load in trees
+    
+    //std::cout << "wrong space charge 1!" << std::endl;
+    
     TTree* treeD = (TTree*)infile.Get("SpaCEtree_bkwdDisp");
     TTree* treeE = (TTree*)infile.Get("SpaCEtree");
     
     //Build histograms
     CalSCEhistograms = Build_TH3(treeD,treeE,"x_reco","y_reco","z_reco","bkwd");
     //histograms are Dx, Dy, Dz, dEx/E0, dEy/E0, dEz/E0
+    break;
+    }
+      case SpaceChargeRepresentation_t::kParametric:{ 
+      	//std::cout << "wrong space charge 2!" << std::endl; 
+      	break;}
+      case SpaceChargeRepresentation_t::kUnknown:{
+      	//std::cout << "wrong space charge 3!" << std::endl;
+      	break;}
+    }
     
     infile.Close();
     
@@ -271,6 +337,7 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
       fDataSimCorrFunc_DataBottom.SetParameter(i_p,databottom_pars[i_p]);
   }
 
+  //std::cout << "Finished setting up space charge" << std::endl;
   return true;
 }
 
@@ -320,6 +387,8 @@ bool spacecharge::SpaceChargeMicroBooNE::EnableCalEfieldSCE() const
 /// used in ionization electron drift
 geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetPosOffsets(geo::Point_t const& tmp_point) const
 {
+
+	//std::cout << "Calculating position space charge offsets!" << std::endl;
   geo::Vector_t thePosOffsets;
   geo::Point_t point = tmp_point;
   if (!EnableSimSpatialSCE()) return thePosOffsets;     // no correction, zero displacement
@@ -327,6 +396,11 @@ geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetPosOffsets(geo::Point_t con
   if(!IsInsideBoundaries(point)&&!IsTooFarFromBoundaries(point)) point = PretendAtBoundary(point);
   switch (fRepresentationType) {
   
+    case SpaceChargeRepresentation_t::kTH3:
+    	//std::cout << "I'm TH3!" << std::endl;
+      thePosOffsets = GetOffsetsVoxel(point,SCEhistograms.at(0),SCEhistograms.at(1),SCEhistograms.at(2));
+      break;
+      
     case SpaceChargeRepresentation_t::kVoxelized:
       thePosOffsets = GetOffsetsVoxel(point,SCEhistograms.at(0),SCEhistograms.at(1),SCEhistograms.at(2));
       break;
@@ -350,6 +424,9 @@ geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetPosOffsets(geo::Point_t con
 				fDataSimCorrFunc_DataBottom.Eval(point.X())/fDataSimCorrFunc_MCBottom.Eval(point.X()));
   }
   thePosOffsets *= data_corr_scale*fSpatialOffsetScale;
+  
+  //std::cout << "\tHere's the space charge position offsets: (" << tmp_point.X() << ", " << tmp_point.Y() << ", " << tmp_point.Z() << ") --> (" << thePosOffsets.X() << ", " << thePosOffsets.Y() << ", " << thePosOffsets.Z() << ")" << std::endl;
+  
   return thePosOffsets;
 }
 
@@ -365,37 +442,24 @@ geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetCalPosOffsets(geo::Point_t 
   
   thePosOffsets = GetOffsetsVoxel(point,CalSCEhistograms.at(0),CalSCEhistograms.at(1),CalSCEhistograms.at(2));
     
+  //std::cout << "\tHere's the space charge position offsets: (" << tmp_point.X() << ", " << tmp_point.Y() << ", " << tmp_point.Z() << ") --> (" << thePosOffsets.X() << ", " << thePosOffsets.Y() << ", " << thePosOffsets.Z() << ")" << std::endl;
+     
   return thePosOffsets;
 }
 
 //----------------------------------------------------------------------------
 /// Provides position offsets using voxelized interpolation
-///
-/// FIXME: The try-catch is a kludge until appropriate handling can be
-/// developed for situations in which the transformed point lies
-/// outside of the bounds of interpolation.
 geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetOffsetsVoxel
   (geo::Point_t const& point,TH3F* hX, TH3F* hY, TH3F* hZ) const
-try {
+{	
   geo::Point_t transformedPoint = Transform(point);
+ 
   return {
   	hX->Interpolate(transformedPoint.X(),transformedPoint.Y(),transformedPoint.Z()),
   	hY->Interpolate(transformedPoint.X(),transformedPoint.Y(),transformedPoint.Z()),
   	hZ->Interpolate(transformedPoint.X(),transformedPoint.Y(),transformedPoint.Z())
   	};
-}
-catch (art::Exception const& e) {
   	
-  if (e.categoryCode() == art::errors::FatalRootError) {
-    mf::LogAbsolute("RootError") << "BEGIN SUPPRESSED ERROR\n"
-                                 << e.what()
-                                 << "END SUPPRESSED ERROR";
-    return geo::Vector_t{};
-  }
-  throw;
-}
-catch (...) {
-  throw;
  }
  
 /// Build 3D histograms for voxelized interpolation
@@ -621,6 +685,10 @@ geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetEfieldOffsets(geo::Point_t 
   
   switch (fRepresentationType) {
     
+    case SpaceChargeRepresentation_t::kTH3:
+      theEfieldOffsets = -1.0*GetOffsetsVoxel(point,SCEhistograms.at(3),SCEhistograms.at(4),SCEhistograms.at(5));
+      break;
+    
     case SpaceChargeRepresentation_t::kVoxelized:
       theEfieldOffsets = -1.0*GetOffsetsVoxel(point,SCEhistograms.at(3),SCEhistograms.at(4),SCEhistograms.at(5));
       break;
@@ -649,7 +717,7 @@ geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetCalEfieldOffsets(geo::Point
   
   theEfieldOffsets = -1.0*GetOffsetsVoxel(point, CalSCEhistograms.at(3), CalSCEhistograms.at(4), CalSCEhistograms.at(5));
   
-  std::cout<< "   in service: (" << point.X() << ", " << point.Y() << ", " << point.Z() << ") -> (" << theEfieldOffsets.X() << ", " << theEfieldOffsets.Y() << ", " << theEfieldOffsets.Z() << ")" << std::endl;
+  //std::cout<< "   in service: (" << point.X() << ", " << point.Y() << ", " << point.Z() << ") -> (" << theEfieldOffsets.X() << ", " << theEfieldOffsets.Y() << ", " << theEfieldOffsets.Z() << ")" << std::endl;
 
   theEfieldOffsets *= fEfieldOffsetScale;
 
@@ -883,7 +951,10 @@ spacecharge::SpaceChargeMicroBooNE::ParseRepresentationType
   (std::string repr_str)
 {
   
+  //std::cout << "Space charge representation: " << repr_str << std::endl;
+  
   if (repr_str == "Parametric")      return SpaceChargeRepresentation_t::kParametric;
+  else if (repr_str == "Voxelized_TH3") return SpaceChargeRepresentation_t::kTH3;
   else if (repr_str == "Voxelized") return SpaceChargeRepresentation_t::kVoxelized;
   else                               return SpaceChargeRepresentation_t::kUnknown;
   
