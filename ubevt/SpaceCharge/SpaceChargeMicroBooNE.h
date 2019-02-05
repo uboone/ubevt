@@ -158,6 +158,7 @@ namespace spacecharge {
       
       typedef enum {
         kVoxelized,
+        kTH3,
         kParametric,
         kUnknown
       } SpaceChargeRepresentation_t;
