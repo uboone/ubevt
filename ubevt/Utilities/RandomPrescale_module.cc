@@ -60,8 +60,8 @@ util::RandomPrescale::RandomPrescale(fhicl::ParameterSet const & pset) :
   // Create a default random engine.
   // Obain the random seed from NuRandomService, unless overridden in configuration
   // with key "Seed."
-  fEngine{art::ServiceHandle<rndm::NuRandomService>{}
-          ->createEngine(*this, "HepJamesRandom", "RandomPrescale", pset, "Seed")}
+  fEngine(art::ServiceHandle<rndm::NuRandomService>{}
+          ->createEngine(*this, "HepJamesRandom", "RandomPrescale", pset, "Seed"))
 {
   mf::LogInfo("RandomPrescale")
     << "RandomPrescale module configured with pass probability " << fProb;
