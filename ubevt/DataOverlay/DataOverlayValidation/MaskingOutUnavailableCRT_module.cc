@@ -20,6 +20,10 @@
 //includes for CRTHits.
 #include "ubobj/CRT/CRTSimData.hh"
 #include "ubobj/CRT/CRTHit.hh"
+#include "ubobj/RawData/DAQHeaderTimeUBooNE.h"
+
+//#include "ubobj/CRT/CRTTrack.hh"
+//#include "ubcrt/CRT/CRTAuxFunctions.hh"
 
 #include <string>
 #include <vector>
@@ -53,6 +57,7 @@ private:
   std::string fMaskedLabel;
   std::string fMaskedInstanceName;
   bool        verbose;
+  std::string  data_label_DAQHeader_;
 
   int         event_counter;
   int         bad_adc_counter;
@@ -72,6 +77,7 @@ lar::MaskingOutUnavailableCRT::MaskingOutUnavailableCRT(fhicl::ParameterSet cons
   fMaskedLabel         = p.get<std::string>("MaskedLabel");
   fMaskedInstanceName  = p.get<std::string>("MaskedInstanceName");
   verbose               = p.get<bool>("verbose");
+  data_label_DAQHeader_ = p.get<std::string>("data_label_DAQHeader_");
 
   event_counter         = 0;
   bad_adc_counter       = 0;
@@ -103,6 +109,25 @@ void lar::MaskingOutUnavailableCRT::produce(art::Event & e)
     std::cout<<"THERE ARE NO SIMULATED CRT HITS !"<<std::endl;
   }
 
+  // get DAQHeader for GPS time                                                                                             
+  art::Handle< raw::DAQHeaderTimeUBooNE > rawHandle_DAQHeader;
+  e.getByLabel(data_label_DAQHeader_, rawHandle_DAQHeader);
+  // make sure DAQHeader for GPS time looks good
+  if(!rawHandle_DAQHeader.isValid()){
+    std::cout << "Run " << e.run() << ", subrun " << e.subRun()
+              << ", event " << e.event() << " has zero"
+              << " DAQHeaderTimeUBooNE  " << " in with label " << data_label_DAQHeader_ << std::endl;
+    return;
+  }
+  // get event GPS time 
+  raw::DAQHeaderTimeUBooNE const& my_DAQHeader(*rawHandle_DAQHeader);
+  art::Timestamp evtTimeGPS = my_DAQHeader.gps_time();
+  auto evt_timeGPS_sec = evtTimeGPS.timeHigh();
+  auto evt_timeGPS_nsec = evtTimeGPS.timeLow();
+  if(verbose!=0){
+    std::cout<<"Evt:GPS_Time: sec, nsec :"<<evt_timeGPS_sec <<" "<< evt_timeGPS_nsec <<std::endl;
+  }
+ 
   std::unique_ptr<std::vector<crt::CRTHit>> dummyInput(new std::vector<crt::CRTHit>);
   std::vector<crt::CRTHit> const& crthits = (crthits_h.isValid())? *crthits_h : *dummyInput;
 
@@ -113,11 +138,31 @@ void lar::MaskingOutUnavailableCRT::produce(art::Event & e)
 
   // Loop over the crt hits.                                                                                                                                                                         
   for(auto const& od : crthits) {
-    // The differnt CRT comissioning periods are hardcoded here and should. 
-    // Infor should be placed in a future database and this piece of code be modified.  
+    // !!! The differnt CRT comissioning periods are hardcoded here and should ! 
+    // !!! be placed in a future database and this piece of code be modified !!!  
     if (runnumber < 11049 ) continue; // before full comissioning of the CRT
-                                      
-    masked_crthits_v->emplace_back( od );
+
+    crt::CRTHit CRTHitevent;
+
+    CRTHitevent.plane = od.plane +10; // This is out chosen way to distinguish between data and MC CRT hits. 
+    
+    CRTHitevent.x_pos = od.x_pos;
+    CRTHitevent.x_err = od.x_err;
+    CRTHitevent.y_pos = od.y_pos;
+    CRTHitevent.y_err = od.y_err;
+    CRTHitevent.z_pos = od.z_pos;
+    CRTHitevent.z_err = od.z_err;
+    CRTHitevent.ts0_s = evt_timeGPS_sec;   //od.ts0_s; 
+    CRTHitevent.ts0_ns = evt_timeGPS_nsec; //od.ts0_ns;
+    //CRTHitevent.ts0_s_err = od.ts0_s_err;
+    //CRTHitevent.ts0_ns_err = od.ts0_ns_err;
+    CRTHitevent.ts1_ns = od.ts1_ns;
+    //CRTHitevent.ts1_ns_err = od.ts1_ns_err;
+    CRTHitevent.feb_id = od.feb_id; 
+    CRTHitevent.pesmap = od.pesmap;
+    CRTHitevent.peshit = od.peshit;
+
+    masked_crthits_v->emplace_back( CRTHitevent );
     
     
   } // End of the loop over the CRTHits.

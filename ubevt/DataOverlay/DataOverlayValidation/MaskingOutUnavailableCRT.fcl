@@ -6,6 +6,6 @@ MaskingOutUnavailableCRT: {
  MaskedLabel              : "maskedcrthitsim"
  MaskedInstanceName       : ""
  verbose                  : true
-
+ data_label_DAQHeader_: "daq"
 }
 END_PROLOG
