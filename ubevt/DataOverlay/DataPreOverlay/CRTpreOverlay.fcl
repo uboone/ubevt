@@ -1,6 +1,6 @@
 BEGIN_PROLOG
-MaskingOutUnavailableCRT: {
- module_type              : "MaskingOutUnavailableCRT"  
+CRTpreOverlay: {
+ module_type              : "CRTpreOverlay"  
  CRTHitLabel              : "crthitsim"
  CRTHitInstanceName       : ""
  MaskedLabel              : "maskedcrthitsim"

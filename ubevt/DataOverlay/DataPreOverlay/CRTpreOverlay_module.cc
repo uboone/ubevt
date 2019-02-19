@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////
-// Class:       MaskingOutUnavailableCRT
+// Class:       CRTpreOverlay
 // Plugin Type: producer (art v2_11_03)
-// File:        MaskingOutUnavailableCRT_module.cc
+// File:        CRTpreOverlay_module.cc
 //
 // Generated at Fri Nov  2 13:48:18 2018 by Adi Ashkenazi 
 // from cetlib version v3_03_01.
@@ -30,21 +30,21 @@
 #include <memory>
 
 namespace lar {
-  class MaskingOutUnavailableCRT;
+  class CRTpreOverlay;
 }
 
 
-class lar::MaskingOutUnavailableCRT : public art::EDProducer {
+class lar::CRTpreOverlay : public art::EDProducer {
 public:
-  explicit MaskingOutUnavailableCRT(fhicl::ParameterSet const & p);
+  explicit CRTpreOverlay(fhicl::ParameterSet const & p);
   // The compiler-generated destructor is fine for non-base
   // classes without bare pointers or other resource use.
 
   // Plugins should not be copied or assigned.
-  MaskingOutUnavailableCRT(MaskingOutUnavailableCRT const &) = delete;
-  MaskingOutUnavailableCRT(MaskingOutUnavailableCRT &&) = delete;
-  MaskingOutUnavailableCRT & operator = (MaskingOutUnavailableCRT const &) = delete;
-  MaskingOutUnavailableCRT & operator = (MaskingOutUnavailableCRT &&) = delete;
+  CRTpreOverlay(CRTpreOverlay const &) = delete;
+  CRTpreOverlay(CRTpreOverlay &&) = delete;
+  CRTpreOverlay & operator = (CRTpreOverlay const &) = delete;
+  CRTpreOverlay & operator = (CRTpreOverlay &&) = delete;
 
   // Required functions.
   void produce(art::Event & e) override;
@@ -65,7 +65,7 @@ private:
 };
 
 
-lar::MaskingOutUnavailableCRT::MaskingOutUnavailableCRT(fhicl::ParameterSet const & p)
+lar::CRTpreOverlay::CRTpreOverlay(fhicl::ParameterSet const & p)
 // :
 // Initialize member data here.
 {
@@ -84,7 +84,7 @@ lar::MaskingOutUnavailableCRT::MaskingOutUnavailableCRT(fhicl::ParameterSet cons
 
 }
 
-void lar::MaskingOutUnavailableCRT::produce(art::Event & e)
+void lar::CRTpreOverlay::produce(art::Event & e)
 {
   if ( verbose ) 
     std::cout << "Event #" << event_counter << std::endl;
@@ -173,4 +173,4 @@ void lar::MaskingOutUnavailableCRT::produce(art::Event & e)
   return;
 
 }
-DEFINE_ART_MODULE(lar::MaskingOutUnavailableCRT)
+DEFINE_ART_MODULE(lar::CRTpreOverlay)

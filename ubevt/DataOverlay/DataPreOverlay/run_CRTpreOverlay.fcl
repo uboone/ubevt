@@ -1,14 +1,14 @@
 #include "services_microboone.fcl"
 #include "triggeralgo_service.fcl"
-#include "MaskingOutUnavailableCRT.fcl"
+#include "CRTpreOverlay.fcl"
 
-process_name: MaskingOutUnavailableCRT
+process_name: CRTpreOverlay
 
 services:
 {
   scheduler:               { defaultExceptions: false }    # Make all uncaught exceptions fatal.
   # Load the service that manages root files for histograms.
-  TFileService:            { fileName: "MaskingOutUnavailableCRT_ana.root" }
+  TFileService:            { fileName: "CRTpreOverlay_ana.root" }
   TimeTracker:             {}
   ExptGeoHelperInterface:         @local::microboone_geometry_helper
   Geometry:                       @local::microboone_geo
@@ -39,7 +39,7 @@ physics:
  {
 
   ### Masking out CRT simulated hits for CRT panels unavailable in the input data file.
-  maskedcrthitsim : @local::MaskingOutUnavailableCRT
+  maskedcrthitsim : @local::CRTpreOverlay
  }
  analyzers:
  {
@@ -64,7 +64,7 @@ outputs:
  out1:
  {
    module_type: RootOutput
-   fileName:    "MaskingOutUnavailableCRT.root"
+   fileName:    "CRTpreOverlay.root"
    dataTier:    "reco"
    compressionLevel: 1
    outputCommands: ["keep *_*_*_*", "drop raw::RawDigits_driftWC_orig_NFforBadChannels"]
