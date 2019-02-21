@@ -8,6 +8,7 @@
 #include "fhiclcpp/ParameterSet.h"
 #include "larevt/CalibrationDBI/Interface/ElectronLifetimeService.h"
 #include "UbooneElectronLifetimeProvider.h"
+#include "UbooneCalibrationServiceHelper.h"
 
 namespace lariov{
 
@@ -24,7 +25,7 @@ namespace lariov{
       UbooneElectronLifetimeService(fhicl::ParameterSet const& pset, art::ActivityRegistry& reg);
       
       void PreProcessEvent(const art::Event& evt, art::ScheduleContext) {
-        fProvider.UpdateTimeStamp( (DBTimeStamp_t)evt.run() );
+        fProvider.UpdateTimeStamp( fHelper.GetTimeStamp(evt, "Electron Lifetime" ) );
       }
      
     private:
@@ -34,6 +35,7 @@ namespace lariov{
       }
 
       UbooneElectronLifetimeProvider fProvider;
+      UbooneCalibrationServiceHelper fHelper;
   };
 }//end namespace lariov
       
