@@ -20,7 +20,7 @@
 #include "larevt/CalibrationDBI/IOVData/IOVDataConstants.h"
 #include "larevt/CalibrationDBI/Providers/DatabaseRetrievalAlg.h"
 
-#include "UBElectronLifetimeProvider.h"
+#include "ElectronLifetimeProvider.h"
 #include "UbooneElectronLifetimeContainer.h"
 
 namespace lariov {
