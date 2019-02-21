@@ -90,9 +90,6 @@ class OverlayRawDataMicroBooNE : public art::EDProducer {
     void GenerateMCOpDetGainScaleMap();
     std::unordered_map<raw::Channel_t,float> fMCOpDetGainScaleMap;
 
-    void GenerateMCOpDetGainScaleMap();
-    std::unordered_map<raw::Channel_t,float> fMCOpDetGainScaleMap;
-
     void GenerateMCOpDetHighGainScaleMap(std::vector<raw::OpDetWaveform> const&);
     std::unordered_map<raw::Channel_t,float> fMCOpDetHighGainScaleMap;
 
