@@ -109,6 +109,9 @@ void lar::CRTpreOverlay::produce(art::Event & e)
     std::cout<<"THERE ARE NO SIMULATED CRT HITS !"<<std::endl;
   }
 
+  // Declare the products that we will be outputing from this module.
+  std::unique_ptr< std::vector<crt::CRTHit> > masked_crthits_v(new std::vector<crt::CRTHit>);
+
   // get DAQHeader for GPS time                                                                                             
   art::Handle< raw::DAQHeaderTimeUBooNE > rawHandle_DAQHeader;
   e.getByLabel(data_label_DAQHeader_, rawHandle_DAQHeader);
@@ -117,6 +120,7 @@ void lar::CRTpreOverlay::produce(art::Event & e)
     std::cout << "Run " << e.run() << ", subrun " << e.subRun()
               << ", event " << e.event() << " has zero"
               << " DAQHeaderTimeUBooNE  " << " in with label " << data_label_DAQHeader_ << std::endl;
+    e.put(std::move(masked_crthits_v));
     return;
   }
   // get event GPS time 
@@ -130,9 +134,6 @@ void lar::CRTpreOverlay::produce(art::Event & e)
  
   std::unique_ptr<std::vector<crt::CRTHit>> dummyInput(new std::vector<crt::CRTHit>);
   std::vector<crt::CRTHit> const& crthits = (crthits_h.isValid())? *crthits_h : *dummyInput;
-
-  // Declare the products that we will be outputing from this module.
-  std::unique_ptr< std::vector<crt::CRTHit> > masked_crthits_v(new std::vector<crt::CRTHit>);
 
   // Loop through the old CRTHits and set the new CRTHits equal to all of those values.
 
