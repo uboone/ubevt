@@ -55,6 +55,7 @@ void mix::OpDetWaveformMixer::Mix(std::vector<raw::OpDetWaveform> const& mcVecto
     fRDAdderAlg.SetScaleInputs(scale_map.at(od.ChannelNumber()%100),1.0);
    
     std::cout<<"Applying the PMT gain for channel "<<od.ChannelNumber()<<" gain : "<<scale_map.at(od.ChannelNumber()%100)<<std::endl; 
+
     //If the sizes are not the same...
     if(od.size() != outputVector[i_output].size()){
 

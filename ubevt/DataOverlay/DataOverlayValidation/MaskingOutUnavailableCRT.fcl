@@ -1,0 +1,11 @@
+BEGIN_PROLOG
+MaskingOutUnavailableCRT: {
+ module_type              : "MaskingOutUnavailableCRT"  
+ CRTHitLabel              : "crthitsim"
+ CRTHitInstanceName       : ""
+ MaskedLabel              : "maskedcrthitsim"
+ MaskedInstanceName       : ""
+ verbose                  : true
+
+}
+END_PROLOG

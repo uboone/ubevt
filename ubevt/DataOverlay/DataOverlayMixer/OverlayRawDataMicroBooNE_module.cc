@@ -17,6 +17,11 @@
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
+#include "art/Framework/Services/Registry/ServiceMacros.h"
+#include "art/Framework/Services/Registry/ActivityRegistry.h"
+#include "art/Framework/Services/Registry/ServiceHandle.h"
+#include "larcore/Geometry/Geometry.h"
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -29,6 +34,8 @@
 #include "larevt/CalibrationDBI/Interface/ChannelStatusProvider.h"
 #include "ubevt/Utilities/PMTRemapService.h"
 #include "ubevt/Utilities/PMTRemapProvider.h"
+#include "larevt/CalibrationDBI/Interface/PmtGainService.h"
+#include "larevt/CalibrationDBI/Interface/PmtGainProvider.h"
 
 #include "DataOverlay/RawDigitMixer.h"
 #include "DataOverlay/CRTMixer.h"
@@ -79,6 +86,9 @@ class OverlayRawDataMicroBooNE : public art::EDProducer {
 
     void GenerateMCRawDigitScaleMap(std::vector<raw::RawDigit> const&);
     std::unordered_map<raw::ChannelID_t,float> fMCRawDigitScaleMap;
+    
+    void GenerateMCOpDetGainScaleMap();
+    std::unordered_map<raw::Channel_t,float> fMCOpDetGainScaleMap;
 
     void GenerateMCOpDetGainScaleMap();
     std::unordered_map<raw::Channel_t,float> fMCOpDetGainScaleMap;
@@ -151,13 +161,14 @@ void mix::OverlayRawDataMicroBooNE::produce(art::Event& evt) {
   MixOpDetWaveforms_LowGain(evt, *opdet_lg);
   MixTriggerData(evt, *triggerdata);
 
-  
   //put output digits
   evt.put(std::move(rawdigits));
+  evt.put(std::move(crthits));
   evt.put(std::move(opdet_hg),"OpdetBeamHighGain");
   evt.put(std::move(opdet_lg),"OpdetBeamLowGain");
   evt.put(std::move(crthits));
   evt.put(std::move(triggerdata));
+
 }
 
 
@@ -213,7 +224,7 @@ bool mix::OverlayRawDataMicroBooNE::MixCRTHits( const art::Event& event, std::ve
     std::cout<<"NO CRT INFO in the input data file - NO CRT MIXING DONE!"<<std::endl;
     return false;
   }
-  
+
   std::vector<crt::CRTHit> const& mcCRTInputVec = (mcCRTHandle.isValid())? *mcCRTHandle : *dummyInput;
 
   fCRTMixer.Mix(mcCRTInputVec,*dataCRTHandle,output);
@@ -241,7 +252,7 @@ void mix::OverlayRawDataMicroBooNE::GenerateMCOpDetHighGainScaleMap(std::vector<
   //note: we will put here access to the channel database to determine dead channels
   fMCOpDetHighGainScaleMap.clear();
   for(auto const& d : dataVector)
-    fMCOpDetHighGainScaleMap[d.ChannelNumber()] = fDefaultMCOpDetScale;
+     fMCOpDetHighGainScaleMap[d.ChannelNumber()] = fDefaultMCOpDetScale;
 }
 
 void mix::OverlayRawDataMicroBooNE::GenerateMCOpDetLowGainScaleMap(std::vector<raw::OpDetWaveform> const& dataVector){
@@ -250,7 +261,7 @@ void mix::OverlayRawDataMicroBooNE::GenerateMCOpDetLowGainScaleMap(std::vector<r
   //note: we will put here access to the channel database to determine dead channels
   fMCOpDetLowGainScaleMap.clear();
   for(auto const& d : dataVector)
-    fMCOpDetLowGainScaleMap[d.ChannelNumber()] = fDefaultMCOpDetScale;
+     fMCOpDetLowGainScaleMap[d.ChannelNumber()] = fDefaultMCOpDetScale;
 }
 
 bool mix::OverlayRawDataMicroBooNE::MixOpDetWaveforms_HighGain( const art::Event& event, std::vector<raw::OpDetWaveform> & output) {
