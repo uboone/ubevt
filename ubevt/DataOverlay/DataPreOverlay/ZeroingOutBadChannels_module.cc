@@ -4,6 +4,7 @@
 // File:        ZeroingOutBadChannels_module.cc
 //
 // Generated at Fri Nov  2 13:48:18 2018 by Christopher Barnes using cetskelgen
+// Modified  at Mon Feb 18 by Adi Ashkenazi adding simulated pedestal 
 // from cetlib version v3_03_01.
 ////////////////////////////////////////////////////////////////////////
 
@@ -135,7 +136,7 @@ void lar::ZeroingOutBadChannels::produce(art::Event & e)
 
     // Use this to make a new RawDigits product.
     raw::RawDigit raw_digit( channel, samples, adc_counts, compression );
-
+    raw_digit.SetPedestal (rawdigit_h->at( i ).GetPedestal());
     zeroed_RawDigit_v->emplace_back( raw_digit );
 
   } // End of the loop over the RawDigits.
@@ -166,7 +167,7 @@ void lar::ZeroingOutBadChannels::produce(art::Event & e)
     // Loop through the time ticks to set the entries at the affected time ticks equal to 0.
     for ( size_t j = starting_time_tick; j < size_t(ending_time_tick); j++ ) {
 
-      adc_counts.at( j ) = 0;
+      adc_counts.at( j ) = 0; 
     
     } // End of the loop over setting the time ticks to 0.
 
