@@ -160,7 +160,6 @@ void mix::OverlayRawDataMicroBooNE::produce(art::Event& evt) {
 
   //put output digits
   evt.put(std::move(rawdigits));
-  evt.put(std::move(crthits));
   evt.put(std::move(opdet_hg),"OpdetBeamHighGain");
   evt.put(std::move(opdet_lg),"OpdetBeamLowGain");
   evt.put(std::move(crthits));

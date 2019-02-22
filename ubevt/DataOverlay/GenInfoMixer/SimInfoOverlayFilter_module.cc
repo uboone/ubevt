@@ -512,6 +512,12 @@ bool mix::SimInfoOverlayFilter::beginRun(art::Run & r)
 
 bool mix::SimInfoOverlayFilter::beginSubRun(art::SubRun & sr)
 {
+  if(fFillPOTInfo){
+    fPOTSum_totpot = 0.0;
+    fPOTSum_totgoodpot = 0.0;
+    fPOTSum_totspills = 0.0;
+    fPOTSum_goodspills = 0.0;
+  }
   return true;
 }
 
