@@ -6,23 +6,23 @@
  * @author eberly@slac.stanford.edu
  */
 
-#ifndef ELECTRONLIFETIMEPROVIDER_H
-#define ELECTRONLIFETIMEPROVIDER_H
+#ifndef UBELECTRONLIFETIMEPROVIDER_H
+#define UBELECTRONLIFETIMEPROVIDER_H
 
 #include "larcorealg/CoreUtils/UncopiableAndUnmovableClass.h"
 
 namespace lariov {
 
   /**
-     \class ElectronLifetimeProvider
+     \class UBElectronLifetimeProvider
      Pure abstract interface class for retrieving electron lifetimes.
      
   */
-  class ElectronLifetimeProvider: private lar::UncopiableAndUnmovableClass {
+  class UBElectronLifetimeProvider: private lar::UncopiableAndUnmovableClass {
   
     public:
     
-      virtual ~ElectronLifetimeProvider() = default;
+      virtual ~UBElectronLifetimeProvider() = default;
        
       /// Retrieve pedestal information     
       virtual float Lifetime() const = 0;

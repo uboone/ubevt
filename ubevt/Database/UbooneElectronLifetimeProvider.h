@@ -20,7 +20,7 @@
 #include "larevt/CalibrationDBI/IOVData/IOVDataConstants.h"
 #include "larevt/CalibrationDBI/Providers/DatabaseRetrievalAlg.h"
 
-#include "ElectronLifetimeProvider.h"
+#include "UBElectronLifetimeProvider.h"
 #include "UbooneElectronLifetimeContainer.h"
 
 namespace lariov {
@@ -41,7 +41,7 @@ namespace lariov {
    * - *DefaultIndMean* (real, default: 2048.0): constant parameter returned
    *   when /UseDB/ and /UseFile/ parameters are false
    */
-  class UbooneElectronLifetimeProvider : public DatabaseRetrievalAlg, public ElectronLifetimeProvider {
+  class UbooneElectronLifetimeProvider : public DatabaseRetrievalAlg, public UBElectronLifetimeProvider {
   
     public:
     
