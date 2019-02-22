@@ -75,7 +75,7 @@ util::RandomPrescale::RandomPrescale(fhicl::ParameterSet const & pset) :
   // with key "Seed."
 
   art::ServiceHandle<rndm::NuRandomService> seeds;
-  seeds->createEngine(*this, "HepJamesRandom", "RandomPrescale", pset, "Seed");
+  (void)seeds->createEngine(*this, "HepJamesRandom", "RandomPrescale", pset, "Seed");
 }
 
 // Configuration method.
