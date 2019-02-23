@@ -30,8 +30,8 @@ table_fragment_end
 
 product                 version
 ubcore                  v08_00_00_05
-larevt                  v08_01_00_02
-gallery                 v1_11_01
+larevt                  v08_01_00_03
+gallery                 v1_11_02
 cetbuildtools	        v7_06_04	-	only_for_build
 end_product_list
 
