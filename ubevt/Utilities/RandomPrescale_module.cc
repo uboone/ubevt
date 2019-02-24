@@ -3,7 +3,7 @@
 // Module Type: filter
 // File:        RandomPrescale_module.cc
 //
-// This is a filter module that accepts events with some specified 
+// This is a filter module that accepts events with some specified
 // probability.  Random number seed and engine are managed by NuRandomService
 //               and RandomNumberGenerator service.
 //
@@ -31,78 +31,48 @@ namespace util
   public:
     explicit RandomPrescale(fhicl::ParameterSet const & pset);
 
-    // Module (re)configuration.
-
-    void reconfigure(fhicl::ParameterSet const & pset);
-
     // Plugins should not be copied or assigned.
     RandomPrescale(RandomPrescale const &) = delete;
     RandomPrescale(RandomPrescale &&) = delete;
     RandomPrescale & operator = (RandomPrescale const &) = delete;
     RandomPrescale & operator = (RandomPrescale &&) = delete;
 
-    // Overrides.
+  private:
+
     bool filter(art::Event & e) override;
     void endJob() override;
 
-
-  private:
-
-    // Data members.
-
     // Fcl parameters.
-
     double fProb;           // Accept propability
 
-    // Statistics.
+    CLHEP::HepRandomEngine& fEngine;
 
-    unsigned int fTotal;    // Total events.
-    unsigned int fPass;     // Passing events.
+    // Statistics.
+    unsigned int fTotal{};    // Total events.
+    unsigned int fPass{};     // Passing events.
   };
 }
 
 // Constructor.
 
 util::RandomPrescale::RandomPrescale(fhicl::ParameterSet const & pset) :
-  fProb(0.),
-  fTotal(0),
-  fPass(0)
-{
-  reconfigure(pset);
-
+  fProb{pset.get<double>("Probability")},
   // Create a default random engine.
-  // Obain the random seed from NuRandomService, unless overridden in configuration 
+  // Obain the random seed from NuRandomService, unless overridden in configuration
   // with key "Seed."
-
-  art::ServiceHandle<rndm::NuRandomService> seeds;
-  (void)seeds->createEngine(*this, "HepJamesRandom", "RandomPrescale", pset, "Seed");
-}
-
-// Configuration method.
-
-void util::RandomPrescale::reconfigure(fhicl::ParameterSet const & pset)
+  fEngine{art::ServiceHandle<rndm::NuRandomService>{}
+          ->createEngine(*this, "HepJamesRandom", "RandomPrescale", pset, "Seed")}
 {
-  fProb = pset.get<double>("Probability");
-  mf::LogInfo("RandomPrescale") 
+  mf::LogInfo("RandomPrescale")
     << "RandomPrescale module configured with pass probability " << fProb;
 }
-
-// Filter method.
 
 bool util::RandomPrescale::filter(art::Event & e)
 {
   ++fTotal;
 
-  // Get random number generator.
-
-  art::ServiceHandle<art::RandomNumberGenerator> rng;
-  CLHEP::HepRandomEngine &engine = rng->getEngine(art::ScheduleID::first(),
-                                                  moduleDescription().moduleLabel(),
-                                                  "RandomPrescale");
-
   // Did this event pass?
-
-  bool pass = engine.flat() < fProb;
+  bool const pass = fEngine.flat() < fProb;
   if(pass)
     ++fPass;
   return pass;
