@@ -36,6 +36,7 @@ art_make(
 	MODULE_LIBRARIES
 			ub_RawDigitMixer
 			ub_OpDetWaveformMixer
+			ub_CRTMixer
                         lardataobj_RawData
 			nusimdata_SimulationBase
 			lardataobj_MCBase

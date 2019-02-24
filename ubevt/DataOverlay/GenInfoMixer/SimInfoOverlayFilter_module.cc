@@ -55,6 +55,10 @@
 #include "lardataobj/Simulation/SimEnergyDeposit.h"
 #include "lardataobj/Simulation/GeneratedParticleInfo.h"
 
+//pot product
+#include "larcoreobj/SummaryData/POTSummary.h"
+
+
 namespace mix {
   class SimInfoOverlayFilter;
 }
@@ -135,6 +139,14 @@ private:
   //verbose
   int fVerbosity;
 
+  //pot accounting
+  bool fFillPOTInfo;
+  art::InputTag fPOTSummaryTag;
+  double fPOTSum_totpot;
+  double fPOTSum_totgoodpot;
+  double fPOTSum_totspills;
+  double fPOTSum_goodspills;
+
   void FillInputModuleLabels(fhicl::ParameterSet const &,
 			     std::string,
 			     std::vector<art::InputTag> &);
@@ -183,6 +195,18 @@ mix::SimInfoOverlayFilter::SimInfoOverlayFilter(fhicl::ParameterSet const & p)
 {
   FillInputModuleLabels(p);
   DeclareProduces();
+
+  fFillPOTInfo = p.get<bool>("FillPOTInfo",true);
+  if(fFillPOTInfo){
+    fPOTSummaryTag = p.get<art::InputTag>("POTSummaryTag");
+    fPOTSum_totpot = 0.0;
+    fPOTSum_totgoodpot = 0.0;
+    fPOTSum_totspills = 0.0;
+    fPOTSum_goodspills = 0.0;
+
+    this->produces<sumdata::POTSummary,art::InSubRun>();
+  }
+
 }
 
 void mix::SimInfoOverlayFilter::FillInputModuleLabels(fhicl::ParameterSet const & p,
@@ -431,6 +455,19 @@ bool mix::SimInfoOverlayFilter::filter(art::Event & e)
 	      << "Event " << gEvent.eventAuxiliary().event() << std::endl;      
   }
 
+  if(fFillPOTInfo){
+    auto eventsInGalleryFile = gEvent.numberOfEventsInFile();
+    gallery::Handle< sumdata::POTSummary > potsum_handle;
+    if(!gEvent.getByLabel<sumdata::POTSummary>(fPOTSummaryTag,potsum_handle))
+      throw cet::exception("SimInfoOverlayFilter") << "No POTSummary object with tag " << fPOTSummaryTag;
+    
+    auto const& potsum(*potsum_handle);
+    fPOTSum_totpot += potsum.totpot/eventsInGalleryFile;
+    fPOTSum_totgoodpot += potsum.totgoodpot/eventsInGalleryFile;
+    fPOTSum_totspills += double(potsum.totspills)/eventsInGalleryFile;
+    fPOTSum_goodspills += double(potsum.goodspills)/eventsInGalleryFile;
+  }
+
   auto mctruth_artptr_lookup = FillCollectionMap<simb::MCTruth>(fMCTruthInputModuleLabels,
 								fMCTruthMap,
 								"std::vector<simb::MCTruth>",
@@ -475,6 +512,12 @@ bool mix::SimInfoOverlayFilter::beginRun(art::Run & r)
 
 bool mix::SimInfoOverlayFilter::beginSubRun(art::SubRun & sr)
 {
+  if(fFillPOTInfo){
+    fPOTSum_totpot = 0.0;
+    fPOTSum_totgoodpot = 0.0;
+    fPOTSum_totspills = 0.0;
+    fPOTSum_goodspills = 0.0;
+  }
   return true;
 }
 
@@ -489,6 +532,12 @@ bool mix::SimInfoOverlayFilter::endRun(art::Run & r)
 
 bool mix::SimInfoOverlayFilter::endSubRun(art::SubRun & sr)
 {
+  std::unique_ptr<sumdata::POTSummary> srpot_ptr(new sumdata::POTSummary());
+  srpot_ptr->totpot = fPOTSum_totpot;
+  srpot_ptr->totgoodpot = fPOTSum_totgoodpot;
+  srpot_ptr->totspills = (int)fPOTSum_totspills;
+  srpot_ptr->goodspills = (int)fPOTSum_goodspills;
+  sr.put(std::move(srpot_ptr));
   return true;
 }
 
