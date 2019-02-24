@@ -87,22 +87,20 @@ microboone_electronlifetime_provider:
 {
     DatabaseRetrievalAlg: @local::microboone_databaseretrievalalg   
     
-    UseDB: false
+    UseDB: true
     UseFile: false
     
-    DefaultExpOffset:       15.0
-    DefaultExpOffsetErr:    0.01
-    DefaultTimeConstant:    3.0e-5
-    DefaultTimeConstantErr: 0.1e-5
+    DefaultLifetime:       1000.0
+    DefaultLifetimeErr:    0.0
 }
-microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBFolderName: "elifetime_data_tmp"
-microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBUrl: "http://dbdata0vm.fnal.gov:8086/uboonecon_dev/app/"
+microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBFolderName: "elifetime_data"
 microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBTag: "v1r0"
 
 microboone_electronlifetime_service:
 {
   service_provider: UbooneElectronLifetimeService
   ElectronLifetimeProvider: @local::microboone_electronlifetime_provider
+  CalibrationHelper: @local::microboone_calibservicehelper
 }
 
 
