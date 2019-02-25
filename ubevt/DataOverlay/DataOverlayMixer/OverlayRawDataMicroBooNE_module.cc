@@ -114,7 +114,7 @@ mix::OverlayRawDataMicroBooNE::OverlayRawDataMicroBooNE(fhicl::ParameterSet cons
   :
   fRDMixer(false), //print warnings turned off
   fODMixer(false), //print warnings turned off
-  fCRTMixer(false), //print warnings turned off
+  fCRTMixer(), //print warnings turned off
 
   fDefaultRawDigitSatPoint(p.get<short>("DefaultRawDigitSaturationPoint",4096)),
   fDefaultOpDetSatPoint(p.get<short>("DefaultOpDetSaturationPoint",4096)),
