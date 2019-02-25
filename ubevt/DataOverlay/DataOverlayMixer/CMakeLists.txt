@@ -42,6 +42,7 @@ art_make(
 			lardataobj_MCBase
 			larevt_CalibrationDBI_IOVData
 			larevt_CalibrationDBI_Providers
+			larcorealg_Geometry
                         ${ART_FRAMEWORK_CORE}
 			${ART_FRAMEWORK_IO_PRODUCTMIX}
 			${ART_FRAMEWORK_IO_ROOT}
