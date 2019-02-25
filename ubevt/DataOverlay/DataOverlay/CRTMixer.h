@@ -38,8 +38,7 @@ class mix::CRTMixer{
 public:
 
   /// Default constructor
-  CRTMixer(bool p=false):
-  _printWarnings(p){};
+  CRTMixer(){};
 
   void DeclareData(std::vector<crt::CRTHit> const& dataVector,
 		   std::vector<crt::CRTHit> & outputVector);
@@ -62,7 +61,7 @@ public:
   
  private:
   
-  bool _printWarnings;
+  //bool _printWarnings;
 
 // std::unordered_map<raw::Channel_t,size_t> fChannelIndexMap;
   
