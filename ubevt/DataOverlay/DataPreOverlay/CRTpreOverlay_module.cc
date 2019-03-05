@@ -147,8 +147,7 @@ void lar::CRTpreOverlay::produce(art::Event & e)
 
     crt::CRTHit CRTHitevent;
 
-    CRTHitevent.plane = od.plane +10; // This is out chosen way to distinguish between data and MC CRT hits. 
-    
+    CRTHitevent.plane = od.plane; 
     CRTHitevent.x_pos = od.x_pos;
     CRTHitevent.x_err = od.x_err;
     CRTHitevent.y_pos = od.y_pos;
