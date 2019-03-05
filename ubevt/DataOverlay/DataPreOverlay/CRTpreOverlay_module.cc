@@ -61,6 +61,7 @@ private:
 
   int         event_counter;
   int         bad_adc_counter;
+  int         fTimeZeroOffset;
 
 };
 
@@ -78,6 +79,7 @@ lar::CRTpreOverlay::CRTpreOverlay(fhicl::ParameterSet const & p)
   fMaskedInstanceName  = p.get<std::string>("MaskedInstanceName");
   verbose               = p.get<bool>("verbose");
   data_label_DAQHeader_ = p.get<std::string>("data_label_DAQHeader_");
+  fTimeZeroOffset       = p.get<int>("TimeZeroOffset");
 
   event_counter         = 0;
   bad_adc_counter       = 0;
@@ -153,8 +155,8 @@ void lar::CRTpreOverlay::produce(art::Event & e)
     CRTHitevent.y_err = od.y_err;
     CRTHitevent.z_pos = od.z_pos;
     CRTHitevent.z_err = od.z_err;
-    CRTHitevent.ts0_s = evt_timeGPS_sec;   //od.ts0_s; 
-    CRTHitevent.ts0_ns = evt_timeGPS_nsec; //od.ts0_ns;
+    CRTHitevent.ts0_s = od.ts0_s + evt_timeGPS_sec;   //od.ts0_s; 
+    CRTHitevent.ts0_ns = od.ts0_ns + evt_timeGPS_nsec - float(fTimeZeroOffset); //od.ts0_ns;
     //CRTHitevent.ts0_s_err = od.ts0_s_err;
     //CRTHitevent.ts0_ns_err = od.ts0_ns_err;
     CRTHitevent.ts1_ns = od.ts1_ns;

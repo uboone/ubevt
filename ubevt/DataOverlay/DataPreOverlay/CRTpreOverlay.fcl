@@ -7,5 +7,6 @@ CRTpreOverlay: {
  MaskedInstanceName       : ""
  verbose                  : true
  data_label_DAQHeader_: "daq"
+ TimeZeroOffset          : 69000
 }
 END_PROLOG
