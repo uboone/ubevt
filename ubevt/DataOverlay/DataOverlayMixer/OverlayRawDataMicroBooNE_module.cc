@@ -84,6 +84,8 @@ class OverlayRawDataMicroBooNE : public art::EDProducer {
     float                fDefaultMCRawDigitScale;
     float                fDefaultMCOpDetScale;
 
+    float                fOpDetConstantSimulatedGain;
+
     void GenerateMCRawDigitScaleMap(std::vector<raw::RawDigit> const&);
     std::unordered_map<raw::ChannelID_t,float> fMCRawDigitScaleMap;
     
@@ -128,7 +130,8 @@ mix::OverlayRawDataMicroBooNE::OverlayRawDataMicroBooNE(fhicl::ParameterSet cons
   fCRTMCModuleLabel(p.get<std::string>("CRTMCModuleLabel")),
   fCRTDataModuleLabel(p.get<std::string>("CRTDataModuleLabel")),
   fDefaultMCRawDigitScale(p.get<float>("DefaultMCRawDigitScale",1)),
-  fDefaultMCOpDetScale(p.get<float>("DefaultMCOpDetScale",1))
+  fDefaultMCOpDetScale(p.get<float>("DefaultMCOpDetScale",1)),
+  fOpDetConstantSimulatedGain(p.get<float>("OpDetConstantSimulatedGain",1))
 {
   fRDMixer.SetSaturationPoint(fDefaultRawDigitSatPoint);
   fODMixer.SetSaturationPoint(fDefaultOpDetSatPoint);
@@ -277,7 +280,7 @@ bool mix::OverlayRawDataMicroBooNE::MixOpDetWaveforms_HighGain( const art::Event
   fODMixer.DeclareData(*dataOpDetHandle_HighGain,output);
   //fODMixer.Mix(*mcOpDetHandle_HighGain, fMCOpDetHighGainScaleMap, output);
   //fODMixer.Mix(*corr_mcOpDetHandle_HighGain, fMCOpDetHighGainScaleMap, output);
-  fODMixer.Mix(*corr_mcOpDetHandle_HighGain, fMCOpDetGainScaleMap, output);
+  fODMixer.Mix(*corr_mcOpDetHandle_HighGain, fMCOpDetGainScaleMap, output, fOpDetConstantSimulatedGain);
   
   return true;
 }

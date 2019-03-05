@@ -36,7 +36,8 @@ void mix::OpDetWaveformMixer::DeclareData(std::vector<raw::OpDetWaveform> const&
 
 void mix::OpDetWaveformMixer::Mix(std::vector<raw::OpDetWaveform> const& mcVector,
 				  std::unordered_map<raw::Channel_t,float> const& scale_map,
-				  std::vector<raw::OpDetWaveform> & outputVector){
+				  std::vector<raw::OpDetWaveform> & outputVector,
+				  float fOpDetConstantSimulatedGain){
 
 
   for( auto const& od : mcVector){
@@ -52,7 +53,7 @@ void mix::OpDetWaveformMixer::Mix(std::vector<raw::OpDetWaveform> const& mcVecto
     size_t i_output = it_ch->second;
 
     fRDAdderAlg.SetPedestalInputs(2048,0.0); //HARDCODED PEDESTAL AT 2048!!!!!!!
-    fRDAdderAlg.SetScaleInputs(scale_map.at(od.ChannelNumber()%100),1.0);
+    fRDAdderAlg.SetScaleInputs(scale_map.at(od.ChannelNumber()%100)/fOpDetConstantSimulatedGain,1.0);// HARDCODE GAIN USED FOR SIMULATION
    
     std::cout<<"Applying the PMT gain for channel "<<od.ChannelNumber()<<" gain : "<<scale_map.at(od.ChannelNumber()%100)<<std::endl; 
 

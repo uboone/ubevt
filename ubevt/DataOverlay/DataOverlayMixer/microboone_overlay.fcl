@@ -13,6 +13,7 @@ microboone_overlay:{
   CRTDataModuleLabel : merger
   DefaultMCRawDigitScale: 1.0
   DefaultMCOpDetScale:    1.0
+  OpDetConstantSimulatedGain: 20.0
 }
 
 microboone_overlay_retriever: {
