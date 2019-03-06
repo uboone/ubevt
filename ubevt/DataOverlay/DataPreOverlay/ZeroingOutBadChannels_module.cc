@@ -173,6 +173,7 @@ void lar::ZeroingOutBadChannels::produce(art::Event & e)
 
     // Make a new raw::RawDigit product with the correct adc counts.
     raw::RawDigit new_raw_digit( channel, samples, adc_counts, compression );
+    new_raw_digit.SetPedestal (rawdigit_h->at( wire ).GetPedestal());
 
     // Set the value of 'zeroed_RawDigit_v' at this entry equal to the new raw digit.
     zeroed_RawDigit_v->at( wire ) = new_raw_digit;
