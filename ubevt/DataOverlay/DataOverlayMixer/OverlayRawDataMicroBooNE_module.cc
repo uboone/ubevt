@@ -302,7 +302,7 @@ bool mix::OverlayRawDataMicroBooNE::MixOpDetWaveforms_LowGain( const art::Event&
   fODMixer.DeclareData(*dataOpDetHandle_LowGain,output);
   //fODMixer.Mix(*mcOpDetHandle_LowGain, fMCOpDetLowGainScaleMap, output);
   //fODMixer.Mix(*corr_mcOpDetHandle_LowGain, fMCOpDetLowGainScaleMap, output);
-  fODMixer.Mix(*corr_mcOpDetHandle_LowGain, fMCOpDetGainScaleMap, output);
+  fODMixer.Mix(*corr_mcOpDetHandle_LowGain, fMCOpDetGainScaleMap, output, fOpDetConstantSimulatedGain);
   
   return true;
 }
