@@ -126,7 +126,7 @@ void lar::ZeroingOutBadChannels::produce(art::Event & e)
   // Declare a map between the location in raw digits and the channel value.
   // First entry: the channel.
   // Second entry: the entry in the 'rawdigit_h' vector.
-  std::vector< std::vector< size_t > > raw_digit_channel_map;
+  std::map<size_t,size_t> raw_digit_channel_map;
   raw_digit_channel_map.clear();
 
   // Loop through the old RawDigits and set the new RawDigits equal to all of those values.
@@ -147,7 +147,7 @@ void lar::ZeroingOutBadChannels::produce(art::Event & e)
     raw_digit_single_channel_map.push_back( i );
 
     // Push back this vector to 'raw_digit_channel_map'.
-    raw_digit_channel_map.push_back( raw_digit_single_channel_map );
+    raw_digit_channel_map[channel] = i;
 
     // Use this to make a new RawDigits product.
     raw::RawDigit raw_digit( channel, samples, adc_counts, compression );
@@ -165,25 +165,14 @@ void lar::ZeroingOutBadChannels::produce(art::Event & e)
   for ( size_t bad_channel_iter = 0; bad_channel_iter < bad_channels_h->size(); bad_channel_iter += 3 ) {
 
     // Save the value of the wire, the starting time, and the ending time.
-    channel            = bad_channels_h->at( bad_channel_iter );
+    channel            = size_t(bad_channels_h->at( bad_channel_iter ));
     starting_time_tick = bad_channels_h->at( bad_channel_iter + 1 );
     ending_time_tick   = bad_channels_h->at( bad_channel_iter + 2 );
 
     // Using our map, convert the channel value to the value of the index of the 'rawdigit_h' vector.
-    size_t rawdigit_h_idx;
-
-    for ( size_t map_iter = 0; map_iter < raw_digit_channel_map.size(); map_iter++ ) {
-
-      // Set the value of the rawdigit_h_idx if you have the right channel.
-      if ( channel == raw_digit_channel_map.at( map_iter )[0] ) {
-	
-	rawdigit_h_idx = raw_digit_channel_map.at( map_iter )[1];
-	
-	break;
-
-      }
-
-    }
+    auto m_iter = raw_digit_channel_map.find(channel);
+    if(m_iter==raw_digit_channel_map.end()) continue;
+    size_t rawdigit_h_idx = m_iter->second;
 
     // Unpack the values from this entry in the 'zeroed_RawDigit_v' vector using the 'rawdigit_h_idx'.
     // Get all of the information for the old RawDigits.                                                                                                                                                   
@@ -197,13 +186,13 @@ void lar::ZeroingOutBadChannels::produce(art::Event & e)
     // Loop through the time ticks to set the entries at the affected time ticks equal to 0.
     for ( size_t j = starting_time_tick; j < size_t(ending_time_tick); j++ ) {
 
-      adc_counts.at( j ) = rawdigit_h->at( wire ).GetPedestal(); 
+      adc_counts.at( j ) = rawdigit_h->at( rawdigit_h_idx ).GetPedestal(); 
     
     } // End of the loop over setting the time ticks to 0.
 
     // Make a new raw::RawDigit product with the correct adc counts.
     raw::RawDigit new_raw_digit( channel, samples, adc_counts, compression );
-    new_raw_digit.SetPedestal (rawdigit_h->at( wire ).GetPedestal());
+    new_raw_digit.SetPedestal (rawdigit_h->at( rawdigit_h_idx ).GetPedestal());
 
     // Set the value of 'zeroed_RawDigit_v' at this entry equal to the new raw digit.
     zeroed_RawDigit_v->at( rawdigit_h_idx ) = new_raw_digit;
