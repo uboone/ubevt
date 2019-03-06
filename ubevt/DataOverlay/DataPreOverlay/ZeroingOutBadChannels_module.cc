@@ -167,7 +167,7 @@ void lar::ZeroingOutBadChannels::produce(art::Event & e)
     // Loop through the time ticks to set the entries at the affected time ticks equal to 0.
     for ( size_t j = starting_time_tick; j < size_t(ending_time_tick); j++ ) {
 
-      adc_counts.at( j ) = 0; 
+      adc_counts.at( j ) = rawdigit_h->at( wire ).GetPedestal(); 
     
     } // End of the loop over setting the time ticks to 0.
 
