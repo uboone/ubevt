@@ -122,6 +122,12 @@ void lar::ZeroingOutBadChannels::produce(art::Event & e)
     return;
 
   }
+  
+  // Declare a map between the location in raw digits and the channel value.
+  // First entry: the channel.
+  // Second entry: the entry in the 'rawdigit_h' vector.
+  std::vector< std::vector< size_t > > raw_digit_channel_map;
+  raw_digit_channel_map.clear();
 
   // Loop through the old RawDigits and set the new RawDigits equal to all of those values.
 
@@ -134,6 +140,15 @@ void lar::ZeroingOutBadChannels::produce(art::Event & e)
     raw::RawDigit::ADCvector_t adc_counts        = rawdigit_h->at( i ).ADCs();
     raw::Compress_t            compression       = rawdigit_h->at( i ).Compression();
 
+    // Fill in the entry in the 'raw_digit_channel_map' vector.
+    std::vector< size_t > raw_digit_single_channel_map;
+    raw_digit_single_channel_map.clear();
+    raw_digit_single_channel_map.push_back( size_t(channel) );
+    raw_digit_single_channel_map.push_back( i );
+
+    // Push back this vector to 'raw_digit_channel_map'.
+    raw_digit_channel_map.push_back( raw_digit_single_channel_map );
+
     // Use this to make a new RawDigits product.
     raw::RawDigit raw_digit( channel, samples, adc_counts, compression );
     raw_digit.SetPedestal (rawdigit_h->at( i ).GetPedestal());
@@ -142,24 +157,39 @@ void lar::ZeroingOutBadChannels::produce(art::Event & e)
   } // End of the loop over the RawDigits.
 
   // Declare the variables that will be used in the following loop.
-  int wire;
-  int starting_time_tick;
-  int ending_time_tick;
+  size_t channel;
+  int    starting_time_tick;
+  int    ending_time_tick;
 
   // Loop through the 'bad_channels' data product to find which bad wires you should set to 0.
   for ( size_t bad_channel_iter = 0; bad_channel_iter < bad_channels_h->size(); bad_channel_iter += 3 ) {
 
     // Save the value of the wire, the starting time, and the ending time.
-    wire               = bad_channels_h->at( bad_channel_iter );
+    channel            = bad_channels_h->at( bad_channel_iter );
     starting_time_tick = bad_channels_h->at( bad_channel_iter + 1 );
     ending_time_tick   = bad_channels_h->at( bad_channel_iter + 2 );
 
-    // Unpack the values from this entry in the 'zeroed_RawDigit_v' vector.
+    // Using our map, convert the channel value to the value of the index of the 'rawdigit_h' vector.
+    size_t rawdigit_h_idx;
+
+    for ( size_t map_iter = 0; map_iter < raw_digit_channel_map.size(); map_iter++ ) {
+
+      // Set the value of the rawdigit_h_idx if you have the right channel.
+      if ( channel == raw_digit_channel_map.at( map_iter )[0] ) {
+	
+	rawdigit_h_idx = raw_digit_channel_map.at( map_iter )[1];
+	
+	break;
+
+      }
+
+    }
+
+    // Unpack the values from this entry in the 'zeroed_RawDigit_v' vector using the 'rawdigit_h_idx'.
     // Get all of the information for the old RawDigits.                                                                                                                                                   
-    raw::ChannelID_t           channel           = rawdigit_h->at( wire ).Channel();
-    unsigned short             samples           = rawdigit_h->at( wire ).Samples();
-    raw::RawDigit::ADCvector_t adc_counts        = rawdigit_h->at( wire ).ADCs();
-    raw::Compress_t            compression       = rawdigit_h->at( wire ).Compression();
+    unsigned short             samples           = rawdigit_h->at( rawdigit_h_idx ).Samples();
+    raw::RawDigit::ADCvector_t adc_counts        = rawdigit_h->at( rawdigit_h_idx ).ADCs();
+    raw::Compress_t            compression       = rawdigit_h->at( rawdigit_h_idx ).Compression();
     
     // Increment bad_adc_counter.
     bad_adc_counter++;
@@ -175,7 +205,7 @@ void lar::ZeroingOutBadChannels::produce(art::Event & e)
     raw::RawDigit new_raw_digit( channel, samples, adc_counts, compression );
 
     // Set the value of 'zeroed_RawDigit_v' at this entry equal to the new raw digit.
-    zeroed_RawDigit_v->at( wire ) = new_raw_digit;
+    zeroed_RawDigit_v->at( rawdigit_h_idx ) = new_raw_digit;
 
   } // End of the loop over the effected channels.
 
