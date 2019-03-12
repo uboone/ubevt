@@ -177,12 +177,16 @@ void mix::OverlayRawDataMicroBooNE::GenerateMCRawDigitScaleMap(std::vector<raw::
   //note: we will put here access to the channel database to determine dead channels
   fMCRawDigitScaleMap.clear();
 
-  const lariov::ChannelStatusProvider& chanStatus = art::ServiceHandle<lariov::ChannelStatusService>()->GetProvider();
+  ///Wes, 12 March 2019
+  ///Look, we do this via wirecell now and the ZeroedOutChannels module and etc.
+  ///So, remove the DB access and lookup here, and set the scale on everything to be the default (1.0!)
+
+  //const lariov::ChannelStatusProvider& chanStatus = art::ServiceHandle<lariov::ChannelStatusService>()->GetProvider();
   
   for(auto const& d : dataDigitVector){
-    if(chanStatus.IsBad(d.Channel()))
-      fMCRawDigitScaleMap[d.Channel()] = 0.0;
-    else
+    //if(chanStatus.IsBad(d.Channel()))
+    //fMCRawDigitScaleMap[d.Channel()] = 0.0;
+    //else
       fMCRawDigitScaleMap[d.Channel()] = fDefaultMCRawDigitScale;
   }
   
