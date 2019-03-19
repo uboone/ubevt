@@ -337,7 +337,7 @@ void mix::OverlayRawDataMicroBooNE::remapPMT(const std::vector<raw::OpDetWavefor
   
   for( unsigned int i = 0 ; i< vODW.size() ; i++) {
       raw::OpDetWaveform odw = vODW[i];
-      raw::Channel_t correctedChannelNumber = pmtremap.OriginalOpChannel(odw.ChannelNumber ()); 
+      raw::Channel_t correctedChannelNumber = pmtremap.OriginalOpDet(odw.ChannelNumber ()); 
       corrected_vODW.push_back(odw);
       corrected_vODW[i].SetChannelNumber(correctedChannelNumber);
   }

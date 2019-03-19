@@ -20,10 +20,18 @@ namespace util {
       
       unsigned int CorrectedOpChannel( unsigned int original_opchannel ) const;
       unsigned int OriginalOpChannel( unsigned int corrected_opchannel ) const;
+      unsigned int CorrectedOpDet( unsigned int original_opdet ) const;
+      unsigned int OriginalOpDet( unsigned int corrected_opdet ) const;
       
     private:
     
       std::map<unsigned int, unsigned int> fOriginal_to_corrected_map;
+
+      // Forward and reverse OpDet <--> OpChannel maps.
+      // Information for these is obtained from the geomerty service.
+
+      std::map<unsigned int, unsigned int> fOpDetToOpChannel;
+      std::map<unsigned int, unsigned int> fOpChannelToOpDet;
   };
  
 }

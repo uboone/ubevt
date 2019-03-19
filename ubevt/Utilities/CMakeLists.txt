@@ -3,6 +3,7 @@ cet_enable_asserts()
 art_make ( NO_PLUGINS
            BASENAME_ONLY
 	   LIB_LIBRARIES lardata_Utilities_LArFFT_service
+			 larcorealg_Geometry
 	   	         ${ART_FRAMEWORK_CORE}
                          ${ART_FRAMEWORK_PRINCIPAL}
 			 ${ART_FRAMEWORK_SERVICES_BASIC}
