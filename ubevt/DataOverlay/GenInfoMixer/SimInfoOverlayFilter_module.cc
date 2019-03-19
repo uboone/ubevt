@@ -495,6 +495,64 @@ bool mix::SimInfoOverlayFilter::filter(art::Event & e)
 						     mctruth_artptr_lookup,
 						     gtruth_artptr_lookup);
 
+  auto mcpart_artptr_lookup = FillCollectionMap<simb::MCParticle>(fMCParticleInputModuleLabels,
+							          fMCParticleMap,
+							          "std::vector<simb::MCParticle>",
+							          e);
+
+  FillCollectionMap<sim::SimEnergyDeposit>(fSimEnergyDepositInputModuleLabels,
+				       fSimEnergyDepositMap,
+				       "std::vector<sim::SimEnergyDeposit>",
+				       e);
+
+  FillCollectionMap<sim::AuxDetSimChannel>(fAuxDetSimChannelInputModuleLabels,
+				       fAuxDetSimChannelMap,
+				       "std::vector<sim::AuxDetSimChannel>",
+				       e);
+
+  FillCollectionMap<sim::SimChannel>(fSimChannelInputModuleLabels,
+				       fSimChannelMap,
+				       "std::vector<sim::SimChannel>",
+				       e);
+
+  FillCollectionMap<sim::SimPhotons>(fSimPhotonsInputModuleLabels,
+				       fSimPhotonsMap,
+				       "std::vector<sim::SimPhotons>",
+				       e);
+
+  // this could be empty if running a "downstream" SimInfoMixer instance
+  if(fMCTruthInputModuleLabels.empty() && !fMCTruthMCParticleAssnsInputModuleLabels.empty()) {
+    // assume "generator" module generated the mctruth already
+    std::vector<art::Handle<std::vector<simb::MCTruth>>> mclists;
+    e.getManyByType(mclists);
+    for(size_t mcl = 0; mcl < mclists.size(); ++mcl){
+      art::Handle< std::vector<simb::MCTruth> > mclistHandle = mclists[mcl];
+      std::string process_name = mclistHandle.provenance()->processName();
+      std::string instance_name = mclistHandle.provenance()->productInstanceName();
+      std::string module_name = mclistHandle.provenance()->moduleLabel();
+      // make sure we are only using products added in this session
+      if(process_name != moduleDescription().processName()) {
+        continue;
+      }
+      auto canonical_product_name =  art::canonicalProductName(
+          art::friendlyname::friendlyName("std::vector<simb::MCTruth>"),
+	  module_name,
+	  instance_name,
+	  fMCTruthMCParticleAssnsInputModuleLabels.begin()->process());
+      auto product_id = art::ProductID(canonical_product_name);
+      for(size_t m = 0; m < mclistHandle->size(); ++m){
+        art::Ptr<simb::MCTruth> mct(mclistHandle, m);
+
+        mctruth_artptr_lookup[std::make_pair(product_id,m)] = mct;
+      }
+    }
+  }
+  FillAssnsCollectionMap<simb::MCTruth,simb::MCParticle,sim::GeneratedParticleInfo>
+    (fMCTruthMCParticleAssnsInputModuleLabels,
+     fMCTruthMCParticleAssnsMap,
+     mctruth_artptr_lookup,
+     mcpart_artptr_lookup);
+
   //put onto event and loop the gallery event
   PutCollectionsOntoEvent(e);
   gEvent.next();
@@ -532,12 +590,14 @@ bool mix::SimInfoOverlayFilter::endRun(art::Run & r)
 
 bool mix::SimInfoOverlayFilter::endSubRun(art::SubRun & sr)
 {
-  std::unique_ptr<sumdata::POTSummary> srpot_ptr(new sumdata::POTSummary());
-  srpot_ptr->totpot = fPOTSum_totpot;
-  srpot_ptr->totgoodpot = fPOTSum_totgoodpot;
-  srpot_ptr->totspills = (int)fPOTSum_totspills;
-  srpot_ptr->goodspills = (int)fPOTSum_goodspills;
-  sr.put(std::move(srpot_ptr));
+  if(fFillPOTInfo){
+    std::unique_ptr<sumdata::POTSummary> srpot_ptr(new sumdata::POTSummary());
+    srpot_ptr->totpot = fPOTSum_totpot;
+    srpot_ptr->totgoodpot = fPOTSum_totgoodpot;
+    srpot_ptr->totspills = (int)fPOTSum_totspills;
+    srpot_ptr->goodspills = (int)fPOTSum_goodspills;
+    sr.put(std::move(srpot_ptr));
+  }
   return true;
 }
 
