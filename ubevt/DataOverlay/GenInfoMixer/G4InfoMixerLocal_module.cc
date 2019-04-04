@@ -149,5 +149,5 @@ bool mix::G4InfoMixerLocal::MixSimpleCopy( std::vector< std::vector<T> const*> c
   return true;
 }
 
-
-DEFINE_ART_MODULE((art::MixFilter<mix::G4InfoMixerLocal,art::RootIOPolicy>))
+using Module_t = art::MixFilter<mix::G4InfoMixerLocal,art::RootIOPolicy>;
+DEFINE_ART_MODULE(Module_t)

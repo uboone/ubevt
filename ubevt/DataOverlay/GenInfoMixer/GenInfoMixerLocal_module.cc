@@ -193,4 +193,5 @@ std::string mix::GenInfoMixerLocal::getMixFile()
 }
 */
 
-DEFINE_ART_MODULE((art::MixFilter<mix::GenInfoMixerLocal,art::RootIOPolicy>))
+using Module_t = art::MixFilter<mix::GenInfoMixerLocal,art::RootIOPolicy>;
+DEFINE_ART_MODULE(Module_t)

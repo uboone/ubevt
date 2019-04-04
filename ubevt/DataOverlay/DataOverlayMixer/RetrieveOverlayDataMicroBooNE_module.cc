@@ -432,4 +432,5 @@ std::string mix::RetrieveOverlayDataMicroBooNE::getMixFile()
 }
 
 
-DEFINE_ART_MODULE((art::MixFilter<mix::RetrieveOverlayDataMicroBooNE,art::RootIOPolicy>))
+using Module_t = art::MixFilter<mix::RetrieveOverlayDataMicroBooNE,art::RootIOPolicy>;
+DEFINE_ART_MODULE(Module_t)
