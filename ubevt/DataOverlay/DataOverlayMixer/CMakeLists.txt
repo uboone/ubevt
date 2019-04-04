@@ -12,14 +12,14 @@ art_make(
 			lardataobj_MCBase
                         ${ART_FRAMEWORK_CORE}
 			${ART_FRAMEWORK_IO_PRODUCTMIX}
-			${ART_FRAMEWORK_IO_ROOT}
+			${ART_ROOT_IO}
 			${ART_FRAMEWORK_MODULES}
                         ${ART_FRAMEWORK_PRINCIPAL}
                         ${ART_FRAMEWORK_SERVICES_REGISTRY}
                         ${ART_FRAMEWORK_SERVICES_SYSTEM_FILECATALOGMETADATA_SERVICE}
                         art_Persistency_Common
 			art_Persistency_Provenance
-			art_Framework_IO_Root_detail_sources
+			art_root_io_detail
                         art_Utilities canvas
 			ifdh
                         ${MF_MESSAGELOGGER}
@@ -43,7 +43,7 @@ art_make(
 			larevt_CalibrationDBI_Providers
                         ${ART_FRAMEWORK_CORE}
 			${ART_FRAMEWORK_IO_PRODUCTMIX}
-			${ART_FRAMEWORK_IO_ROOT}
+			${ART_ROOT_IO}
 			${ART_FRAMEWORK_MODULES}
                         ${ART_FRAMEWORK_PRINCIPAL}
                         ${ART_FRAMEWORK_SERVICES_REGISTRY}
@@ -52,7 +52,7 @@ art_make(
                         art_Persistency_Common
 			art_Persistency_Provenance
                         art_Utilities
-			art_Framework_IO_Root_detail_sources
+			art_root_io_detail
 			canvas
 			ifdh
                         ${MF_MESSAGELOGGER}
@@ -69,14 +69,14 @@ art_make(
 			ub_RawDigitAdderAna
                         lardataobj_RawData
                         ${ART_FRAMEWORK_CORE}
-			${ART_FRAMEWORK_IO_ROOT}
+			${ART_ROOT_IO}
 			${ART_FRAMEWORK_MODULES}
                         ${ART_FRAMEWORK_PRINCIPAL}
                         ${ART_FRAMEWORK_SERVICES_REGISTRY}
-                        ${ART_FRAMEWORK_SERVICES_OPTIONAL}
-                        ${ART_FRAMEWORK_SERVICES_OPTIONAL_TFILESERVICE_SERVICE}
+                        ${ART_ROOT_IO_TFILE_SUPPORT} ${ROOT_CORE}
+                        ${ART_ROOT_IO_TFILESERVICE_SERVICE}
 			art_Persistency_Provenance
-			art_Framework_IO_Root_detail_sources
+			art_root_io_detail
 			${BOOST_LIB}
                         ${FHICLCPP}
                         cetlib cetlib_except

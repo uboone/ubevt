@@ -10,6 +10,7 @@
 // information (from GENIE) into a data file. 
 ////////////////////////////////////////////////////////////////////////
 
+#include "art_root_io/RootIOPolicy.h"
 #include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Modules/MixFilter.h"
 #include "art/Framework/IO/ProductMix/MixHelper.h"
@@ -192,4 +193,4 @@ std::string mix::GenInfoMixerLocal::getMixFile()
 }
 */
 
-DEFINE_ART_MODULE(art::MixFilter<mix::GenInfoMixerLocal>)
+DEFINE_ART_MODULE((art::MixFilter<mix::GenInfoMixerLocal,art::RootIOPolicy>))
