@@ -87,7 +87,7 @@ private:
 DEFINE_ART_MODULE(CalWireInvert)
   
 //-------------------------------------------------
-CalWireInvert::CalWireInvert(fhicl::ParameterSet const& pset) :
+CalWireInvert::CalWireInvert(fhicl::ParameterSet const& pset) : EDProducer{pset},
     fPedestalRetrievalAlg(art::ServiceHandle<lariov::DetPedestalService>()->GetPedestalProvider())
 {
     this->reconfigure(pset);

@@ -84,7 +84,7 @@ namespace uboone{
 
 namespace uboone{
 
-  MicrobooneResp::MicrobooneResp(fhicl::ParameterSet const& pset)
+  MicrobooneResp::MicrobooneResp(fhicl::ParameterSet const& pset) : EDProducer{pset}
   {
     this->reconfigure(pset);
   }

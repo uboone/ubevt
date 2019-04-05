@@ -115,7 +115,7 @@ class CalWireROI : public art::EDProducer
 DEFINE_ART_MODULE(CalWireROI)
   
 //-------------------------------------------------
-CalWireROI::CalWireROI(fhicl::ParameterSet const& pset)
+CalWireROI::CalWireROI(fhicl::ParameterSet const& pset) : EDProducer{pset}
 {
   this->reconfigure(pset);
 

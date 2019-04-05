@@ -67,7 +67,7 @@ private:
 
 
 spacecharge::SCECorrReco::SCECorrReco(fhicl::ParameterSet const & p)
- : hEmag(nullptr)
+ : EDProducer{p}, hEmag(nullptr)
 // Initialize member data here.
 {
   produces< std::vector<recob::Track> >();

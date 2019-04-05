@@ -118,7 +118,7 @@ DEFINE_ART_MODULE(RawDigitFilterUBooNE)
 ///
 /// pset - Fcl parameters.
 ///
-RawDigitFilterUBooNE::RawDigitFilterUBooNE(fhicl::ParameterSet const & pset) :
+RawDigitFilterUBooNE::RawDigitFilterUBooNE(fhicl::ParameterSet const & pset) : EDProducer{pset},
                       fNumEvent(0),
                       fBinAverageAlg(pset),
                       fCharacterizationAlg(pset.get<fhicl::ParameterSet>("CharacterizationAlg")),
