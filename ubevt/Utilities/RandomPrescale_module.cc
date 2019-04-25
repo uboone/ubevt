@@ -55,7 +55,7 @@ namespace util
 
 // Constructor.
 
-util::RandomPrescale::RandomPrescale(fhicl::ParameterSet const & pset) :
+util::RandomPrescale::RandomPrescale(fhicl::ParameterSet const & pset) : EDFilter{pset},
   fProb{pset.get<double>("Probability")},
   // Create a default random engine.
   // Obain the random seed from NuRandomService, unless overridden in configuration

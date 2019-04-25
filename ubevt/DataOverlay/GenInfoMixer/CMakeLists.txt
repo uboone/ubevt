@@ -6,8 +6,8 @@ art_make(
 			nusimdata_SimulationBase
                         ${ART_FRAMEWORK_CORE}
 			${ART_FRAMEWORK_IO_PRODUCTMIX}
-			${ART_FRAMEWORK_IO_ROOT}
-                        art_Framework_IO_Root_detail_sources
+			${ART_ROOT_IO}
+                        art_root_io_detail
 			${ART_FRAMEWORK_MODULES}
                         ${ART_FRAMEWORK_PRINCIPAL}
                         ${ART_FRAMEWORK_SERVICES_REGISTRY}

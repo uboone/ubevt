@@ -10,6 +10,7 @@
 // information into a data file.
 ////////////////////////////////////////////////////////////////////////
 
+#include "art_root_io/RootIOPolicy.h"
 #include "art/Framework/Core/ModuleMacros.h"
 #include "art/Framework/Modules/MixFilter.h"
 #include "art/Framework/IO/ProductMix/MixHelper.h"
@@ -148,5 +149,5 @@ bool mix::G4InfoMixerLocal::MixSimpleCopy( std::vector< std::vector<T> const*> c
   return true;
 }
 
-
-DEFINE_ART_MODULE(art::MixFilter<mix::G4InfoMixerLocal>)
+using Module_t = art::MixFilter<mix::G4InfoMixerLocal,art::RootIOPolicy>;
+DEFINE_ART_MODULE(Module_t)

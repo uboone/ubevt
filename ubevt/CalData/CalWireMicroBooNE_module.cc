@@ -31,7 +31,7 @@
 #include "canvas/Persistency/Common/Ptr.h" 
 #include "canvas/Persistency/Common/Assns.h" 
 #include "art/Framework/Services/Registry/ServiceHandle.h" 
-#include "art/Framework/Services/Optional/TFileService.h"
+#include "art_root_io/TFileService.h"
 
 // LArSoft libraries
 #include "larcoreobj/SimpleTypesAndConstants/RawTypes.h" // raw::ChannelID_t
@@ -102,6 +102,7 @@ namespace caldata {
   
   //-------------------------------------------------
   CalWireMicroBooNE::CalWireMicroBooNE(fhicl::ParameterSet const& pset) 
+    : EDProducer{pset}
   {
     this->reconfigure(pset);
 
