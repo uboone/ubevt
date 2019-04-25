@@ -16,7 +16,7 @@
 #include "canvas/Utilities/InputTag.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
-#include "art/Framework/Services/Optional/TFileService.h"
+#include "art_root_io/TFileService.h"
 
 #include <memory>
 
@@ -56,7 +56,7 @@ private:
 
 
 spacecharge::ShiftEdepSCE::ShiftEdepSCE(fhicl::ParameterSet const & p)
-  : fEDepTag(p.get<art::InputTag>("EDepTag")),
+  : EDProducer{p}, fEDepTag(p.get<art::InputTag>("EDepTag")),
     fMakeAnaTree(p.get<bool>("MakeAnaTree",true))
 {
   produces< std::vector<sim::SimEnergyDeposit> >();

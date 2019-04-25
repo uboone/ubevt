@@ -24,6 +24,7 @@
 //-----------------------------------------------
 spacecharge::SpaceChargeServiceMicroBooNE::SpaceChargeServiceMicroBooNE(fhicl::ParameterSet const& pset, art::ActivityRegistry &reg)
 {
+  TH1::AddDirectory(kFALSE);
   fProp.reset(new spacecharge::SpaceChargeMicroBooNE(pset));
 
   auto const *detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();

@@ -176,7 +176,7 @@ private:
 
 
 mix::SimInfoOverlayFilter::SimInfoOverlayFilter(fhicl::ParameterSet const & p)
-  :
+  : EDFilter{p},
   fSimInputFileNames(p.get<std::vector<std::string>>("SimInputFileNames")),
   gEvent(fSimInputFileNames),
   fVerbosity(p.get<int>("Verbosity",-1))

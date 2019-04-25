@@ -58,7 +58,7 @@ private:
 
 
 lar::ZeroingOutBadChannels::ZeroingOutBadChannels(fhicl::ParameterSet const & p)
-// :
+  : EDProducer{p}
 // Initialize member data here.
 {
   // Call appropriate produces<>() functions here.

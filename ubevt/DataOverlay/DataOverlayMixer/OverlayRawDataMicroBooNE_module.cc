@@ -90,7 +90,7 @@ class OverlayRawDataMicroBooNE : public art::EDProducer {
 
 
 mix::OverlayRawDataMicroBooNE::OverlayRawDataMicroBooNE(fhicl::ParameterSet const& p)
-  :
+  : EDProducer{p},
   fRDMixer(false), //print warnings turned off
   fODMixer(false), //print warnings turned off
 
