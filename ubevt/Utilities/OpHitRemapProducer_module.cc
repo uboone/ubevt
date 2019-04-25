@@ -49,7 +49,7 @@ private:
 };
 
 
-OpHitRemapProducer::OpHitRemapProducer(fhicl::ParameterSet const & p)
+OpHitRemapProducer::OpHitRemapProducer(fhicl::ParameterSet const & p) : EDProducer{p}
 {
   inputTag_ = p.get<art::InputTag>("OpHitsInputTag");
   opchanmap_ = p.get<std::vector<int> >("OpChannelSwapMap");
