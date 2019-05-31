@@ -432,7 +432,7 @@ geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetPosOffsets(geo::Point_t con
 
 /// Primary working method of service that provides position offsets to be
 /// used in ionization electron drift for correction in reconstruction
-geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetCalPosOffsets(geo::Point_t const& tmp_point) const
+geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetCalPosOffsets(geo::Point_t const& tmp_point, int const& TPCid) const
 {
   geo::Vector_t thePosOffsets;
   geo::Point_t point = tmp_point;
@@ -707,7 +707,7 @@ geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetEfieldOffsets(geo::Point_t 
   return theEfieldOffsets;
 }
 
-geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetCalEfieldOffsets(geo::Point_t const& tmp_point) const
+geo::Vector_t spacecharge::SpaceChargeMicroBooNE::GetCalEfieldOffsets(geo::Point_t const& tmp_point, int const& TPCid) const
 {
   geo::Vector_t theEfieldOffsets;
   geo::Point_t point = tmp_point;
