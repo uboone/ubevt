@@ -190,10 +190,10 @@ namespace spacecharge {
       bool EnableCorrSCE() const override {return (EnableCalSpatialSCE()||EnableCalEfieldSCE()) ;}
 
       geo::Vector_t GetPosOffsets(geo::Point_t const& point) const override;
-      geo::Vector_t GetCalPosOffsets(geo::Point_t const& point) const override;  
+      geo::Vector_t GetCalPosOffsets(geo::Point_t const& point, int const& TPCid = 1) const override;  
 
       geo::Vector_t GetEfieldOffsets(geo::Point_t const& point) const override;
-      geo::Vector_t GetCalEfieldOffsets(geo::Point_t const& tmp_point) const override;
+      geo::Vector_t GetCalEfieldOffsets(geo::Point_t const& point, int const& TPCid = 1) const override;
       
     protected:
 
