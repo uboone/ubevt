@@ -24,7 +24,7 @@ art_make( BASENAME_ONLY
                         SignalShapingServiceMicroBooNE_service
 			larevt_CalibrationDBI_Providers
 			ubevt_Database
-                        nutools_RandomUtils_NuRandomService_service
+                        nurandom_RandomUtils_NuRandomService_service
                         ${ART_FRAMEWORK_CORE}
                         ${ART_FRAMEWORK_PRINCIPAL}
                         ${ART_FRAMEWORK_SERVICES_REGISTRY}

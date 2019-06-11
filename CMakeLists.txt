@@ -57,6 +57,7 @@ find_ups_product(art_root_io)
 find_ups_product(lardata)
 find_ups_product(larcore)
 find_ups_product(nutools)
+find_ups_product( nurandom )
 
 find_ups_product(gallery)
 
