@@ -1,7 +1,7 @@
-#ifndef TESTLYCORRECTIONPROVIDER_CXX
-#define TESTLYCORRECTIONPROVIDER_CXX
+#ifndef UBOONELIGHTYIELDPROVIDER_CXX
+#define UBOONELIGHTYIELDPROVIDER_CXX
 
-#include "LightYieldScalingProvider.h"
+#include "ubevt/Database/UbooneLightYieldProvider.h"
 #include "larevt/CalibrationDBI/Providers/WebError.h"
 
 // art/LArSoft libraries
@@ -15,7 +15,7 @@
 namespace lariov {
 
   //constructor      
-  LightYieldScalingProvider::LightYieldScalingProvider(fhicl::ParameterSet const& p) :
+  UbooneLightYieldProvider::UbooneLightYieldProvider(fhicl::ParameterSet const& p) :
     DatabaseRetrievalAlg(p.get<fhicl::ParameterSet>("DatabaseRetrievalAlg")),
     fEventTimeStamp(0),
     fCurrentTimeStamp(0) {
@@ -23,7 +23,7 @@ namespace lariov {
     this->Reconfigure(p);
   }
       
-  void LightYieldScalingProvider::Reconfigure(fhicl::ParameterSet const& p) {
+  void UbooneLightYieldProvider::Reconfigure(fhicl::ParameterSet const& p) {
     
     this->DatabaseRetrievalAlg::Reconfigure(p.get<fhicl::ParameterSet>("DatabaseRetrievalAlg"));
     fData.Clear();
@@ -75,7 +75,7 @@ namespace lariov {
       std::cout << "Using light yield scaling from local file: "<<abs_fp<<"\n";
       std::ifstream file(abs_fp);
       if (!file) {
-        throw cet::exception("LightYieldScalingProvider")
+        throw cet::exception("UbooneLightYieldProvider")
           << "File "<<abs_fp<<" is not found.";
       }
 
@@ -119,14 +119,14 @@ namespace lariov {
 
   // This method saves the time stamp of the latest event.
 
-  void LightYieldScalingProvider::UpdateTimeStamp(DBTimeStamp_t ts) {
-    mf::LogInfo("LightYieldScalingProvider") << "LightYieldScalingProvider::UpdateTimeStamp called.";
+  void UbooneLightYieldProvider::UpdateTimeStamp(DBTimeStamp_t ts) {
+    mf::LogInfo("UbooneLightYieldProvider") << "UbooneLightYieldProvider::UpdateTimeStamp called.";
     fEventTimeStamp = ts;
   }
 
   // Maybe update method cached data (public non-const version).
 
-  bool LightYieldScalingProvider::Update(DBTimeStamp_t ts) {
+  bool UbooneLightYieldProvider::Update(DBTimeStamp_t ts) {
     
     fEventTimeStamp = ts;
     return DBUpdate(ts);
@@ -134,26 +134,26 @@ namespace lariov {
 
   // Maybe update method cached data (private const version using current event time).
 
-  bool LightYieldScalingProvider::DBUpdate() const {
+  bool UbooneLightYieldProvider::DBUpdate() const {
     return DBUpdate(fEventTimeStamp);
   }
 
   // Maybe update method cached data (private const version).
   // This is the function that does the actual work of updating data from database.
 
-  bool LightYieldScalingProvider::DBUpdate(DBTimeStamp_t ts) const {
+  bool UbooneLightYieldProvider::DBUpdate(DBTimeStamp_t ts) const {
 
     bool result = false;
     
     if (fDataSource == DataSource::Database && ts != fCurrentTimeStamp) {
       
-      mf::LogInfo("LightYieldScalingProvider") << "LightYieldScalingProvider::DBUpdate called with new timestamp.";
+      mf::LogInfo("UbooneLightYieldProvider") << "UbooneLightYieldProvider::DBUpdate called with new timestamp.";
 
       fCurrentTimeStamp = ts;     
 
       // Call non-const base class method.
 
-      result = const_cast<LightYieldScalingProvider*>(this)->UpdateFolder(ts);
+      result = const_cast<UbooneLightYieldProvider*>(this)->UpdateFolder(ts);
       if(result) {
 	//DBFolder was updated, so now update the Snapshot
 	fData.Clear();
@@ -189,20 +189,20 @@ namespace lariov {
     return result;
   }
   
-  const PmtGain& LightYieldScalingProvider::PmtGainObject(DBChannelID_t ch) const { 
+  const PmtGain& UbooneLightYieldProvider::PmtGainObject(DBChannelID_t ch) const { 
     DBUpdate();
     return fData.GetRow(ch);
   }
       
-  float LightYieldScalingProvider::LYScaling(DBChannelID_t ch) const {
+  float UbooneLightYieldProvider::LYScaling(DBChannelID_t ch) const {
     return this->PmtGainObject(ch).Gain();
   }
   
-  float LightYieldScalingProvider::LYScalingErr(DBChannelID_t ch) const {
+  float UbooneLightYieldProvider::LYScalingErr(DBChannelID_t ch) const {
     return this->PmtGainObject(ch).GainErr();
   }
   
-  CalibrationExtraInfo const& LightYieldScalingProvider::ExtraInfo(DBChannelID_t ch) const {
+  CalibrationExtraInfo const& UbooneLightYieldProvider::ExtraInfo(DBChannelID_t ch) const {
     return this->PmtGainObject(ch).ExtraInfo();
   }
 
