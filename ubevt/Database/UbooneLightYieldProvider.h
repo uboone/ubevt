@@ -1,21 +1,21 @@
 /**
- * \file LightYieldScalingProvider.h
+ * \file UbooneLightYieldProvider.h
  *
  * \ingroup WebDBI
  * 
- * \brief Class def header for a class LightYieldScalingProvider
+ * \brief Class def header for a class UbooneLightYieldProvider
  *
  * @author ralitsa.sharankova@tufts.edu
  */
 
-#ifndef LIGHTYIELDSCALINGPROVIDER_H
-#define LIGHTYIELDSCALINGPROVIDER_H
+#ifndef UBOONELIGHTYIELDPROVIDER_H
+#define UBOONELIGHTYIELDPROVIDER_H
 
 #include "larevt/CalibrationDBI/IOVData/PmtGain.h"
 #include "larevt/CalibrationDBI/IOVData/Snapshot.h"
 #include "larevt/CalibrationDBI/IOVData/IOVDataConstants.h"
-#include "larevt/CalibrationDBI/Interface/PmtGainProvider.h"
 #include "larevt/CalibrationDBI/Providers/DatabaseRetrievalAlg.h"
+#include "ubevt/Database/LightYieldProvider.h"
 
 namespace lariov {
 
@@ -30,17 +30,13 @@ namespace lariov {
    * - *UseDB* (boolean, default: false): retrieve information from the database
    * - *UseFile* (boolean, default: false): retrieve information from a file;
    *   not implemented yet
-   * - *DefaultLightYield* (real, default: ): Light Yield Scaling returned 
-   *   when /UseDB/ and /UseFile/ parameters are false
-   * - *DefaultGainErr* (real, default: ): Gain uncertainty returned
-   *   when /UseDB/ and /UseFile/ parameters are false
    */
-  class LightYieldscalingProvider : public DatabaseRetrievalAlg, public PmtGainProvider {
+  class UbooneLightYieldProvider : public DatabaseRetrievalAlg, public LightYieldProvider {
   
     public:
     
       /// Constructors
-      LightYieldscalingProvider(fhicl::ParameterSet const& p);
+      UbooneLightYieldProvider(fhicl::ParameterSet const& p);
       
       /// Reconfigure function called by fhicl constructor
       void Reconfigure(fhicl::ParameterSet const& p) override;
@@ -54,7 +50,7 @@ namespace lariov {
       /// Retrieve gain information
       const PmtGain& PmtGainObject(DBChannelID_t ch) const;      
       float LYScaling(DBChannelID_t ch) const override;
-      float LYSalingErr(DBChannelID_t ch) const override;
+      float LYScalingErr(DBChannelID_t ch) const override;
       CalibrationExtraInfo const& ExtraInfo(DBChannelID_t ch) const override;
       
     private:
