@@ -90,9 +90,8 @@ crt_channelstatus_provider:
   UseDB: true
   UseFile: false
 }
-crt_channelstatus_provider.DatabaseRetrievalAlg.DBUrl: "http://dbdata0vm.fnal.gov:8086/uboonecon_dev/app/"
 crt_channelstatus_provider.DatabaseRetrievalAlg.DBFolderName: "crt_channelstatus_data"
-crt_channelstatus_provider.DatabaseRetrievalAlg.DBTag: "v1r1"
+crt_channelstatus_provider.DatabaseRetrievalAlg.DBTag: "v1r0"
 
 crt_channelstatus_service:
 {
