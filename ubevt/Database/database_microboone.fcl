@@ -81,6 +81,27 @@ wirecell_channelstatus_service_mc:
 }
 
 #===============================================
+#Uboone CRT channel status database configuration
+#===============================================
+crt_channelstatus_provider:
+{
+  DatabaseRetrievalAlg: @local::microboone_databaseretrievalalg
+  
+  UseDB: true
+  UseFile: false
+}
+crt_channelstatus_provider.DatabaseRetrievalAlg.DBFolderName: "crt_channelstatus_data"
+crt_channelstatus_provider.DatabaseRetrievalAlg.DBTag: "v1r0"
+
+crt_channelstatus_service:
+{
+  service_provider: UbooneCRTChannelStatusService
+  ChannelStatusProvider: @local::crt_channelstatus_provider
+  #FindNoisyChannels: false
+  CalibrationHelper: @local::microboone_calibservicehelper
+}
+
+#===============================================
 #Uboone electron lifetime database configuration
 #===============================================
 microboone_electronlifetime_provider:
