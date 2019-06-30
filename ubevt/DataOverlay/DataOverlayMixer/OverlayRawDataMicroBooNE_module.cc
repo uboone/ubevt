@@ -86,6 +86,11 @@ class OverlayRawDataMicroBooNE : public art::EDProducer {
 
     float                fOpDetConstantSimulatedGain;
 
+
+    bool fDoTPCMixing;
+    bool fDoPMTMixing;
+    bool fDoCRTMixing;
+
     void GenerateMCRawDigitScaleMap(std::vector<raw::RawDigit> const&);
     std::unordered_map<raw::ChannelID_t,float> fMCRawDigitScaleMap;
     
@@ -121,14 +126,14 @@ mix::OverlayRawDataMicroBooNE::OverlayRawDataMicroBooNE(fhicl::ParameterSet cons
   fDefaultRawDigitSatPoint(p.get<short>("DefaultRawDigitSaturationPoint",4096)),
   fDefaultOpDetSatPoint(p.get<short>("DefaultOpDetSaturationPoint",4096)),
   fOpDetMinSampleSize(p.get<size_t>("OpDetMinSampleSize",100)),
-  fRawDigitDataModuleLabel(p.get<std::string>("RawDigitDataModuleLabel")),
-  fOpDetDataModuleLabel(p.get<std::string>("OpDetDataModuleLabel")),
-  fTriggerDataModuleLabel(p.get<std::string>("TriggerDataModuleLabel")),
-  fRawDigitMCModuleLabel(p.get<std::string>("RawDigitMCModuleLabel")),
-  fOpDetMCModuleLabel(p.get<std::string>("OpDetMCModuleLabel")),
-  fTriggerMCModuleLabel(p.get<std::string>("TriggerMCModuleLabel")),
-  fCRTMCModuleLabel(p.get<std::string>("CRTMCModuleLabel")),
-  fCRTDataModuleLabel(p.get<std::string>("CRTDataModuleLabel")),
+  fRawDigitDataModuleLabel(p.get<std::string>("RawDigitDataModuleLabel","")),
+  fOpDetDataModuleLabel(p.get<std::string>("OpDetDataModuleLabel","")),
+  fTriggerDataModuleLabel(p.get<std::string>("TriggerDataModuleLabel","")),
+  fRawDigitMCModuleLabel(p.get<std::string>("RawDigitMCModuleLabel","")),
+  fOpDetMCModuleLabel(p.get<std::string>("OpDetMCModuleLabel","")),
+  fTriggerMCModuleLabel(p.get<std::string>("TriggerMCModuleLabel","")),
+  fCRTMCModuleLabel(p.get<std::string>("CRTMCModuleLabel","")),
+  fCRTDataModuleLabel(p.get<std::string>("CRTDataModuleLabel","")),
   fDefaultMCRawDigitScale(p.get<float>("DefaultMCRawDigitScale",1)),
   fDefaultMCOpDetScale(p.get<float>("DefaultMCOpDetScale",1)),
   fOpDetConstantSimulatedGain(p.get<float>("OpDetConstantSimulatedGain",1))
@@ -137,37 +142,59 @@ mix::OverlayRawDataMicroBooNE::OverlayRawDataMicroBooNE(fhicl::ParameterSet cons
   fODMixer.SetSaturationPoint(fDefaultOpDetSatPoint);
   fODMixer.SetMinSampleSize(fOpDetMinSampleSize);
   
-  produces< std::vector<raw::RawDigit> >();
-  produces< std::vector<crt::CRTHit> >();
-  produces< std::vector<raw::OpDetWaveform> >("OpdetBeamHighGain");
-  produces< std::vector<raw::OpDetWaveform> >("OpdetBeamLowGain");
-  produces< std::vector<raw::Trigger> >();
+  if(fRawDigitDataModuleLabel.size()==0 && fRawDigitMCModuleLabel.size()==0)
+    fDoTPCMixing = false;
+  else
+    fDoTPCMixing = true;
+
+  if(fOpDetDataModuleLabel.size()==0 && fTriggerDataModuleLabel.size()==0 &&
+     fOpDetMCModuleLabel.size()==0 && fTriggerMCModuleLabel.size()==0)
+    fDoPMTMixing = false;
+  else 
+    fDoPMTMixing = true;
+
+  if(fCRTDataModuleLabel.size()==0 && fCRTDataModuleLabel.size()==0)
+    fDoCRTMixing = false;
+  else
+    fDoCRTMixing = true;
+
+  if(fDoTPCMixing) produces< std::vector<raw::RawDigit> >();
+  if(fDoCRTMixing) produces< std::vector<crt::CRTHit> >();
+  if(fDoPMTMixing){
+    produces< std::vector<raw::OpDetWaveform> >("OpdetBeamHighGain");
+    produces< std::vector<raw::OpDetWaveform> >("OpdetBeamLowGain");
+    produces< std::vector<raw::Trigger> >();
+  }
 }
 
 void mix::OverlayRawDataMicroBooNE::produce(art::Event& evt) {
 
-  //make output containers 
-  std::unique_ptr<std::vector<raw::RawDigit> >     rawdigits(new std::vector<raw::RawDigit>);
-  std::unique_ptr<std::vector<crt::CRTHit> >       crthits(new std::vector<crt::CRTHit>);
-  std::unique_ptr<std::vector<raw::OpDetWaveform> > opdet_hg(new std::vector<raw::OpDetWaveform>);
-  std::unique_ptr<std::vector<raw::OpDetWaveform> > opdet_lg(new std::vector<raw::OpDetWaveform>);
-  std::unique_ptr<std::vector<raw::Trigger> > triggerdata(new std::vector<raw::Trigger>);
-  
-  //get output digits
-  MixRawDigits(evt, *rawdigits);
-  MixCRTHits(evt, *crthits);
-  GenerateMCOpDetGainScaleMap(); // Right now the gain scale map is the same for low and high gain readout and it is obtained before mixing any of them
-  MixOpDetWaveforms_HighGain(evt, *opdet_hg);
-  MixOpDetWaveforms_LowGain(evt, *opdet_lg);
-  MixTriggerData(evt, *triggerdata);
+  if(fDoTPCMixing){
+    std::unique_ptr<std::vector<raw::RawDigit> >     rawdigits(new std::vector<raw::RawDigit>);
+    MixRawDigits(evt, *rawdigits);
+    evt.put(std::move(rawdigits));
+  }
 
-  //put output digits
-  evt.put(std::move(rawdigits));
-  evt.put(std::move(opdet_hg),"OpdetBeamHighGain");
-  evt.put(std::move(opdet_lg),"OpdetBeamLowGain");
-  evt.put(std::move(crthits));
-  evt.put(std::move(triggerdata));
+  if(fDoCRTMixing){
+    std::unique_ptr<std::vector<crt::CRTHit> >       crthits(new std::vector<crt::CRTHit>);
+    MixCRTHits(evt, *crthits);
+    evt.put(std::move(crthits));
+  }
 
+  if(fDoPMTMixing){
+    std::unique_ptr<std::vector<raw::OpDetWaveform> > opdet_hg(new std::vector<raw::OpDetWaveform>);
+    std::unique_ptr<std::vector<raw::OpDetWaveform> > opdet_lg(new std::vector<raw::OpDetWaveform>);
+    std::unique_ptr<std::vector<raw::Trigger> > triggerdata(new std::vector<raw::Trigger>);
+    
+    GenerateMCOpDetGainScaleMap(); // Right now the gain scale map is the same for low and high gain readout and it is obtained before mixing any of them
+    MixOpDetWaveforms_HighGain(evt, *opdet_hg);
+    MixOpDetWaveforms_LowGain(evt, *opdet_lg);
+    MixTriggerData(evt, *triggerdata);
+    
+    evt.put(std::move(opdet_hg),"OpdetBeamHighGain");
+    evt.put(std::move(opdet_lg),"OpdetBeamLowGain");
+    evt.put(std::move(triggerdata));
+  }
 }
 
 
