@@ -122,6 +122,8 @@ microboone_detsim_services.LightYieldService.LightYieldProvider.UseDB: true
 microboone_simulation_services:                                 @local::microboone_g4_services
 microboone_simulation_services.LArFFT:                          @local::microboone_larfft
 microboone_simulation_services.SignalShapingServiceMicroBooNE:  @local::microboone_signalshapingservice
+microboone_simulation_services.PmtGainService:                  @local::microboone_pmtgain_service
+microboone_simulation_services.LightYieldService:               @local::microboone_lightyield_service
 microboone_simulation_services.UBOpticalChConfig:               @local::microboone_optical_ch_config
 microboone_simulation_services.UBOpReadoutMap:                  @local::microboone_opreadoutmap_mc
 microboone_simulation_services.ExptGeoHelperInterface:          @local::microboone_geometry_helper
