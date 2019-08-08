@@ -5,7 +5,9 @@
 //#include "larevt/CalibrationDBI/Providers/WebError.h"
 
 // art/LArSoft libraries
+#include "cetlib/search_path.h"
 #include "cetlib_except/exception.h"
+#include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
 //C/C++
@@ -228,4 +230,3 @@ namespace lariov {
 }//end namespace lariov
 	
 #endif
-        
