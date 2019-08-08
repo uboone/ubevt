@@ -4,8 +4,9 @@
 #include "UboonedqdxCorrectionProvider.h"
 
 // art/LArSoft libraries
+#include "cetlib/search_path.h"
 #include "cetlib_except/exception.h"
-
+#include "fhiclcpp/ParameterSet.h"
 
 #include <fstream>
 
@@ -498,4 +499,3 @@ namespace lariov {
 }//end namespace lariov
 	
 #endif
-        
