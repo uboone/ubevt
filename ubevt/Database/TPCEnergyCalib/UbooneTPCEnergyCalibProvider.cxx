@@ -6,6 +6,7 @@
 
 // art/LArSoft libraries
 #include "cetlib_except/exception.h"
+#include "fhiclcpp/ParameterSet.h"
 
 #include <fstream>
 
