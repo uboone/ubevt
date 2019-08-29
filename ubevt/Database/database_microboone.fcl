@@ -91,7 +91,7 @@ crt_channelstatus_provider:
   UseFile: false
 }
 crt_channelstatus_provider.DatabaseRetrievalAlg.DBFolderName: "crt_channelstatus_data"
-crt_channelstatus_provider.DatabaseRetrievalAlg.DBTag: "v1r0"
+crt_channelstatus_provider.DatabaseRetrievalAlg.DBTag: "v2r0"
 
 crt_channelstatus_service:
 {
