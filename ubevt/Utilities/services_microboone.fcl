@@ -27,8 +27,11 @@ microboone_services_reco.ElectronicsCalibService:       @local::microboone_elect
 microboone_services_reco.UBElectronLifetimeService:        @local::microboone_electronlifetime_service
 microboone_services_reco.TPCEnergyCalibService:         @local::microboone_tpcenergycalib_service
 microboone_services_reco.UBOpReadoutMap:                @local::microboone_opreadoutmap
+microboone_services_reco.CRTChannelStatusService: @local::crt_channelstatus_service
 
 microboone_services_reco.LightYieldService.LightYieldProvider.UseDB: true
+
+
 
 # Define microboone_full_services ... this includes ALL services and we don't care about resource usage!
 microboone_full_services:                           @local::microboone_simulation_services
