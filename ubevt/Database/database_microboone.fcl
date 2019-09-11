@@ -54,7 +54,7 @@ microboone_channelstatus_provider:
   UseFile: false
 }
 microboone_channelstatus_provider.DatabaseRetrievalAlg.DBFolderName: "channelstatus_data"
-microboone_channelstatus_provider.DatabaseRetrievalAlg.DBTag: "v3r1"
+microboone_channelstatus_provider.DatabaseRetrievalAlg.DBTag: "v3r2"
 
 microboone_channelstatus_service:
 {
@@ -91,7 +91,7 @@ crt_channelstatus_provider:
   UseFile: false
 }
 crt_channelstatus_provider.DatabaseRetrievalAlg.DBFolderName: "crt_channelstatus_data"
-crt_channelstatus_provider.DatabaseRetrievalAlg.DBTag: "v1r0"
+crt_channelstatus_provider.DatabaseRetrievalAlg.DBTag: "v2r0"
 
 crt_channelstatus_service:
 {
@@ -115,7 +115,7 @@ microboone_electronlifetime_provider:
     DefaultLifetimeErr:    0.0
 }
 microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBFolderName: "elifetime_data"
-microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBTag: "v1r0"
+microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBTag: "v1r1"
 
 microboone_electronlifetime_service:
 {
@@ -174,7 +174,7 @@ microboone_lightyield_provider:
 }
 microboone_lightyield_provider.DatabaseRetrievalAlg.DBFolderName: "lightyieldscale_data"
 #microboone_lightyield_provider.DatabaseRetrievalAlg.DBUrl: "http://dbdata0vm.fnal.gov:8086/uboonecon_dev/app/"
-microboone_lightyield_provider.DatabaseRetrievalAlg.DBTag: "v1r0"
+microboone_lightyield_provider.DatabaseRetrievalAlg.DBTag: "v2r0"
 
 microboone_lightyield_service:
 {
