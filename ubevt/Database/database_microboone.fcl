@@ -230,7 +230,7 @@ microboone_tpcenergycalib_provider_mc:
 }
 
 #set values that are identical in data and mc
-microboone_tpcenergycalib_provider_mc.dEdxCorrectionProvider.DatabaseRetrievalAlg.DBUrl: "http://dbdata0vm.fnal.gov:8086/uboonecon_dev/app/"
+microboone_tpcenergycalib_provider_mc.dEdxCorrectionProvider.DatabaseRetrievalAlg.DBUrl: "http://dbdata0vm.fnal.gov:8186/uboonecon_prod/app/"
 
 microboone_tpcenergycalib_provider_mc.XShapeCorrectionProvider.DatabaseRetrievalAlg.DBTag: "v1r0"
 microboone_tpcenergycalib_provider_mc.YZCorrectionProvider.DatabaseRetrievalAlg.DBTag: "v1r0"
