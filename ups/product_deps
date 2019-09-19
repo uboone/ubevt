@@ -31,20 +31,20 @@ table_fragment_end
 product                 version
 ubcore                  v08_30_02
 larevt                  v08_06_09
-gallery                 v1_12_04
-ifdh_art		v2_08_07
+gallery                 v1_12_06
+ifdh_art		v2_08_09
 cetbuildtools	        v7_12_01	-	only_for_build
 end_product_list
 
 qualifier      ubcore         larevt         gallery	   ifdh_art
-c2:py3:debug   c2:py3:debug   c2:py3:debug   c2:py3:debug  c2:py3:s86:debug
-c2:py3:prof    c2:py3:prof    c2:py3:prof    c2:py3:prof   c2:py3:s86:prof
-e17:py3:debug  e17:py3:debug  e17:py3:debug  e17:py3:debug e17:py3:s86:debug
-e17:py3:prof   e17:py3:prof   e17:py3:prof   e17:py3:prof  e17:py3:s86:prof
-c2:debug       c2:debug       c2:debug       c2:debug	   c2:s86:debug
-c2:prof        c2:prof        c2:prof        c2:prof 	   c2:s86:prof
-e17:debug      e17:debug      e17:debug      e17:debug	   e17:s86:debug
-e17:prof       e17:prof       e17:prof       e17:prof	   e17:s86:prof
+c2:py3:debug   c2:py3:debug   c2:py3:debug   c2:py3:debug  c2:py3:debug
+c2:py3:prof    c2:py3:prof    c2:py3:prof    c2:py3:prof   c2:py3:prof
+e17:py3:debug  e17:py3:debug  e17:py3:debug  e17:py3:debug e17:py3:debug
+e17:py3:prof   e17:py3:prof   e17:py3:prof   e17:py3:prof  e17:py3:prof
+c2:debug       c2:debug       c2:debug       c2:debug	   c2:debug
+c2:prof        c2:prof        c2:prof        c2:prof 	   c2:prof
+e17:debug      e17:debug      e17:debug      e17:debug	   e17:debug
+e17:prof       e17:prof       e17:prof       e17:prof	   e17:prof
 end_qualifier_list
 
 # Preserve tabs and formatting in emacs and vi / vim:
