@@ -89,7 +89,10 @@ void spacecharge::ShiftEdepSCE::produce(art::Event & e)
     if(sce->EnableSimSpatialSCE())
       posOffsets = sce->GetPosOffsets(edep.MidPoint());
     outEdepVec.emplace_back(edep.NumPhotons(),
+                0,
+                0,
 			    edep.NumElectrons(),
+			    0.0,
 			    edep.Energy(),
 			    sim::SimEnergyDeposit::Point_t(edep.StartX()+posOffsets.X(),
 							   edep.StartY()+posOffsets.Y(),
