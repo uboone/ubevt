@@ -82,10 +82,12 @@ void util::FileCatalogMetadataMicroBooNE::postEndSubRun(art::SubRun const& sr)
   if(sr.getByLabel(fPOTModuleLabel,potListHandle)){
     fTotPOT+=potListHandle->totpot;}
 
-  std::ostringstream streamObj;
-  streamObj << fTotPOT;
-  std::string strPOT = streamObj.str();
-  mds->addMetadata("mc.pot", strPOT);
+  if(fTotPOT > 0.) {
+    std::ostringstream streamObj;
+    streamObj << fTotPOT;
+    std::string strPOT = streamObj.str();
+    mds->addMetadata("mc.pot", strPOT);
+  }
 }
 
 
