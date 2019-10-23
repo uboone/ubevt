@@ -90,6 +90,7 @@ void spacecharge::ShiftEdepSCE::produce(art::Event & e)
       posOffsets = sce->GetPosOffsets(edep.MidPoint());
     outEdepVec.emplace_back(edep.NumPhotons(),
 			    edep.NumElectrons(),
+			    0.0, // scintillation yield factor
 			    edep.Energy(),
 			    sim::SimEnergyDeposit::Point_t(edep.StartX()+posOffsets.X(),
 							   edep.StartY()+posOffsets.Y(),
