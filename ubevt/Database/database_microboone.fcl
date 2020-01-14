@@ -6,7 +6,7 @@ BEGIN_PROLOG
 #Standard uboone production database configuration
 #===============================================
 microboone_databaseretrievalalg: @local::standard_databaseretrievalalg
-microboone_databaseretrievalalg.DBUrl: "http://dbdata0vm.fnal.gov:8186/uboonecon_prod/app/"
+microboone_databaseretrievalalg.DBUrl: "https://dbdata0vm.fnal.gov:8443/uboonecon_prod/app/"
 # for development db, use "http://dbdata0vm.fnal.gov:8086/uboonecon_dev/app/"
 
 microboone_calibservicehelper:
@@ -145,7 +145,7 @@ microboone_pmtgain_provider:
     DefaultBaselineRms:  0.6 
 }
 microboone_pmtgain_provider.DatabaseRetrievalAlg.DBFolderName: "detpmtgains_data"
-microboone_pmtgain_provider.DatabaseRetrievalAlg.DBUrl: "http://dbdata0vm.fnal.gov:8186/uboonecon_prod/app/"
+microboone_pmtgain_provider.DatabaseRetrievalAlg.DBUrl: "https://dbdata0vm.fnal.gov:8443/uboonecon_prod/app/"
 microboone_pmtgain_provider.DatabaseRetrievalAlg.DBTag: "v1r1"
 
 microboone_pmtgain_service:
@@ -257,7 +257,7 @@ microboone_tpcenergycalib_provider_mc:
 }
 
 #set values that are identical in data and mc
-microboone_tpcenergycalib_provider_mc.dEdxCorrectionProvider.DatabaseRetrievalAlg.DBUrl: "http://dbdata0vm.fnal.gov:8186/uboonecon_prod/app/"
+microboone_tpcenergycalib_provider_mc.dEdxCorrectionProvider.DatabaseRetrievalAlg.DBUrl: "https://dbdata0vm.fnal.gov:8443/uboonecon_prod/app/"
 
 microboone_tpcenergycalib_provider_mc.XShapeCorrectionProvider.DatabaseRetrievalAlg.DBTag: "v1r0"
 microboone_tpcenergycalib_provider_mc.YZCorrectionProvider.DatabaseRetrievalAlg.DBTag: "v1r0"
