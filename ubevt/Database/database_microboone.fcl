@@ -153,7 +153,7 @@ microboone_electronicscalib_provider:
     OnlyMisconfigStatusFromDB: true
 }
 microboone_electronicscalib_provider.DatabaseRetrievalAlg.DBFolderName: "electronicscalib_data"
-microboone_electronicscalib_provider.DatabaseRetrievalAlg.DBTag: "v1r3"
+microboone_electronicscalib_provider.DatabaseRetrievalAlg.DBTag: "v1r4"
 
 microboone_electronicscalib_service:
 {
