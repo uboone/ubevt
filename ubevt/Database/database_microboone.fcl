@@ -174,7 +174,7 @@ microboone_lightyield_provider:
 }
 microboone_lightyield_provider.DatabaseRetrievalAlg.DBFolderName: "lightyieldscale_data"
 #microboone_lightyield_provider.DatabaseRetrievalAlg.DBUrl: "http://dbdata0vm.fnal.gov:8086/uboonecon_dev/app/"
-microboone_lightyield_provider.DatabaseRetrievalAlg.DBTag: "v2r1"
+microboone_lightyield_provider.DatabaseRetrievalAlg.DBTag: "v2r2"
 
 microboone_lightyield_service:
 {
