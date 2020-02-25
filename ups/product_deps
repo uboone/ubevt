@@ -21,6 +21,7 @@ fwdir   product_dir scripts
 
 # table fragment to set FW_SEARCH_PATH
 table_fragment_begin
+pathPrepend(FW_SEARCH_PATH, /cvmfs/uboone.osgstorage.org/stash/calibration_databases)
 table_fragment_end
 
 # With "product  version" table below, we now define depdendencies
