@@ -20,6 +20,7 @@
 
 #include <memory>
 
+#include "larcore/CoreUtils/ServiceUtil.h"
 #include "lardataobj/Simulation/SimEnergyDeposit.h"
 #include "larevt/SpaceChargeServices/SpaceChargeService.h"
 #include "TNtuple.h"

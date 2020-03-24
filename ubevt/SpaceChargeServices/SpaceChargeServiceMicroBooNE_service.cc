@@ -12,6 +12,7 @@
 
 // LArSoft includes
 #include "ubevt/SpaceChargeServices/SpaceChargeServiceMicroBooNE.h"
+#include "larcore/CoreUtils/ServiceUtil.h"
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
 
 // ROOT includes
