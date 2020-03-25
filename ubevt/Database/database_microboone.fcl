@@ -34,6 +34,8 @@ microboone_pedestalretrievalalg:
 }
 microboone_pedestalretrievalalg.DatabaseRetrievalAlg.DBFolderName: "detpedestals_data" 
 microboone_pedestalretrievalalg.DatabaseRetrievalAlg.DBTag: "v1r0"
+microboone_pedestalretrievalalg.DatabaseRetrievalAlg.UseSQLite: true
+
 
 microboone_detpedestalservice: 
 {
@@ -54,7 +56,8 @@ microboone_channelstatus_provider:
   UseFile: false
 }
 microboone_channelstatus_provider.DatabaseRetrievalAlg.DBFolderName: "channelstatus_data"
-microboone_channelstatus_provider.DatabaseRetrievalAlg.DBTag: "v3r2"
+microboone_channelstatus_provider.DatabaseRetrievalAlg.DBTag: "v3r3"
+microboone_channelstatus_provider.DatabaseRetrievalAlg.UseSQLite: true
 
 microboone_channelstatus_service:
 {
@@ -92,6 +95,7 @@ crt_channelstatus_provider:
 }
 crt_channelstatus_provider.DatabaseRetrievalAlg.DBFolderName: "crt_channelstatus_data"
 crt_channelstatus_provider.DatabaseRetrievalAlg.DBTag: "v2r0"
+crt_channelstatus_provider.DatabaseRetrievalAlg.UseSQLite: true
 
 crt_channelstatus_service:
 {
@@ -115,7 +119,8 @@ microboone_electronlifetime_provider:
     DefaultLifetimeErr:    0.0
 }
 microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBFolderName: "elifetime_data"
-microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBTag: "v1r1"
+microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBTag: "v2r0"
+microboone_electronlifetime_provider.DatabaseRetrievalAlg.UseSQLite: true
 
 microboone_electronlifetime_service:
 {
@@ -147,6 +152,7 @@ microboone_pmtgain_provider:
 microboone_pmtgain_provider.DatabaseRetrievalAlg.DBFolderName: "detpmtgains_data"
 microboone_pmtgain_provider.DatabaseRetrievalAlg.DBUrl: "https://dbdata0vm.fnal.gov:8443/uboonecon_prod/app/"
 microboone_pmtgain_provider.DatabaseRetrievalAlg.DBTag: "v1r1"
+microboone_pmtgain_provider.DatabaseRetrievalAlg.UseSQLite: true
 
 microboone_pmtgain_service:
 {
@@ -173,8 +179,8 @@ microboone_lightyield_provider:
     
 }
 microboone_lightyield_provider.DatabaseRetrievalAlg.DBFolderName: "lightyieldscale_data"
-#microboone_lightyield_provider.DatabaseRetrievalAlg.DBUrl: "http://dbdata0vm.fnal.gov:8086/uboonecon_dev/app/"
-microboone_lightyield_provider.DatabaseRetrievalAlg.DBTag: "v2r0"
+microboone_lightyield_provider.DatabaseRetrievalAlg.DBTag: "v2r2"
+microboone_lightyield_provider.DatabaseRetrievalAlg.UseSQLite: true
 
 microboone_lightyield_service:
 {
@@ -201,7 +207,8 @@ microboone_electronicscalib_provider:
     OnlyMisconfigStatusFromDB: true
 }
 microboone_electronicscalib_provider.DatabaseRetrievalAlg.DBFolderName: "electronicscalib_data"
-microboone_electronicscalib_provider.DatabaseRetrievalAlg.DBTag: "v1r3"
+microboone_electronicscalib_provider.DatabaseRetrievalAlg.DBTag: "v1r4"
+microboone_electronicscalib_provider.DatabaseRetrievalAlg.UseSQLite: true
 
 microboone_electronicscalib_service:
 {
@@ -280,6 +287,9 @@ microboone_tpcenergycalib_provider_mc.XShapeCorrectionProvider_Plane2.DatabaseRe
 microboone_tpcenergycalib_provider_mc.XShapeCorrectionProvider_Plane0.DatabaseRetrievalAlg.DBTag: "v1r0"
 microboone_tpcenergycalib_provider_mc.XShapeCorrectionProvider_Plane1.DatabaseRetrievalAlg.DBTag: "v1r0"
 microboone_tpcenergycalib_provider_mc.XShapeCorrectionProvider_Plane2.DatabaseRetrievalAlg.DBTag: "v1r0"
+microboone_tpcenergycalib_provider_mc.XShapeCorrectionProvider_Plane0.DatabaseRetrievalAlg.UseSQLite: true
+microboone_tpcenergycalib_provider_mc.XShapeCorrectionProvider_Plane1.DatabaseRetrievalAlg.UseSQLite: true
+microboone_tpcenergycalib_provider_mc.XShapeCorrectionProvider_Plane2.DatabaseRetrievalAlg.UseSQLite: true
 
 microboone_tpcenergycalib_provider_mc.XNormCorrectionProvider.DatabaseRetrievalAlg.DBFolderName: "none"
 microboone_tpcenergycalib_provider_mc.dEdxCorrectionProvider.DatabaseRetrievalAlg.DBFolderName: "none"
@@ -290,6 +300,9 @@ microboone_tpcenergycalib_provider_mc.YZCorrectionProvider_Plane2.DatabaseRetrie
 microboone_tpcenergycalib_provider_mc.YZCorrectionProvider_Plane0.DatabaseRetrievalAlg.DBTag: "v1r1"
 microboone_tpcenergycalib_provider_mc.YZCorrectionProvider_Plane1.DatabaseRetrievalAlg.DBTag: "v1r1"
 microboone_tpcenergycalib_provider_mc.YZCorrectionProvider_Plane2.DatabaseRetrievalAlg.DBTag: "v1r1"
+microboone_tpcenergycalib_provider_mc.YZCorrectionProvider_Plane0.DatabaseRetrievalAlg.UseSQLite: true
+microboone_tpcenergycalib_provider_mc.YZCorrectionProvider_Plane1.DatabaseRetrievalAlg.UseSQLite: true
+microboone_tpcenergycalib_provider_mc.YZCorrectionProvider_Plane2.DatabaseRetrievalAlg.UseSQLite: true
 
 #point data to data database folders and correct data tags
 microboone_tpcenergycalib_provider_data.XShapeCorrectionProvider_Plane0.DatabaseRetrievalAlg.DBFolderName: "dqdx_xshape_plane0_data"
@@ -298,19 +311,26 @@ microboone_tpcenergycalib_provider_data.XShapeCorrectionProvider_Plane2.Database
 microboone_tpcenergycalib_provider_data.XShapeCorrectionProvider_Plane0.DatabaseRetrievalAlg.DBTag: "v1r2"
 microboone_tpcenergycalib_provider_data.XShapeCorrectionProvider_Plane1.DatabaseRetrievalAlg.DBTag: "v1r2"
 microboone_tpcenergycalib_provider_data.XShapeCorrectionProvider_Plane2.DatabaseRetrievalAlg.DBTag: "v1r2"
+microboone_tpcenergycalib_provider_data.XShapeCorrectionProvider_Plane0.DatabaseRetrievalAlg.UseSQLite: true
+microboone_tpcenergycalib_provider_data.XShapeCorrectionProvider_Plane1.DatabaseRetrievalAlg.UseSQLite: true
+microboone_tpcenergycalib_provider_data.XShapeCorrectionProvider_Plane2.DatabaseRetrievalAlg.UseSQLite: true
 
 microboone_tpcenergycalib_provider_data.XNormCorrectionProvider.UseDB: true
 microboone_tpcenergycalib_provider_data.XNormCorrectionProvider.DatabaseRetrievalAlg.DBFolderName: "dqdx_xnorm_data"
 microboone_tpcenergycalib_provider_data.XNormCorrectionProvider.DatabaseRetrievalAlg.DBTag: "v1r1"
+microboone_tpcenergycalib_provider_data.XNormCorrectionProvider.DatabaseRetrievalAlg.UseSQLite: true
 
 microboone_tpcenergycalib_provider_data.dEdxCorrectionProvider.DatabaseRetrievalAlg.DBFolderName: "none"
 
 microboone_tpcenergycalib_provider_data.YZCorrectionProvider_Plane0.DatabaseRetrievalAlg.DBFolderName: "dqdx_yz_plane0_data"
 microboone_tpcenergycalib_provider_data.YZCorrectionProvider_Plane1.DatabaseRetrievalAlg.DBFolderName: "dqdx_yz_plane1_data"
 microboone_tpcenergycalib_provider_data.YZCorrectionProvider_Plane2.DatabaseRetrievalAlg.DBFolderName: "dqdx_yz_plane2_data"
-microboone_tpcenergycalib_provider_data.YZCorrectionProvider_Plane0.DatabaseRetrievalAlg.DBTag: "v2r3"
-microboone_tpcenergycalib_provider_data.YZCorrectionProvider_Plane1.DatabaseRetrievalAlg.DBTag: "v2r3"
-microboone_tpcenergycalib_provider_data.YZCorrectionProvider_Plane2.DatabaseRetrievalAlg.DBTag: "v2r3"
+microboone_tpcenergycalib_provider_data.YZCorrectionProvider_Plane0.DatabaseRetrievalAlg.DBTag: "v3r0"
+microboone_tpcenergycalib_provider_data.YZCorrectionProvider_Plane1.DatabaseRetrievalAlg.DBTag: "v3r0"
+microboone_tpcenergycalib_provider_data.YZCorrectionProvider_Plane2.DatabaseRetrievalAlg.DBTag: "v3r0"
+microboone_tpcenergycalib_provider_data.YZCorrectionProvider_Plane0.DatabaseRetrievalAlg.UseSQLite: true
+microboone_tpcenergycalib_provider_data.YZCorrectionProvider_Plane1.DatabaseRetrievalAlg.UseSQLite: true
+microboone_tpcenergycalib_provider_data.YZCorrectionProvider_Plane2.DatabaseRetrievalAlg.UseSQLite: true
     
 microboone_tpcenergycalib_service:
 {
