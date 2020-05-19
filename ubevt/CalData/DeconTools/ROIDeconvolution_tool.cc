@@ -34,7 +34,8 @@ public:
     void configure(const fhicl::ParameterSet& pset)              override;
     void outputHistograms(art::TFileDirectory&)            const override;
     
-    void Deconvolve(const IROIFinder::Waveform&,
+    void Deconvolve(detinfo::DetectorClocksData const& clockData,
+                    const IROIFinder::Waveform&,
                     raw::ChannelID_t,
                     IROIFinder::CandidateROIVec const&,
                     recob::Wire::RegionsOfInterest_t& )    const override;
@@ -111,7 +112,8 @@ void ROIDeconvolution::configure(const fhicl::ParameterSet& pset)
     
     return;
 }
-void ROIDeconvolution::Deconvolve(const IROIFinder::Waveform&        waveform,
+void ROIDeconvolution::Deconvolve(detinfo::DetectorClocksData const& clockData,
+                                  const IROIFinder::Waveform&        waveform,
                                   raw::ChannelID_t                   channel,
                                   IROIFinder::CandidateROIVec const& roiVec,
                                   recob::Wire::RegionsOfInterest_t&  ROIVec) const
@@ -185,7 +187,7 @@ void ROIDeconvolution::Deconvolve(const IROIFinder::Waveform&        waveform,
         std::copy(waveform.begin()+firstOffset, waveform.begin()+secondOffset, holder.begin() + holderOffset);
         
         // Deconvolute the raw signal using the channel's nominal response
-        fSignalShaping->Deconvolute(channel,holder,"nominal");
+        fSignalShaping->Deconvolute(clockData, channel,holder,"nominal");
         
         // Get rid of the leading and trailing "extra" bins needed to keep the FFT happy
         if (roiStart > 0 || holderOffset > 0) std::copy(holder.begin() + holderOffset + roiStart, holder.begin() + holderOffset + roiStop, holder.begin());

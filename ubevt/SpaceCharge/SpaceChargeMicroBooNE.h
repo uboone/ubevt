@@ -12,8 +12,7 @@
 // LArSoft libraries
 #include "larevt/SpaceCharge/SpaceCharge.h"
 #include "larcoreobj/SimpleTypesAndConstants/geo_vectors.h"
-#include "larcorealg/CoreUtils/ProviderPack.h"
-#include "lardataalg/DetectorInfo/DetectorProperties.h"
+#include "lardataalg/DetectorInfo/DetectorPropertiesData.h"
 
 // FHiCL libraries
 #include "fhiclcpp/ParameterSet.h"
@@ -151,11 +150,6 @@ namespace spacecharge {
  
     public:
 
-      /// List of service providers we depend on.
-      using providers_type = lar::ProviderPack<
-        detinfo::DetectorProperties
-        >;
-      
       typedef enum {
         kVoxelized,
         kTH3,
@@ -163,21 +157,18 @@ namespace spacecharge {
         kUnknown
       } SpaceChargeRepresentation_t;
     
-      explicit SpaceChargeMicroBooNE(fhicl::ParameterSet const& pset);
-      
       /**
        * @brief Constructs the provider and sets up the dependencies.
        * @param pset FHiCL parameter set for provider configuration
-       * @param providers pack of providers `SpaceChargeMicroBooNE` depends on
+       * @param detProp reference to DetectorPropertiesData object
        * @see Configure()
        */
-      SpaceChargeMicroBooNE
-        (fhicl::ParameterSet const& pset, providers_type providers);
+      SpaceChargeMicroBooNE(fhicl::ParameterSet const& pset,
+                            detinfo::DetectorPropertiesData const& detProp);
       
       SpaceChargeMicroBooNE(SpaceChargeMicroBooNE const&) = delete;
       virtual ~SpaceChargeMicroBooNE() = default;
       
-      bool Configure(fhicl::ParameterSet const& pset, detinfo::DetectorProperties const*);
       bool Update(uint64_t ts=0);
       
       bool EnableSimSpatialSCE() const override;

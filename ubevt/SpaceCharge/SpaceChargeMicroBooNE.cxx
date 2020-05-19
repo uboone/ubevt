@@ -54,33 +54,15 @@ namespace {
 
 
 //-----------------------------------------------
-spacecharge::SpaceChargeMicroBooNE::SpaceChargeMicroBooNE(
-  fhicl::ParameterSet const& pset
-)
-{
-  //Configure(pset);
-}
-
-//-----------------------------------------------
 spacecharge::SpaceChargeMicroBooNE::SpaceChargeMicroBooNE
-  (fhicl::ParameterSet const& pset, providers_type providers)
-{
-  Configure(pset, providers.get<detinfo::DetectorProperties>());
-}
-
-//------------------------------------------------
-bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& pset, 
-						   detinfo::DetectorProperties const* detprop)
+  (fhicl::ParameterSet const& pset, detinfo::DetectorPropertiesData const& detProp)
 {  
-  assert(detprop); // detector properties service provider is required
-  
   fEnableSimSpatialSCE = pset.get<bool>("EnableSimSpatialSCE");
   fEnableSimEfieldSCE = pset.get<bool>("EnableSimEfieldSCE");
   fEnableCalSpatialSCE = pset.get<bool>("EnableCalSpatialSCE");
   fEnableCalEfieldSCE = pset.get<bool>("EnableCalEfieldSCE");
    
-  //auto const *detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
-  fEfield = detprop->Efield();  
+  fEfield = detProp.Efield();
 
   if((fEnableSimSpatialSCE == true) || (fEnableSimEfieldSCE == true))
   {
@@ -338,7 +320,6 @@ bool spacecharge::SpaceChargeMicroBooNE::Configure(fhicl::ParameterSet const& ps
   }
 
   //std::cout << "Finished setting up space charge" << std::endl;
-  return true;
 }
 
 //------------------------------------------------

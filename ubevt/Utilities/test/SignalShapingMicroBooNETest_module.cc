@@ -15,6 +15,7 @@
 
 #include "ubevt/Utilities/SignalShapingServiceMicroBooNE.h"
 #include "lardata/Utilities/LArFFT.h"
+#include "lardata/DetectorInfoServices/DetectorClocksService.h"
 
 #include "TComplex.h"
 #include "TFile.h"
@@ -88,6 +89,7 @@ namespace util
     art::ServiceHandle<art::TFileService> tfs;
     art::ServiceHandle<util::LArFFT> fft;
     art::ServiceHandle<util::SignalShapingServiceMicroBooNE> sss;
+    auto const clockData = art::ServiceHandle<detinfo::DetectorClocksService>()->DataForJob();
 
     int nticks = fft->FFTSize();
     std::cout << "Number of ticks = " << nticks << std::endl;
@@ -108,14 +110,14 @@ namespace util
     // Convoluted pulse.
 
     std::vector<float> tconvc(tinc);
-    sss->Convolute(6000, tconvc, 0.0, 0.0);
+    sss->Convolute(clockData, 6000, tconvc, 0.0, 0.0);
     TH1D* hconvc = dirc.make<TH1D>("conv", "Collection Convoluted", nhist+1, -0.5, nhist+0.5);
     vector_to_hist(tconvc, hconvc);
 
     // Deconvoluted pulse.
 
     std::vector<float> tdeconvc(tconvc);
-    sss->Deconvolute(6000, tdeconvc, 0.0, 0.0);
+    sss->Deconvolute(clockData, 6000, tdeconvc, 0.0, 0.0);
     TH1D* hdeconvc = dirc.make<TH1D>("deconv", "Collection Deconvoluted", nhist+1, -0.5, nhist+0.5);
     vector_to_hist(tdeconvc, hdeconvc);
 
@@ -150,14 +152,14 @@ namespace util
     // Convoluted pulse.
 
     std::vector<float> utconvi(utini);
-    sss->Convolute(0, utconvi, 0.0, 0.0);
+    sss->Convolute(clockData, 0, utconvi, 0.0, 0.0);
     TH1D* uhconvi = udiri.make<TH1D>("conv", "InductionU Convoluted", nhist+1, -0.5, nhist+0.5);
     vector_to_hist(utconvi, uhconvi);
 
     // Deconvoluted pulse.
 
     std::vector<float> utdeconvi(utconvi);
-    sss->Deconvolute(0, utdeconvi, 0.0, 0.0);
+    sss->Deconvolute(clockData, 0, utdeconvi, 0.0, 0.0);
     TH1D* uhdeconvi = udiri.make<TH1D>("deconv", "InductionU Deconvoluted", nhist+1, -0.5, nhist+0.5);
     vector_to_hist(utdeconvi, uhdeconvi);
 
@@ -191,14 +193,14 @@ namespace util
     // Convoluted pulse.
 
     std::vector<float> tconvi(tini);
-    sss->Convolute(3000, tconvi, 0.0, 0.0);
+    sss->Convolute(clockData, 3000, tconvi, 0.0, 0.0);
     TH1D* hconvi = diri.make<TH1D>("conv", "InductionV Convoluted", nhist+1, -0.5, nhist+0.5);
     vector_to_hist(tconvi, hconvi);
 
     // Deconvoluted pulse.
 
     std::vector<float> tdeconvi(tconvi);
-    sss->Deconvolute(3000, tdeconvi, 0.0, 0.0);
+    sss->Deconvolute(clockData, 3000, tdeconvi, 0.0, 0.0);
     TH1D* hdeconvi = diri.make<TH1D>("deconv", "InductionV Deconvoluted", nhist+1, -0.5, nhist+0.5);
     vector_to_hist(tdeconvi, hdeconvi);
 

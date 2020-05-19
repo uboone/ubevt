@@ -17,6 +17,9 @@
 #include "fhiclcpp/ParameterSet.h"
 #include "ubevt/CalData/DeconTools/IROIFinder.h"
 #include "lardataobj/RecoBase/Wire.h"
+namespace detinfo {
+  class DetectorClocksData;
+}
 
 namespace art
 {
@@ -34,7 +37,8 @@ namespace uboone_tool
         virtual void outputHistograms(art::TFileDirectory&)         const = 0;
         
         // Find the ROI's
-        virtual void Deconvolve(IROIFinder::Waveform const&,
+        virtual void Deconvolve(detinfo::DetectorClocksData const&,
+                                IROIFinder::Waveform const&,
                                 raw::ChannelID_t,
                                 IROIFinder::CandidateROIVec const&,
                                 recob::Wire::RegionsOfInterest_t& ) const = 0;

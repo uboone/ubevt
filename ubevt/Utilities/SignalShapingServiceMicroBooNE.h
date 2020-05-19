@@ -91,6 +91,9 @@
 #include "larcore/Geometry/Geometry.h"
 #include "larcorealg/Geometry/TPCGeo.h"
 #include "larcorealg/Geometry/PlaneGeo.h"
+namespace detinfo {
+  class DetectorClocksData;
+}
 
 using DoubleVec  = std::vector<double>;
 using FloatVec   = std::vector<float>;
@@ -162,13 +165,18 @@ namespace util {
       //------------------------------------------------------------
 
       // Do convolution calculation (for simulation).
-      template <class T> void Convolute(size_t channel, std::vector<T>& func, double y, double z) const;
-      template <class T> void Convolute(size_t channel, std::vector<T>& func, const std::vector<std::unique_ptr<ResponseParams> >& params) const;
-      template <class T> void Convolute(size_t channel, std::vector<T>& func, const std::string& response_name) const;
+      template <class T> void Convolute(detinfo::DetectorClocksData const& clockData,
+                                        size_t channel, std::vector<T>& func, double y, double z) const;
+      template <class T> void Convolute(detinfo::DetectorClocksData const& clockData,
+                                        size_t channel, std::vector<T>& func, const std::vector<std::unique_ptr<ResponseParams> >& params) const;
+      template <class T> void Convolute(detinfo::DetectorClocksData const& clockData,
+                                        size_t channel, std::vector<T>& func, const std::string& response_name) const;
 
       // Do deconvolution calculation (for reconstruction).
-      template <class T> void Deconvolute(size_t channel, std::vector<T>& func, double y, double z);
-      template <class T> void Deconvolute(size_t channel, std::vector<T>& func, const std::string& response_name);
+      template <class T> void Deconvolute(detinfo::DetectorClocksData const& clockData,
+                                          size_t channel, std::vector<T>& func, double y, double z);
+      template <class T> void Deconvolute(detinfo::DetectorClocksData const& clockData,
+                                          size_t channel, std::vector<T>& func, const std::string& response_name);
 
 
       //------------------------------------------------------------
@@ -181,11 +189,13 @@ namespace util {
       void  SetDecon(size_t datasize);
       const std::vector<unsigned int>&   GetNResponses() const { return fNResponses; } 
       
-      int FieldResponseTOffset(unsigned int const channel, const std::string& response_name) const;
+      int FieldResponseTOffset(detinfo::DetectorClocksData const& clockData,
+                               unsigned int const channel, const std::string& response_name) const;
 
 
       // Filter-related    
-      double Get2DFilterVal(size_t planeNum, size_t freqDimension, double binFrac) const;  // M. Mooney
+      double Get2DFilterVal(detinfo::DetectorClocksData const& clockData,
+                            size_t planeNum, size_t freqDimension, double binFrac) const;  // M. Mooney
       double Get2DFilterNorm(size_t planeNum) const;  // M. Mooney
 
 
@@ -340,7 +350,8 @@ namespace util {
 
 //----------------------------------------------------------------------
 // Do convolution.
-template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(size_t channel, 
+template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(detinfo::DetectorClocksData const& clockData,
+                                                                               size_t channel,
 									       std::vector<T>& func, 
 									       const std::vector<std::unique_ptr<util::ResponseParams> >& params) const
 {
@@ -363,7 +374,7 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(s
   std::vector<T> output;
   output.resize(func.size(), 0.0);
   for (auto input : input_map) {
-    this->Convolute(channel, input.second, input.first);
+    this->Convolute(clockData, channel, input.second, input.first);
     std::transform(input.second.begin(), input.second.end(), output.begin(), output.begin(), std::plus<T>()); 
   }
   
@@ -374,7 +385,8 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(s
       
 //----------------------------------------------------------------------
 // Do convolution.
-template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(size_t channel, std::vector<T>& func, double y, double z) const
+template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(detinfo::DetectorClocksData const& clockData,
+                                                                               size_t channel, std::vector<T>& func, double y, double z) const
 {
 
   double charge_fraction = 1.0;
@@ -385,12 +397,13 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(s
     }
   }
 
-  this->Convolute(channel, func, response_name); 
+  this->Convolute(clockData, channel, func, response_name);
 }
 
 //----------------------------------------------------------------------
 // Do convolution.
-template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(size_t channel, std::vector<T>& func, const std::string& response_name) const
+template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(detinfo::DetectorClocksData const& clockData,
+                                                                               size_t channel, std::vector<T>& func, const std::string& response_name) const
 {
 
   init();
@@ -417,7 +430,7 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(s
   }
   
   //Add time offset
-  int time_offset = FieldResponseTOffset(channel,response_name);  
+  int time_offset = FieldResponseTOffset(clockData, channel,response_name);
   std::vector<T> temp;
   if (time_offset <=0){
     temp.assign(func.begin(),func.begin()-time_offset);
@@ -442,7 +455,8 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(s
 
 //----------------------------------------------------------------------
 // Do deconvolution.
-template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute(size_t channel, std::vector<T>& func, double y, double z)
+template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute(detinfo::DetectorClocksData const& clockData,
+                                                                                 size_t channel, std::vector<T>& func, double y, double z)
 {
   
   double charge_fraction = 1.0;
@@ -453,13 +467,14 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute
     }
   }
 
-  this->Deconvolute(channel, func, response_name); 
+  this->Deconvolute(clockData, channel, func, response_name);
 }  
   
 
 //----------------------------------------------------------------------
 // Do deconvolution.
-template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute(size_t channel, std::vector<T>& func, const std::string& response_name)
+template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute(detinfo::DetectorClocksData const& clockData,
+                                                                                 size_t channel, std::vector<T>& func, const std::string& response_name)
 {
 
   init();
@@ -484,7 +499,7 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute
   fSignalShapingVec[channel].Response(response_name).Deconvolute(func);
 
   //Add Time Offset
-  int time_offset = FieldResponseTOffset(channel,response_name); 
+  int time_offset = FieldResponseTOffset(clockData, channel,response_name);
   std::vector<T> temp;
   if (time_offset <=0){
     temp.assign(func.end()+time_offset,func.end());

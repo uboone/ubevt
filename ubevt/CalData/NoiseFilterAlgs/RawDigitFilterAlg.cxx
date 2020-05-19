@@ -54,7 +54,8 @@ void RawDigitFilterAlg::initializeHists(art::ServiceHandle<art::TFileService>& t
 {
     if (fFillHistograms)
     {
-        double readOutSize = fDetectorProperties->ReadOutWindowSize();
+        auto const detProp = art::ServiceHandle<detinfo::DetectorPropertiesService>()->DataForJob();
+        double readOutSize = detProp.ReadOutWindowSize();
         
         fErosionVecHists.resize(4);
         fDilationVecHists.resize(4);

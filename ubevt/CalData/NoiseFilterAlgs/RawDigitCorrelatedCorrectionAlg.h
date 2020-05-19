@@ -35,7 +35,10 @@
 #include "art_root_io/TFileService.h"
 #include "larcore/CoreUtils/ServiceUtil.h"
 #include "larcore/Geometry/Geometry.h"
-#include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
+namespace detinfo {
+  class DetectorClocksData;
+  class DetectorPropertiesData;
+}
 
 #include "TH1.h"
 #include "TH2.h"
@@ -58,7 +61,9 @@ public:
     void reconfigure(fhicl::ParameterSet const & pset);
     void initializeHists(art::ServiceHandle<art::TFileService>&);
     
-    void removeCorrelatedNoise(RawDigitAdcIdxPair& digitIdxPair,
+    void removeCorrelatedNoise(detinfo::DetectorClocksData const& clockData,
+                               detinfo::DetectorPropertiesData const& detProp,
+                               RawDigitAdcIdxPair& digitIdxPair,
                                raw::ChannelID_t    channel,
                                std::vector<float>& truncMeanWireVec,
                                std::vector<float>& truncRmsWireVec,
@@ -139,7 +144,6 @@ private:
     
     // Useful services, keep copies for now (we can update during begin run periods)
     art::ServiceHandle<geo::Geometry>            fGeometry;             ///< pointer to Geometry service
-    detinfo::DetectorProperties const* fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>();   ///< Detector properties service
 };
     
 } // end caldata namespace
