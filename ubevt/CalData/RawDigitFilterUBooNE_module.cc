@@ -105,7 +105,6 @@ private:
     
     // Useful services, keep copies for now (we can update during begin run periods)
     geo::GeometryCore const*           fGeometry;             ///< pointer to Geometry service
-    detinfo::DetectorProperties const* fDetectorProperties;   ///< Detector properties service
     const lariov::DetPedestalProvider& fPedestalRetrievalAlg; ///< Keep track of an instance to the pedestal retrieval alg
 };
 
@@ -129,7 +128,6 @@ RawDigitFilterUBooNE::RawDigitFilterUBooNE(fhicl::ParameterSet const & pset) : E
 {
     
     fGeometry = lar::providerFrom<geo::Geometry>();
-    fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>();
     
     reconfigure(pset);
     produces<std::vector<raw::RawDigit> >();
@@ -202,11 +200,13 @@ void RawDigitFilterUBooNE::produce(art::Event & event)
     art::Handle< std::vector<raw::RawDigit> > digitVecHandle;
     event.getByLabel(fDigitModuleLabel, digitVecHandle);
     
+    auto const clockData = art::ServiceHandle<detinfo::DetectorClocksService>()->DataFor(event);
+    auto const detProp = art::ServiceHandle<detinfo::DetectorPropertiesService>()->DataFor(event, clockData);
     // Require a valid handle
     if (digitVecHandle.isValid())
     {
         unsigned int maxChannels    = fGeometry->Nchannels();
-        unsigned int maxTimeSamples = fDetectorProperties->NumberTimeSamples();
+        unsigned int maxTimeSamples = detProp.NumberTimeSamples();
         
         // Sadly, the RawDigits come to us in an unsorted condition which is not optimal for
         // what we want to do here. So we make a vector of pointers to the input raw digits and sort them
@@ -389,7 +389,9 @@ void RawDigitFilterUBooNE::produce(art::Event & event)
                 // Now go through the groups to remove correlated noise in those groups
                 for(auto& groupToDigitIdxPair : groupToDigitIdxPairMap)
                 {
-                    fCorCorrectAlg.removeCorrelatedNoise(groupToDigitIdxPair.second,
+                    fCorCorrectAlg.removeCorrelatedNoise(clockData,
+                                                         detProp,
+                                                         groupToDigitIdxPair.second,
                                                          channel,
                                                          truncMeanWireVec,
                                                          truncRmsWireVec,

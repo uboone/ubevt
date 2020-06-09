@@ -26,10 +26,8 @@
 spacecharge::SpaceChargeServiceMicroBooNE::SpaceChargeServiceMicroBooNE(fhicl::ParameterSet const& pset, art::ActivityRegistry &reg)
 {
   TH1::AddDirectory(kFALSE);
-  fProp.reset(new spacecharge::SpaceChargeMicroBooNE(pset));
-
-  auto const *detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
-  fProp->Configure(pset,detprop);
+  auto const detprop = art::ServiceHandle<detinfo::DetectorPropertiesService>()->DataForJob();
+  fProp.reset(new spacecharge::SpaceChargeMicroBooNE(pset, detprop));
 
   reg.sPreBeginRun.watch(this, &SpaceChargeServiceMicroBooNE::preBeginRun);
 }
@@ -38,14 +36,6 @@ spacecharge::SpaceChargeServiceMicroBooNE::SpaceChargeServiceMicroBooNE(fhicl::P
 void spacecharge::SpaceChargeServiceMicroBooNE::preBeginRun(const art::Run& run)
 {
   fProp->Update(run.id().run());
-}
-
-//------------------------------------------------
-void spacecharge::SpaceChargeServiceMicroBooNE::reconfigure(fhicl::ParameterSet const& pset)
-{
-  auto const *detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
-  fProp->Configure(pset,detprop);
-  return;
 }
 
 //------------------------------------------------

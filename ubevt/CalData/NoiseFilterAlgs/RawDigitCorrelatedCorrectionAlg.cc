@@ -1,4 +1,3 @@
-
 #include <cmath>
 #include <algorithm>
 #include <vector>
@@ -8,6 +7,9 @@
 
 #include "art/Framework/Core/ModuleMacros.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
+
+#include "lardata/DetectorInfoServices/DetectorClocksService.h"
+#include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
 
 #include <cmath>
 #include <algorithm>
@@ -65,16 +67,18 @@ void RawDigitCorrelatedCorrectionAlg::reconfigure(fhicl::ParameterSet const & ps
 void RawDigitCorrelatedCorrectionAlg::initializeHists(art::ServiceHandle<art::TFileService>& tfs)
 {
     // Following to determine min/max frequencies
-    double sampleRate  = fDetectorProperties->SamplingRate();
-    double readOutSize = fDetectorProperties->ReadOutWindowSize();
+    auto const clockData = art::ServiceHandle<detinfo::DetectorClocksService>()->DataForJob();
+    auto const detProp = art::ServiceHandle<detinfo::DetectorPropertiesService>()->DataForJob(clockData);
+    double sampleRate  = sampling_rate(clockData);
+    double readOutSize = detProp.ReadOutWindowSize();
     double maxFreq     = 1000000. / (2. * sampleRate);
     double minFreq     = 1000000. / (2. * sampleRate * readOutSize);
     int    numSamples  = (readOutSize / 2 + 1) / 4;
     
     // quick aside
-//    std::cout << "++> plane 0 offset: " << fDetectorProperties->GetXTicksOffset(0,0,0) << std::endl;
-//    std::cout << "++> plane 1 offset: " << fDetectorProperties->GetXTicksOffset(1,0,0) << std::endl;
-//    std::cout << "++> plane 2 offset: " << fDetectorProperties->GetXTicksOffset(2,0,0) << std::endl;
+//    std::cout << "++> plane 0 offset: " << detProp.GetXTicksOffset(0,0,0) << std::endl;
+//    std::cout << "++> plane 1 offset: " << detProp.GetXTicksOffset(1,0,0) << std::endl;
+//    std::cout << "++> plane 2 offset: " << detProp.GetXTicksOffset(2,0,0) << std::endl;
     
     fFFTHist[0]       = tfs->make<TProfile>("FFTPlaneU",    "FFT;kHz",  numSamples, minFreq, maxFreq, 0., 10000.);
     fFFTHist[1]       = tfs->make<TProfile>("FFTPlaneV",    "FFT;kHz",  numSamples, minFreq, maxFreq, 0., 10000.);
@@ -284,7 +288,9 @@ void RawDigitCorrelatedCorrectionAlg::smoothCorrectionVec(std::vector<float>& co
     return;
 }
 
-void RawDigitCorrelatedCorrectionAlg::removeCorrelatedNoise(RawDigitAdcIdxPair& digitIdxPair,
+void RawDigitCorrelatedCorrectionAlg::removeCorrelatedNoise(detinfo::DetectorClocksData const& clockData,
+                                                            detinfo::DetectorPropertiesData const& detProp,
+                                                            RawDigitAdcIdxPair& digitIdxPair,
                                                             raw::ChannelID_t    channel,
                                                             std::vector<float>& truncMeanWireVec,
                                                             std::vector<float>& truncRmsWireVec,
@@ -505,8 +511,8 @@ void RawDigitCorrelatedCorrectionAlg::removeCorrelatedNoise(RawDigitAdcIdxPair& 
     // Final diagnostics block
     if (doFFTCorrection && !origCorValVec.empty())
     {
-        double sampleFreq  = 1000000. / fDetectorProperties->SamplingRate();
-        double readOutSize = fDetectorProperties->ReadOutWindowSize();
+        double sampleFreq  = 1000000. / sampling_rate(clockData);
+        double readOutSize = detProp.ReadOutWindowSize();
         int    fftDataSize = origCorValVec.size();
         
         TVirtualFFT* fftr2c = TVirtualFFT::FFT(1, &fftDataSize, "R2C");
@@ -546,8 +552,8 @@ void RawDigitCorrelatedCorrectionAlg::removeCorrelatedNoise(RawDigitAdcIdxPair& 
     // Run an FFT here to check our "corrected" wires
     if (fRunFFTCorrected)
     {
-        double sampleFreq  = 1000000. / fDetectorProperties->SamplingRate();
-        double readOutSize = fDetectorProperties->ReadOutWindowSize();
+        double sampleFreq  = 1000000. / sampling_rate(clockData);
+        double readOutSize = detProp.ReadOutWindowSize();
         
         for(const auto& wireAdcItr : wireToAdcIdxMap)
         {

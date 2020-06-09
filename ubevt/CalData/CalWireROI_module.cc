@@ -41,6 +41,7 @@
 #include "lardataobj/RawData/raw.h"
 #include "lardataobj/RecoBase/Wire.h"
 #include "lardata/ArtDataHelper/WireCreator.h"
+#include "lardata/DetectorInfoServices/DetectorClocksService.h"
 #include "lardata/Utilities/LArFFT.h"
 #include "lardata/Utilities/AssociationUtil.h"
 #include "ubevt/Utilities/SignalShapingServiceMicroBooNE.h"
@@ -239,6 +240,7 @@ void CalWireROI::produce(art::Event& evt)
     
     const lariov::ChannelStatusProvider& chanFilt = art::ServiceHandle<lariov::ChannelStatusService>()->GetProvider();
     
+    auto const clockData = art::ServiceHandle<detinfo::DetectorClocksService>()->DataFor(evt);
     // loop over all wires
     wirecol->reserve(digitVecHandle->size());
     for(size_t rdIter = 0; rdIter < digitVecHandle->size(); ++rdIter)
@@ -294,7 +296,7 @@ void CalWireROI::produce(art::Event& evt)
             fROIFinder->FindROIs(rawAdcLessPedVec, channel, raw_noise, candRoiVec);
             
             // Do the deconvolution
-            fDeconvolution->Deconvolve(rawAdcLessPedVec, channel, candRoiVec, ROIVec);
+            fDeconvolution->Deconvolve(clockData, rawAdcLessPedVec, channel, candRoiVec, ROIVec);
             
             // Make some histograms?
             if (fOutputHistograms)
