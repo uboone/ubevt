@@ -7,7 +7,7 @@ BEGIN_PROLOG
 #===============================================
 microboone_databaseretrievalalg: @local::standard_databaseretrievalalg
 microboone_databaseretrievalalg.DBUrl: "https://dbdata0vm.fnal.gov:8443/uboonecon_prod/app/"
-# for development db, use "http://dbdata0vm.fnal.gov:8086/uboonecon_dev/app/"
+# for development db, use "https://dbdata0vm.fnal.gov:8443/uboonecon_dev/app/"
 
 microboone_calibservicehelper:
 {
