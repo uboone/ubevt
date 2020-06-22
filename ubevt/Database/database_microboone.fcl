@@ -7,7 +7,7 @@ BEGIN_PROLOG
 #===============================================
 microboone_databaseretrievalalg: @local::standard_databaseretrievalalg
 microboone_databaseretrievalalg.DBUrl: "https://dbdata0vm.fnal.gov:8443/uboonecon_prod/app/"
-# for development db, use "http://dbdata0vm.fnal.gov:8086/uboonecon_dev/app/"
+# for development db, use "https://dbdata0vm.fnal.gov:8443/uboonecon_dev/app/"
 
 microboone_calibservicehelper:
 {
@@ -96,7 +96,7 @@ microboone_electronlifetime_provider:
     DefaultTimeConstantErr: 0.1e-5
 }
 microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBFolderName: "elifetime_data_tmp"
-microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBUrl: "http://dbdata0vm.fnal.gov:8186/uboonecon_prod/app/"
+microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBUrl: "https://dbdata0vm.fnal.gov:8443/uboonecon_prod/app/"
 microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBTag: "v1r0"
 
 microboone_electronlifetime_service:
