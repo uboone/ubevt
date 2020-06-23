@@ -81,6 +81,7 @@ namespace util{
     std::vector<std::string> fDataTier;
     std::vector<std::string> fFileFormat;
     std::vector<std::string> fPOTSummary;
+    std::vector<bool> fMerge;
 
   }; // class TFileMetadataMicroBooNE
 
