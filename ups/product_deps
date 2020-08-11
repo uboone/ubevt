@@ -32,7 +32,7 @@ product                 version
 ubcore                  v09_00_00_rc1
 larevt                  v09_00_00_rc1
 gallery                 v1_14_02
-ifdh_art		v2_10_06
+ifdh_art		v2_10_07
 cetbuildtools	        v7_15_01	-	only_for_build
 end_product_list
 
