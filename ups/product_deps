@@ -30,7 +30,7 @@ table_fragment_end
 
 product                 version
 ubcore                  v09_00_00_rc1
-larevt                  v09_00_00_rc1
+larevt                  v09_00_00
 gallery                 v1_14_02
 ifdh_art		v2_10_07
 cetbuildtools	        v7_15_01	-	only_for_build
