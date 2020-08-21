@@ -35,7 +35,8 @@ public:
     void configure(const fhicl::ParameterSet& pset)              override;
     void outputHistograms(art::TFileDirectory&)            const override;
     
-    void Deconvolve(IROIFinder::Waveform const&,
+    void Deconvolve(detinfo::DetectorClocksData const&,
+                    IROIFinder::Waveform const&,
                     raw::ChannelID_t,
                     IROIFinder::CandidateROIVec const&,
                     recob::Wire::RegionsOfInterest_t& )    const override;
@@ -110,7 +111,8 @@ void MCC7Deconvolution::configure(const fhicl::ParameterSet& pset)
     return;
 }
     
-void MCC7Deconvolution::Deconvolve(IROIFinder::Waveform const&       waveform,
+void MCC7Deconvolution::Deconvolve(detinfo::DetectorClocksData const& clockData,
+                                   IROIFinder::Waveform const&       waveform,
                                    raw::ChannelID_t                  channel,
                                    IROIFinder::CandidateROIVec const& roiVec,
                                    recob::Wire::RegionsOfInterest_t& ROIVec) const
@@ -138,7 +140,7 @@ void MCC7Deconvolution::Deconvolve(IROIFinder::Waveform const&       waveform,
     std::copy(waveform.begin(),waveform.end(),rawAdcLessPedVec.begin()+binOffset);
     
     // Strategy is to run deconvolution on the entire channel and then pick out the ROI's we found above
-    fSignalShaping->Deconvolute(channel,rawAdcLessPedVec,"nominal");
+    fSignalShaping->Deconvolute(clockData,channel,rawAdcLessPedVec,"nominal");
     
     std::vector<float> holder;
     

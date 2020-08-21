@@ -1,4 +1,3 @@
-
 ////////////////////////////////////////////////////////////////////////
 /// \file   SignalShapingServiceMicroBooNE_service.cc
 /// \author H. Greenlee
@@ -77,7 +76,7 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
   
   art::ServiceHandle<art::TFileService> tfs;
   
-  auto const* detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
+  auto const detProp = art::ServiceHandle<detinfo::DetectorPropertiesService const>()->DataForJob();
  
   // Reset initialization flags.
   fInitForConvolution = false;
@@ -223,8 +222,8 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
   //Set fTimeScaleFactor - used to the generate field response
   //------------------------------------------------------------
   
-  double defaultVelocity = detprop->DriftVelocity(fDefaultEField, fDefaultTemperature);
-  double thisVelocity    = detprop->DriftVelocity( detprop->Efield(0), detprop->Temperature() );
+  double defaultVelocity = detProp.DriftVelocity(fDefaultEField, fDefaultTemperature);
+  double thisVelocity    = detProp.DriftVelocity( detProp.Efield(0), detProp.Temperature() );
   double vRatio = defaultVelocity/thisVelocity;
   double vDiff = vRatio -1.0;
 
@@ -237,7 +236,7 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
     term *= vDiff;
   }
 
-  std::cout << "Current E field = " << detprop->Efield(0) << " KV/cm, Ratio of drift velocities = " << vRatio << ", timeScaleFactor = " << fTimeScaleFactor << std::endl;
+  std::cout << "Current E field = " << detProp.Efield(0) << " KV/cm, Ratio of drift velocities = " << vRatio << ", timeScaleFactor = " << fTimeScaleFactor << std::endl;
 
 
 
@@ -758,12 +757,11 @@ void util::SignalShapingServiceMicroBooNE::SetElectResponse()
 void util::SignalShapingServiceMicroBooNE::SetFilters()
 {
 
-  auto const* detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
+  art::ServiceHandle<detinfo::DetectorClocksService> clocks;
   art::ServiceHandle<util::LArFFT> fft;
-  
   art::ServiceHandle<geo::Geometry> geo;
 
-  double ts = detprop->SamplingRate();
+  double ts = sampling_rate(clocks->DataForJob());
   size_t nFFT2 = fft->FFTSize() / 2;
 
   // Calculate collection filter.
@@ -815,8 +813,9 @@ void util::SignalShapingServiceMicroBooNE::SetFilters()
 void util::SignalShapingServiceMicroBooNE::SetResponseSampling()
 {
   // Get services
-  auto const* detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
   auto const* geo = lar::providerFrom<geo::Geometry>();
+  art::ServiceHandle<detinfo::DetectorClocksService> clocks;
+  double const samplingRate = sampling_rate(clocks->DataForJob());
   art::ServiceHandle<util::LArFFT> fft;
   art::ServiceHandle<art::TFileService> tfs; 
   
@@ -824,7 +823,7 @@ void util::SignalShapingServiceMicroBooNE::SetResponseSampling()
   size_t nticks = fft->FFTSize();
   DoubleVec SamplingTime( nticks, 0. );
   for ( size_t itime = 0; itime < nticks; ++itime ) {
-    SamplingTime[itime] = (1.*itime) * detprop->SamplingRate();
+    SamplingTime[itime] = (1.*itime) * samplingRate;
   }
   
   //Loop over channels and responses, resampling each one
@@ -974,7 +973,8 @@ double util::SignalShapingServiceMicroBooNE::GetDeconNoise(unsigned int const ch
 }
 
 
-int util::SignalShapingServiceMicroBooNE::FieldResponseTOffset(unsigned int const channel, const std::string& response_name) const
+int util::SignalShapingServiceMicroBooNE::FieldResponseTOffset(detinfo::DetectorClocksData const& clockData,
+                                                               unsigned int const channel, const std::string& response_name) const
 {
   //no init needed - fFieldResponseTOffset is initialized in reconfigure()
   
@@ -995,9 +995,7 @@ int util::SignalShapingServiceMicroBooNE::FieldResponseTOffset(unsigned int cons
     default:
       throw cet::exception(__FUNCTION__) << "Invalid geo::View_t ... " << view << std::endl;
   }
-  auto tpc_clock = lar::providerFrom<detinfo::DetectorClocksService>()->TPCClock();
-  
-  return tpc_clock.Ticks(time_offset/1.e3);
+  return clockData.TPCClock().Ticks(time_offset/1.e3);
 }
 
 //----------------------------------------------------------------------
@@ -1024,10 +1022,10 @@ const std::vector<util::ComplexF>& util::SignalShapingServiceMicroBooNE::GetConv
 
 //----------------------------------------------------------------------
 // Evaluate 2D filter used in induced charge deconvolution (M. Mooney)
-double util::SignalShapingServiceMicroBooNE::Get2DFilterVal(size_t planeNum, size_t freqDimension, double binFrac) const
+double util::SignalShapingServiceMicroBooNE::Get2DFilterVal(detinfo::DetectorClocksData const& clockData,
+                                                            size_t planeNum, size_t freqDimension, double binFrac) const
 {
-  auto const* detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
-  double ts = detprop->SamplingRate();
+  double ts = sampling_rate(clockData);
 
   double freq;
   double filtVal;

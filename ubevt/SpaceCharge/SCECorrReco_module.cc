@@ -126,8 +126,8 @@ void spacecharge::SCECorrReco::produce(art::Event & e)
     art::ServiceHandle<art::TFileService> tfs;
     hEmag = tfs->make<TH2F>("hEmag","Electric field magnitude", 207, 0.0, 1035.0, 46, -115.0, 115.0);
     
-    auto const* detprop = lar::providerFrom<detinfo::DetectorPropertiesService>();
-    double efield = detprop->Efield();  
+    auto const detprop = art::ServiceHandle<detinfo::DetectorPropertiesService>()->DataFor(e);
+    double efield = detprop.Efield();
     
     Double_t x1 = 100.0;
     for( int i = 0; i < 206; i++ ){

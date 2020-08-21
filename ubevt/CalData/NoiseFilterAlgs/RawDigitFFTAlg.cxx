@@ -1,4 +1,3 @@
-
 #include "RawDigitFFTAlg.h"
 
 #include "art/Framework/Services/Registry/ServiceHandle.h"
@@ -67,7 +66,8 @@ void RawDigitFFTAlg::initializeHists(art::ServiceHandle<art::TFileService>& tfs)
         
         // hijack hists here
         //    double sampleRate  = fDetectorProperties->SamplingRate();
-        double readOutSize = fDetectorProperties->ReadOutWindowSize();
+        auto const detProp = art::ServiceHandle<detinfo::DetectorPropertiesService>()->DataForJob();
+        double readOutSize = detProp.ReadOutWindowSize();
         //    double maxFreq     = 1000000. / (2. * sampleRate);
         //    double minFreq     = 1000000. / (2. * sampleRate * readOutSize);
         //    int    numSamples  = (readOutSize / 2 + 1) / 4;

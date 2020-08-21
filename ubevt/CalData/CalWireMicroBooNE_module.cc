@@ -40,6 +40,7 @@
 #include "lardataobj/RawData/raw.h"
 #include "lardataobj/RecoBase/Wire.h"
 #include "lardata/ArtDataHelper/WireCreator.h"
+#include "lardata/DetectorInfoServices/DetectorClocksService.h"
 #include "lardata/Utilities/LArFFT.h"
 #include "lardata/Utilities/AssociationUtil.h"
 #include "ubevt/Utilities/SignalShapingServiceMicroBooNE.h"
@@ -91,7 +92,8 @@ namespace caldata {
     std::vector<bool> FindSignalRegions(const std::vector<float>& deconvVec, int windowSize, double sigThreshold); // M. Mooney
     void RunAdaptiveBaselinePass(std::vector<float>& deconvVec, int windowSize, int maxSigBinBuffer, double sigThreshold, const std::vector<bool>& signalRegions); // M. Mooney
 
-    template <class T> void DeconvoluteInducedCharge(size_t firstChannel, std::vector<std::vector<T> >& signal) const; // M. Mooney
+    template <class T> void DeconvoluteInducedCharge(detinfo::DetectorClocksData const& clockData,
+                                                     size_t firstChannel, std::vector<std::vector<T> >& signal) const; // M. Mooney
 
 
   protected: 
@@ -217,7 +219,7 @@ namespace caldata {
     //std::vector<TComplex> freqHolder(transformSize+1); // temporary frequency data
     
     wirecol->reserve(digitVecHandle->size());
-
+    auto const clockData = art::ServiceHandle<detinfo::DetectorClocksService>()->DataFor(evt);
     //double normSum[3] = {0.0,0.0,0.0};  //NORM CHECK (M. Mooney)
     if(!doInducedChargeDeconv) { ////////// Normal Deconvolution (No Induced Charge) //////////
       // loop over all wires
@@ -256,7 +258,7 @@ namespace caldata {
       	  }
           
       	  // Do deconvolution.
-      	  sss->Deconvolute(channel, holder,"nominal");
+          sss->Deconvolute(clockData, channel, holder,"nominal");
       	  for(bin = 0; bin < holder.size(); ++bin) {
             holder[bin] /= DeconNorm;
 	  }
@@ -361,7 +363,7 @@ namespace caldata {
 	}
 
         // do induced charge deconvolution - M. Mooney
-        DeconvoluteInducedCharge(firstChannel, holders);
+        DeconvoluteInducedCharge(clockData, firstChannel, holders);
 
         size_t counter = 0;
         for(size_t rdIter = 0; rdIter < digitVecHandle->size(); ++rdIter) { // ++ move
@@ -754,7 +756,8 @@ namespace caldata {
   }
 }
 
-template <class T> void caldata::CalWireMicroBooNE::DeconvoluteInducedCharge(size_t firstChannel, std::vector<std::vector<T> >& signal) const
+template <class T> void caldata::CalWireMicroBooNE::DeconvoluteInducedCharge(detinfo::DetectorClocksData const& clockData,
+                                                                             size_t firstChannel, std::vector<std::vector<T> >& signal) const
 {
   // setup services
   art::ServiceHandle<util::LArFFT> fft;
@@ -808,7 +811,7 @@ template <class T> void caldata::CalWireMicroBooNE::DeconvoluteInducedCharge(siz
 
   // cache filter values for wire-domain projection
   for(size_t k = 0; k < (size_t)numWires; k++) {
-    wireFactors[k] = sss->Get2DFilterVal(planeNum,2,((double) k)/((double) numWires));
+    wireFactors[k] = sss->Get2DFilterVal(clockData, planeNum,2,((double) k)/((double) numWires));
   }
 
   // prepare FFT for wire-domain case
@@ -869,7 +872,7 @@ template <class T> void caldata::CalWireMicroBooNE::DeconvoluteInducedCharge(siz
     }  
 
     // get filter values for time-domain projection
-    double timeFactor = sss->Get2DFilterVal(planeNum,1,((double) j)/((double) numBins));
+    double timeFactor = sss->Get2DFilterVal(clockData,planeNum,1,((double) j)/((double) numBins));
 
     // apply 2D filter
     for(size_t k = 0; k < (size_t)numWires; ++k) {
@@ -902,7 +905,7 @@ template <class T> void caldata::CalWireMicroBooNE::DeconvoluteInducedCharge(siz
   fft->ReinitializeFFT(numBins,fft->FFTOptions(),fft->FFTFitBins());
 
   // do time-domain inverse-FFT for results vectors and store final result of 2D deconvolution
-  int time_offset = sss->FieldResponseTOffset(firstChannel,"nominal");
+  int time_offset = sss->FieldResponseTOffset(clockData, firstChannel,"nominal");
   for(size_t k = 0; k < (size_t)numWires; k++) {
     fft->DoInvFFT(signalFreqVecs[k],signal[k]);
 
