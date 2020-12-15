@@ -108,6 +108,7 @@ microboone_detsim_services.UBOpticalChConfig: @local::microboone_optical_ch_conf
 microboone_detsim_services.LArPropertiesService.ScintPreScale:        0.0093   # DocDB 4914, @MToups
 microboone_detsim_services.UBOpReadoutMap:                  @local::microboone_opreadoutmap_mc
 microboone_detsim_services.ExptGeoHelperInterface:          @local::microboone_geometry_helper
+microboone_detsim_services.GeometryConfigurationWriter:     {}
                                                                       # MUST match between g4 and detsim
 microboone_detsim_services.TPCEnergyCalibService: @local::microboone_tpcenergycalib_service
 microboone_detsim_services.TPCEnergyCalibService.TPCEnergyCalibProvider: @local::microboone_tpcenergycalib_provider_data
@@ -119,6 +120,7 @@ microboone_simulation_services.SignalShapingServiceMicroBooNE:  @local::microboo
 microboone_simulation_services.UBOpticalChConfig:               @local::microboone_optical_ch_config
 microboone_simulation_services.UBOpReadoutMap:                  @local::microboone_opreadoutmap_mc
 microboone_simulation_services.ExptGeoHelperInterface:          @local::microboone_geometry_helper
+microboone_simulation_services.GeometryConfigurationWriter:     {}
 microboone_simulation_services.DetPedestalService:             @local::microboone_detpedestalservice
 microboone_simulation_services.ChannelStatusService:           @local::microboone_channelstatus_service
 microboone_simulation_services.PmtGainService:     @local::microboone_pmtgain_service
