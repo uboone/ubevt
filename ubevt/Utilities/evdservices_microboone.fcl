@@ -61,6 +61,7 @@ microboone_disp:
 {
  ExptGeoHelperInterface:   @local::microboone_geometry_helper
  Geometry:                 @local::microboone_geo 
+ GeometryConfigurationWriter: {}
  LArPropertiesService:     @local::microboone_properties
  DetectorPropertiesService: @local::microboone_detproperties
  DatabaseUtil:		   @local::microboone_database   

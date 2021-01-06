@@ -12,6 +12,7 @@ services:
   TimeTracker:             {}
   ExptGeoHelperInterface:         @local::microboone_geometry_helper
   Geometry:                       @local::microboone_geo
+  GeometryConfigurationWriter:    {}
   DetectorProperties:             @local::microboone_detproperties
   LArProperties:                  @local::microboone_properties
   DetectorClocksService:          @local::microboone_detectorclocks
