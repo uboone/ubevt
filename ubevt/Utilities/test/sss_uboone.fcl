@@ -9,6 +9,7 @@ services:
 }
 
 services.ExptGeoHelperInterface: @local::microboone_geometry_helper
+services.GeometryConfigurationWriter: {}
 services.Geometry:           @local::microboone_geo
 services.DetectorPropertiesService: @local::microboone_detproperties
 services.LArPropertiesService:      @local::microboone_properties

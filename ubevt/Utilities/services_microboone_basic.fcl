@@ -29,6 +29,7 @@ BEGIN_PROLOG
 microboone_basic_services:
 {
  ExptGeoHelperInterface:         @local::microboone_geometry_helper
+ GeometryConfigurationWriter:    {}
  Geometry:                       @local::microboone_geo
  AuxDetGeometry:                 @local::microboone_crt_geometry
  AuxDetExptGeoHelperInterface:    @local::microboone_crt_geo_interface

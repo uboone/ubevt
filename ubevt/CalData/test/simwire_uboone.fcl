@@ -14,6 +14,7 @@ services:
 }
 
 services.ExptGeoHelperInterface: @local::microboone_geometry_helper
+services.GeometryConfigurationWriter: {}
 services.Geometry: @local::microboone_geo
 services.LArPropertiesService: @local::microboone_properties            
 services.LArFFT: @local::microboone_larfft

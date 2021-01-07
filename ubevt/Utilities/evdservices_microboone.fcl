@@ -60,6 +60,7 @@ microboone_infotransfer: @local::standard_infotransfer
 microboone_disp:
 {
  ExptGeoHelperInterface:   @local::microboone_geometry_helper
+ GeometryConfigurationWriter: {}
  Geometry:                 @local::microboone_geo 
  LArPropertiesService:     @local::microboone_properties
  DetectorPropertiesService: @local::microboone_detproperties
