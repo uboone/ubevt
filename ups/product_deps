@@ -30,10 +30,10 @@ table_fragment_end
 
 product                 version
 ubcore                  v09_15_00
-larevt                  v09_01_06
-gallery                 v1_14_03
-ifdh_art		v2_10_07
-cetbuildtools	        v7_15_01	-	only_for_build
+larevt                  v09_20_00_rc0
+gallery                 v1_16_02
+ifdh_art		v2_11_04
+cetbuildtools	        v7_17_01	-	only_for_build
 end_product_list
 
 qualifier      ubcore         larevt         gallery	   ifdh_art
