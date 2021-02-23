@@ -67,7 +67,7 @@ private:
 
 
 lar::CRTpreOverlay::CRTpreOverlay(fhicl::ParameterSet const & p)
-// :
+  : art::EDProducer(p)
 // Initialize member data here.
 {
   // Call appropriate produces<>() functions here.
