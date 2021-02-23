@@ -57,17 +57,13 @@ namespace lariov {
 
     if (fDataSource == DataSource::Default) {
       std::cout << "Using default lifetime fit values\n";
-      float default_expoffset      = p.get<float>("DefaultExpOffset");
-      float default_timeconstant   = p.get<float>("DefaultTimeConstant");
-      float default_expoffseterr      = p.get<float>("DefaultExpOffsetErr");
-      float default_timeconstanterr   = p.get<float>("DefaultTimeConstantErr");
-      
-      ElectronLifetimeContainer default_pars(fLifetimeChannel);
-      
-      default_pars.SetExpOffset(default_expoffset);
-      default_pars.SetTimeConstant(default_timeconstant);
-      default_pars.SetExpOffsetErr(default_expoffseterr);
-      default_pars.SetTimeConstantErr(default_timeconstanterr);
+      float default_lifetime       = p.get<float>("DefaultLifetime");
+      float default_lifetimeerr    = p.get<float>("DefaultLifetimeErr");
+            
+      UbooneElectronLifetimeContainer default_pars(fLifetimeChannel);
+
+      default_pars.SetLifetime(default_lifetime);
+      default_pars.SetLifetimeErr(default_lifetimeerr);
       fData.AddOrReplaceRow(default_pars);
  
     }
@@ -82,25 +78,17 @@ namespace lariov {
       }
       
       std::string line;
-      ElectronLifetimeContainer dp(fLifetimeChannel);
+      UbooneElectronLifetimeContainer dp(fLifetimeChannel);
       while (std::getline(file, line)) {
         size_t current_comma = line.find(',');	
-	float exp_offset        = std::stof( line.substr(current_comma+1, line.find(',',current_comma+1)-(current_comma+1)) );
+	float lifetime        = std::stof( line.substr(current_comma+1, line.find(',',current_comma+1)-(current_comma+1)) );
 	
 	current_comma = line.find(',',current_comma+1);
-	float exp_offset_err    = std::stof( line.substr(current_comma+1, line.find(',',current_comma+1)-(current_comma+1)) );
-	
-	current_comma = line.find(',',current_comma+1);
-	float time_constant     = std::stof( line.substr(current_comma+1, line.find(',',current_comma+1)-(current_comma+1)) );
-	
-	current_comma = line.find(',',current_comma+1);
-	float time_constant_err = std::stof( line.substr(current_comma+1) );
+	float lifetime_err = std::stof( line.substr(current_comma+1) );
 
 	dp.SetChannel(fLifetimeChannel);
-	dp.SetExpOffset(exp_offset);
-        dp.SetTimeConstant(time_constant);
-	dp.SetExpOffsetErr(exp_offset_err);
-        dp.SetTimeConstantErr(time_constant_err);
+	dp.SetLifetime(lifetime);
+        dp.SetLifetimeErr(lifetime_err);
 	fData.AddOrReplaceRow(dp);
 	
 	break; //only should have one line
@@ -153,17 +141,13 @@ namespace lariov {
 	fData.Clear();
 	fData.SetIoV(this->Begin(), this->End());
 
-	double exp_offset, exp_offset_err, time_constant, time_constant_err;
-	fFolder->GetNamedChannelData(fLifetimeChannel, "exponential_offset",     exp_offset);
-	fFolder->GetNamedChannelData(fLifetimeChannel, "time_constant",          time_constant);
-	fFolder->GetNamedChannelData(fLifetimeChannel, "err_exponential_offset", exp_offset_err);
-	fFolder->GetNamedChannelData(fLifetimeChannel, "err_time_constant",      time_constant_err);
+	double lifetime, lifetime_err;
+	fFolder->GetNamedChannelData(fLifetimeChannel, "lifetime",     lifetime);
+	fFolder->GetNamedChannelData(fLifetimeChannel, "lifetime_err",          lifetime_err);
 
-	ElectronLifetimeContainer pd(fLifetimeChannel);
-	pd.SetExpOffset( (float)exp_offset );
-	pd.SetTimeConstant( (float)time_constant );
-	pd.SetExpOffsetErr( (float)exp_offset_err );
-	pd.SetTimeConstantErr( (float)time_constant_err );
+	UbooneElectronLifetimeContainer pd(fLifetimeChannel);
+	pd.SetLifetime( (float)lifetime );
+	pd.SetLifetimeErr( (float)lifetime_err );
 
 	fData.AddOrReplaceRow(pd);
       }
@@ -172,59 +156,17 @@ namespace lariov {
     return result;
   }
   
-  const ElectronLifetimeContainer& UbooneElectronLifetimeProvider::LifetimeContainer() const {     
+  const UbooneElectronLifetimeContainer& UbooneElectronLifetimeProvider::LifetimeContainer() const {     
     DBUpdate();
     return fData.GetRow(fLifetimeChannel);
   }
   
-  float UbooneElectronLifetimeProvider::Lifetime(float t) const {
-    float offset = this->ExpOffset();
-    float c = this->TimeConstant();
-    return (1.0+exp(offset))/(1.0+exp(offset + c*t));
+  float UbooneElectronLifetimeProvider::Lifetime() const {
+    return this->LifetimeContainer().Lifetime();
   }
   
-  float UbooneElectronLifetimeProvider::LifetimeErr(float t) const {
-    float offset = this->ExpOffset();
-    float c = this->TimeConstant();
-    float offset_err = this->ExpOffsetErr();
-    float c_err = this->TimeConstantErr();
-    
-    float vb = pow(exp(offset)*(1.0-exp(c*t))*offset_err,2.0);
-    float vc = pow(t*(1.0+exp(offset))*exp(offset+c*t)*c_err,2.0);
-    return sqrt(vb+vc)/pow(1.0+exp(offset+c*t),2.0);
-  }
-   
-  float UbooneElectronLifetimeProvider::Purity() const {
-    float offset = this->ExpOffset();
-    float c = this->TimeConstant();
-    return (1.0 + exp(offset + 2200.0*c))/(1.0 + exp(offset));
-  }
-  
-  float UbooneElectronLifetimeProvider::PurityErr() const {
-    float offset = this->ExpOffset();
-    float c = this->TimeConstant();
-    float offset_err = this->ExpOffsetErr();
-    float c_err = this->TimeConstantErr();
-    
-    float vb = pow(offset_err*exp(offset)*(exp(2200.0*c)-1.0)/pow(1.0+exp(offset),2.0),2.0);
-    float vc = pow(c_err*2200.0*exp(offset+2200.0*c)/(1.0+exp(offset)),2.0);
-    return sqrt(vb+vc);
-  }   
-      
-  float UbooneElectronLifetimeProvider::ExpOffset() const {
-    return this->LifetimeContainer().ExpOffset();
-  }
-  
-  float UbooneElectronLifetimeProvider::TimeConstant() const {
-    return this->LifetimeContainer().TimeConstant();
-  }
-
-  float UbooneElectronLifetimeProvider::ExpOffsetErr() const {
-    return this->LifetimeContainer().ExpOffsetErr();
-  }
-  
-  float UbooneElectronLifetimeProvider::TimeConstantErr() const {
-    return this->LifetimeContainer().TimeConstantErr();
+  float UbooneElectronLifetimeProvider::LifetimeErr() const {
+    return this->LifetimeContainer().LifetimeErr();
   }
 
 }//end namespace lariov

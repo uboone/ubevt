@@ -30,5 +30,11 @@ art_make_library( LIBRARY_NAME  ub_OpDetWaveformMixer
 		${ROOT_BASIC_LIB_LIST}
 )
 
+art_make_library( LIBRARY_NAME  ub_CRTMixer
+        SOURCE CRTMixer.cxx
+        LIBRARIES
+                ${ROOT_BASIC_LIB_LIST}
+)
+
 install_headers()
 install_source()

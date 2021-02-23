@@ -36,11 +36,13 @@ art_make(
 	MODULE_LIBRARIES
 			ub_RawDigitMixer
 			ub_OpDetWaveformMixer
+			ub_CRTMixer
                         lardataobj_RawData
 			nusimdata_SimulationBase
 			lardataobj_MCBase
 			larevt_CalibrationDBI_IOVData
 			larevt_CalibrationDBI_Providers
+			larcorealg_Geometry
                         ${ART_FRAMEWORK_CORE}
 			${ART_FRAMEWORK_IO_PRODUCTMIX}
 			${ART_ROOT_IO}

@@ -11,7 +11,9 @@
 //		             for histos, dataTier = root-histogram
 //		             (default value: root-tuple)
 //	           fileFormat: This is currently specified by the user,
-//			       the fileFormat for Tfiles is "root" (default value: root)	
+//			       the fileFormat for Tfiles is "root" (default value: root)
+//                 Merge: Merge flag (0 or 1).  If true, include sam metadata parameters
+//                        merge.merge = 1 and merge.merged = 0.
 //
 //                 These parameters can be scalars or sequences.  In case of sequences
 //                 with length greater than one, multiple json files will be
@@ -127,6 +129,14 @@ void util::TFileMetadataMicroBooNE::reconfigure(fhicl::ParameterSet const& pset)
     fFileFormat = pset.get<std::vector<std::string> >("fileFormat");
   if(fFileFormat.size() != fGenerateTFileMetadata.size())
     throw cet::exception("TFileMetadataMicroBooNE") << "FCL sequence size mismatch.\n";
+
+  fMerge.erase(fMerge.begin(), fMerge.end());
+  if(pset.has_key("Merge")) {
+    if(pset.is_key_to_atom("Merge"))
+      fMerge.push_back(pset.get<bool>("Merge"));
+    else if(pset.is_key_to_sequence("Merge"))
+      fMerge = pset.get<std::vector<bool> >("Merge");
+  }
 
   fEnable = false;
   for(bool enable : fGenerateTFileMetadata) {
@@ -332,13 +342,18 @@ void util::TFileMetadataMicroBooNE::postEndJob()
 	if (md.fruns.size()==1 || c==md.fruns.size()) jsonfile<<"\n";
 	else jsonfile<<",\n"; 
       }
-      jsonfile<<"  ],";          
-      jsonfile<<"\n  \"start_time\": \""<<startbuf<<"\",\n";  
-      jsonfile<<"  \"ub_project.name\": \""<<md.fproject_name<<"\",\n  ";
-      jsonfile<<"\"ub_project.stage\": \""<<md.fproject_stage;
-      jsonfile<<"\",\n  \"ub_project.version\": \""<<md.fproject_version<<"\"\n";
+      jsonfile<<"  ]";          
+      jsonfile<<",\n  \"start_time\": \""<<startbuf<<"\"";  
+      jsonfile<<",\n  \"ub_project.name\": \""<<md.fproject_name<<"\"";
+      jsonfile<<",\n  \"ub_project.stage\": \""<<md.fproject_stage<<"\"";
+      jsonfile<<",\n  \"ub_project.version\": \""<<md.fproject_version<<"\"";
+
+      if(fMerge.size() > i && fMerge[i]) {
+	jsonfile << ",\n  \"merge.merge\": 1";
+	jsonfile << ",\n  \"merge.merged\": 0";
+      }
   
-      jsonfile<<"}";
+      jsonfile<<"\n}";
       jsonfile.close();
     }
   } 
