@@ -86,7 +86,7 @@ namespace util{
       }
       ptr->ClearRangeSets();
       
-      return std::move(ptr);
+      return ptr;
     }
 
     ROIAlg(){}
