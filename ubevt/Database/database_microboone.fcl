@@ -84,28 +84,49 @@ wirecell_channelstatus_service_mc:
 }
 
 #===============================================
+#Uboone CRT channel status database configuration
+#===============================================
+crt_channelstatus_provider:
+{
+  DatabaseRetrievalAlg: @local::microboone_databaseretrievalalg
+  
+  UseDB: true
+  UseFile: false
+}
+crt_channelstatus_provider.DatabaseRetrievalAlg.DBFolderName: "crt_channelstatus_data"
+crt_channelstatus_provider.DatabaseRetrievalAlg.DBTag: "v2r0"
+crt_channelstatus_provider.DatabaseRetrievalAlg.UseSQLite: true
+
+crt_channelstatus_service:
+{
+  service_provider: UbooneCRTChannelStatusService
+  ChannelStatusProvider: @local::crt_channelstatus_provider
+  #FindNoisyChannels: false
+  CalibrationHelper: @local::microboone_calibservicehelper
+}
+
+#===============================================
 #Uboone electron lifetime database configuration
 #===============================================
 microboone_electronlifetime_provider:
 {
     DatabaseRetrievalAlg: @local::microboone_databaseretrievalalg   
     
-    UseDB: false
+    UseDB: true
     UseFile: false
     
-    DefaultExpOffset:       15.0
-    DefaultExpOffsetErr:    0.01
-    DefaultTimeConstant:    3.0e-5
-    DefaultTimeConstantErr: 0.1e-5
+    DefaultLifetime:       1000.0
+    DefaultLifetimeErr:    0.0
 }
-microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBFolderName: "elifetime_data_tmp"
-microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBUrl: "https://dbdata0vm.fnal.gov:8443/uboonecon_prod/app/"
-microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBTag: "v1r0"
+microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBFolderName: "elifetime_data"
+microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBTag: "v2r0"
+microboone_electronlifetime_provider.DatabaseRetrievalAlg.UseSQLite: true
 
 microboone_electronlifetime_service:
 {
   service_provider: UbooneElectronLifetimeService
   ElectronLifetimeProvider: @local::microboone_electronlifetime_provider
+  CalibrationHelper: @local::microboone_calibservicehelper
 }
 
 
@@ -137,6 +158,34 @@ microboone_pmtgain_service:
 {
   service_provider: UboonePmtGainService
   PmtGainProvider: @local::microboone_pmtgain_provider
+  CalibrationHelper: @local::microboone_calibservicehelper
+}  
+
+#===============================================
+#Uboone light yield scaling database configuration
+#===============================================
+microboone_lightyield_provider:
+{
+    DatabaseRetrievalAlg: @local::microboone_databaseretrievalalg   
+    
+    UseDB: false
+    UseFile: false
+    
+    DefaultLYScale:       1.0
+    DefaultLYScaleErr:    0.0
+    
+    DefaultPromptLight:  -1.0
+    DefaultLateLight: -1.0
+    
+}
+microboone_lightyield_provider.DatabaseRetrievalAlg.DBFolderName: "lightyieldscale_data"
+microboone_lightyield_provider.DatabaseRetrievalAlg.DBTag: "v2r2"
+microboone_lightyield_provider.DatabaseRetrievalAlg.UseSQLite: true
+
+microboone_lightyield_service:
+{
+  service_provider: UbooneLightYieldService
+  LightYieldProvider: @local::microboone_lightyield_provider
   CalibrationHelper: @local::microboone_calibservicehelper
 }  
 

@@ -14,6 +14,7 @@
 #include "art/Framework/Principal/SubRun.h"
 #include "art/Framework/Principal/Handle.h"
 #include "larcoreobj/SummaryData/POTSummary.h"
+#include "cetlib_except/exception.h"
 
 //--------------------------------------------------------------------
 // Constructor.
@@ -28,6 +29,15 @@ FileCatalogMetadataMicroBooNE(fhicl::ParameterSet const& pset, art::ActivityRegi
   fProjectName = pset.get<std::string>("ProjectName");
   fProjectStage = pset.get<std::string>("ProjectStage");
   fProjectVersion = pset.get<std::string>("ProjectVersion");    
+  fMerge = pset.get<int>("Merge", 0);
+  fParameters = pset.get<std::vector<std::string> >("Parameters", std::vector<std::string>());
+
+  // It doesn't make sense for parameter vector to have an odd number of elements.
+
+  if(fParameters.size() % 2 != 0) {
+    throw cet::exception("FileCatalogMetadataMicroBooNE") 
+      << "Parameter vector has odd number of elements.\n";
+  }
 
   // Register for callbacks.
 
@@ -52,6 +62,12 @@ void util::FileCatalogMetadataMicroBooNE::postBeginJob()
   mds->addMetadata("ubProjectName", fProjectName);
   mds->addMetadata("ubProjectStage", fProjectStage);
   mds->addMetadata("ubProjectVersion", fProjectVersion);
+  std::ostringstream ostr;
+  ostr << fMerge;
+  mds->addMetadata("merge", ostr.str());
+  mds->addMetadata("merged", "0");
+  for(unsigned int i=0; i<fParameters.size(); i += 2)
+    mds->addMetadata(fParameters[i], fParameters[i+1]);
 }
 
 //--------------------------------------------------------------------
@@ -66,10 +82,12 @@ void util::FileCatalogMetadataMicroBooNE::postEndSubRun(art::SubRun const& sr)
   if(sr.getByLabel(fPOTModuleLabel,potListHandle)){
     fTotPOT+=potListHandle->totpot;}
 
-  std::ostringstream streamObj;
-  streamObj << fTotPOT;
-  std::string strPOT = streamObj.str();
-  mds->addMetadata("mc.pot", strPOT);
+  if(fTotPOT > 0.) {
+    std::ostringstream streamObj;
+    streamObj << fTotPOT;
+    std::string strPOT = streamObj.str();
+    mds->addMetadata("mc.pot", strPOT);
+  }
 }
 
 

@@ -19,9 +19,9 @@
 #include "larevt/CalibrationDBI/IOVData/Snapshot.h"
 #include "larevt/CalibrationDBI/IOVData/IOVDataConstants.h"
 #include "larevt/CalibrationDBI/Providers/DatabaseRetrievalAlg.h"
-#include "larevt/CalibrationDBI/Interface/ElectronLifetimeProvider.h"
 
-#include "larevt/CalibrationDBI/IOVData/ElectronLifetimeContainer.h"
+#include "UBElectronLifetimeProvider.h"
+#include "UbooneElectronLifetimeContainer.h"
 
 namespace lariov {
 
@@ -41,7 +41,7 @@ namespace lariov {
    * - *DefaultIndMean* (real, default: 2048.0): constant parameter returned
    *   when /UseDB/ and /UseFile/ parameters are false
    */
-  class UbooneElectronLifetimeProvider : public DatabaseRetrievalAlg, public ElectronLifetimeProvider {
+  class UbooneElectronLifetimeProvider : public DatabaseRetrievalAlg, public UBElectronLifetimeProvider {
   
     public:
     
@@ -62,23 +62,18 @@ namespace lariov {
       bool Update(DBTimeStamp_t ts);
       
       /// Retrieve lifetime information
-      float Lifetime(float t) const override;
-      float Purity() const override;
-      float LifetimeErr(float t) const override;
-      float PurityErr() const override;
+      const UbooneElectronLifetimeContainer& LifetimeContainer() const;
+      float Lifetime() const override;
+      float LifetimeErr() const override;
       
-      const ElectronLifetimeContainer& LifetimeContainer() const;
-      float ExpOffset() const;
-      float TimeConstant() const;
-      float ExpOffsetErr() const;
-      float TimeConstantErr() const;
+      
            
       //hardcoded information about database folder - useful for debugging cross checks
-      static constexpr unsigned int NCOLUMNS = 5;
+      static constexpr unsigned int NCOLUMNS = 3;
       static constexpr const char* FIELD_NAMES[NCOLUMNS]
-        = {"channel", "exponential_offset", "err_exponential_offset", "time_constant", "err_time_constant"};
+        = {"channel", "lifetime", "lifetime_err"};
       static constexpr const char* FIELD_TYPES[NCOLUMNS]
-        = {"bigint", "real", "real", "real", "real"};
+        = {"bigint", "real", "real"};
       
     private:
     
@@ -94,7 +89,7 @@ namespace lariov {
 
       DataSource::ds fDataSource;
           
-      mutable Snapshot<ElectronLifetimeContainer> fData;
+      mutable Snapshot<UbooneElectronLifetimeContainer> fData;
       
       const unsigned int fLifetimeChannel = 0;
   };

@@ -1,4 +1,3 @@
-
 art_make(	
 	  LIB_LIBRARIES
 			${ART_FRAMEWORK_CORE}

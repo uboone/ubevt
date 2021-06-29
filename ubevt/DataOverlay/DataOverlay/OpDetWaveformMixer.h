@@ -44,7 +44,8 @@ public:
 		   std::vector<raw::OpDetWaveform> & outputVector);
   void Mix(std::vector<raw::OpDetWaveform> const& mcVector,
 	   std::unordered_map<raw::Channel_t,float> const& map,
-	   std::vector<raw::OpDetWaveform> & outputVector);
+	   std::vector<raw::OpDetWaveform> & outputVector,
+	   float OpDetConstantSimulatedGain=1);
   
   void SetSaturationPoint(short x)
   { fRDAdderAlg.SetSaturationPoint(x); }

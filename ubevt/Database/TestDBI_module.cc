@@ -30,6 +30,7 @@
 #include "larevt/CalibrationDBI/Interface/DetPedestalProvider.h"
 
 #include "larevt/CalibrationDBI/Interface/ChannelStatusService.h"
+#include "ubevt/Database/CRTChannelStatusService.h"
 #include "larevt/CalibrationDBI/Interface/ChannelStatusProvider.h"
 
 #include "larevt/CalibrationDBI/Interface/PmtGainService.h"
@@ -41,8 +42,8 @@
 #include "larevt/CalibrationDBI/IOVData/CalibrationExtraInfo.h"
 #include "larevt/CalibrationDBI/IOVData/IOVDataError.h"
 
-//#include "UbooneElectronLifetimeService.h"
-//#include "UbooneElectronLifetimeProvider.h"
+#include "UbooneElectronLifetimeService.h"
+#include "UbooneElectronLifetimeProvider.h"
 
 
 
@@ -88,7 +89,7 @@ void TestDBI::analyze(art::Event const & evt)
 
   art::ServiceHandle<geo::Geometry> geo;
   art::Handle< std::vector<raw::RawDigit> > digitVecHandle;
-  
+  /*  
   evt.getByLabel(fRDModuleLabel, digitVecHandle);
   for (auto iter = digitVecHandle->begin(); iter != digitVecHandle->end(); ++iter) {
     raw::RawDigit digit = *iter;
@@ -110,12 +111,14 @@ void TestDBI::analyze(art::Event const & evt)
       fHist_Ind->Fill(sum);
     }
   }//end loop over digits
-
+  */
   std::cout<<"Calibration info at time: "<<evt.time().value()<<std::endl;
 
   const lariov::DetPedestalProvider& pedestalRetrievalAlg = art::ServiceHandle<lariov::DetPedestalService>()->GetPedestalProvider();
   std::cout<<"PEDESTAL "<<pedestalRetrievalAlg.PedMean(8100)<<std::endl;   
 
+  const lariov::UBElectronLifetimeProvider& elifetime_provider = art::ServiceHandle<lariov::UBElectronLifetimeService>()->GetProvider();
+  std::cout<<"LIFETIME: "<<elifetime_provider.Lifetime()<<" "<<elifetime_provider.LifetimeErr()<<std::endl;
 
   // Plot 
   TCanvas c("c","",600,500);
@@ -125,10 +128,10 @@ void TestDBI::analyze(art::Event const & evt)
   c.SaveAs("IndHist.png");
   
   const lariov::ChannelStatusProvider& status_provider = art::ServiceHandle<lariov::ChannelStatusService>()->GetProvider();
-  std::cout<<"  Channel 25 Status: "<<status_provider.Status(25)<<std::endl;
-  
-  //const lariov::UbooneElectronLifetimeProvider& elifetime_provider = art::ServiceHandle<lariov::UbooneElectronLifetimeService>()->GetProvider();
-  //std::cout<<"LIFETIME: "<<elifetime_provider.ExpOffset()<<" "<<elifetime_provider.TimeConstantErr()<<std::endl;
+  std::cout<<"TPC Channel 25 Status: "<<status_provider.Status(25)<<std::endl;
+
+  const lariov::ChannelStatusProvider& crt_status_provider = art::ServiceHandle<lariov::CRTChannelStatusService>()->GetProvider();
+  std::cout<<"CRT Channel 25 Status: "<<crt_status_provider.Status(25)<<std::endl;
   
   const lariov::PmtGainProvider& gain_provider = art::ServiceHandle<lariov::PmtGainService>()->GetProvider();
   for (unsigned int i=0; i!= geo->NOpDets(); ++i) {

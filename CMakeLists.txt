@@ -50,6 +50,7 @@ find_ups_product(lardata)
 find_ups_product(larcore)
 find_ups_product(nutools)
 find_ups_product( nurandom )
+find_ups_product(ubobj)
 
 find_ups_product(gallery)
 

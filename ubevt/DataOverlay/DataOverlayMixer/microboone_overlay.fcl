@@ -9,8 +9,11 @@ microboone_overlay:{
   RawDigitMCModuleLabel : daq
   OpDetMCModuleLabel : pmtreadout
   TriggerMCModuleLabel : triggersim
+  CRTMCModuleLabel : crthitsim
+  CRTDataModuleLabel : merger
   DefaultMCRawDigitScale: 1.0
   DefaultMCOpDetScale:    1.0
+  OpDetConstantSimulatedGain: 20.0
 }
 
 microboone_overlay_retriever: {
@@ -26,6 +29,8 @@ microboone_overlay_retriever: {
     RawDigitMCModuleLabel : daq
     OpDetMCModuleLabel : pmtreadout
     TriggerMCModuleLabel : triggersim
+    CRTMCModuleLabel : crthitsim
+    CRTDataModuleLabel : merger
     InputFileIsData : false
     G4InputModuleLabel : largeant
     GeneratorInputModuleLabel : generator
