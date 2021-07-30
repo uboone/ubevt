@@ -16,6 +16,7 @@
 #include "TH1D.h"
 
 #include <fstream>
+#include <numeric>
 
 namespace uboone_tool
 {

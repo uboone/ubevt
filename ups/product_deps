@@ -1,4 +1,4 @@
-# This @product_deps@ file defines dependencies for this package. 
+# This @product_deps@ file defines dependencies for this package.
 
 # The *parent* line must the first non-commented line and defines this product and version
 # The version must be of the form vxx_yy_zz (e.g. v01_02_03)
@@ -10,7 +10,7 @@ defaultqual e20
 # be used only if your product does not conform to the defaults.
 # Format: directory_type directory_path directory_name
 #   where directory_type is one of incdir, libdir, or bindir
-#   where directory_path is one of product_dir, fq_dir and - 
+#   where directory_path is one of product_dir, fq_dir and -
 # Defaults:
 # incdir  product_dir  include
 # fcldir  product_dir  fcl
@@ -31,8 +31,8 @@ table_fragment_end
 product                 version
 ubcore                  v09_26_01
 larevt                  v09_02_08
-gallery                 v1_16_03
-ifdh_art		v2_11_06
+gallery                 v1_18_04
+ifdh_art		v2_12_04
 cetbuildtools	        v7_17_01	-	only_for_build
 end_product_list
 

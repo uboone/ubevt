@@ -1,4 +1,3 @@
-
 #include "RawDigitCharacterizationAlg.h"
 
 #include "art/Framework/Core/ModuleMacros.h"
@@ -7,6 +6,7 @@
 #include <cmath>
 #include <algorithm>
 #include <functional>
+#include <numeric>
 
 namespace caldata
 {
