@@ -25,7 +25,7 @@ art_make(BASENAME_ONLY
               cetlib::cetlib
               larcorealg_Geometry
               ${FHICLCPP}
-              ${GSL}
+              GSL
         )
 
 

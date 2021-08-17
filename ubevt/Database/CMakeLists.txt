@@ -7,7 +7,7 @@ art_make( BASENAME_ONLY
                         larevt_CalibrationDBI_IOVData
                         larevt_CalibrationDBI_Providers
                         larcorealg_Geometry
-                        ${LIBWDA}
+                        LIBWDA
                         ${MF_MESSAGELOGGER}
                         ${FHICLCPP}
                         cetlib::cetlib
