@@ -4,14 +4,14 @@ art_make_library( LIBRARY_NAME  ub_RawDigitAdderAna
 	SOURCE RawDigitAdderAna.cxx
 	LIBRARIES
                  lardataobj_RawData
-                 ${ROOT_BASIC_LIB_LIST}
+
 )
 
 art_make_library( LIBRARY_NAME  ub_RawDigitAdder
 	SOURCE RawDigitAdder.cxx
 	             RawDigitAdder_HardSaturate.cxx
 	LIBRARIES
-                 ${ROOT_BASIC_LIB_LIST}
+
 )
 
 art_make_library( LIBRARY_NAME  ub_RawDigitMixer
@@ -19,7 +19,7 @@ art_make_library( LIBRARY_NAME  ub_RawDigitMixer
 	LIBRARIES
 		ub_RawDigitAdder
 		lardataobj_RawData
-		${ROOT_BASIC_LIB_LIST}
+
 )
 
 art_make_library( LIBRARY_NAME  ub_OpDetWaveformMixer
@@ -27,7 +27,7 @@ art_make_library( LIBRARY_NAME  ub_OpDetWaveformMixer
 	LIBRARIES
 		ub_RawDigitAdder
 		lardataobj_RawData
-		${ROOT_BASIC_LIB_LIST}
+
 )
 
 install_headers()

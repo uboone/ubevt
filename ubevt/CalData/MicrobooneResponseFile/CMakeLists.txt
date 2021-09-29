@@ -10,10 +10,10 @@ simple_plugin(MicrobooneResp "module"
 			art_Persistency_Provenance canvas
 			art_Utilities canvas
 			${MF_MESSAGELOGGER}
-			
+
 	                ${FHICLCPP}
 			cetlib cetlib_except
-			${ROOT_BASIC_LIB_LIST}
+
               BASENAME_ONLY
 )
 
