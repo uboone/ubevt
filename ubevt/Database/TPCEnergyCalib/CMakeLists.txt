@@ -3,17 +3,16 @@ cet_find_library( LIBWDA NAMES wda PATHS ENV LIBWDA_LIB NO_DEFAULT_PATH )
 include_directories( $ENV{LIBWDA_FQ_DIR}/include )
 
 art_make( BASENAME_ONLY
-          LIB_LIBRARIES 
+          LIB_LIBRARIES
 			larevt_CalibrationDBI_IOVData
 			larevt_CalibrationDBI_Providers
 			larcorealg_Geometry
-			${LIBWDA}
+			LIBWDA
                         ${MF_MESSAGELOGGER}
 	                ${FHICLCPP}
 			cetlib cetlib_except
-                        ${Boost_SYSTEM_LIBRARY}
 			${ART_FRAMEWORK_SERVICES_REGISTRY}
-			${ROOT_BASIC_LIB_LIST}
+
 			art_Utilities canvas
           MODULE_LIBRARIES larcorealg_Geometry
                         larcore_Geometry_Geometry_service
@@ -35,15 +34,15 @@ art_make( BASENAME_ONLY
                         art_Persistency_Provenance canvas
                         art_Utilities canvas
                         ${MF_MESSAGELOGGER}
-                        
+
                         ${FHICLCPP}
                         cetlib cetlib_except
                         ${CLHEP}
                         ${ROOT_GEOM}
                         ${ROOT_XMLIO}
                         ${ROOT_GDML}
-                        ${ROOT_BASIC_LIB_LIST}
-	  SERVICE_LIBRARIES 
+
+	  SERVICE_LIBRARIES
 	              larevt_CalibrationDBI_Providers
 		      ubevt_Database
 		      ubevt_Database_TPCEnergyCalib
@@ -51,7 +50,6 @@ art_make( BASENAME_ONLY
                       ${ART_FRAMEWORK_SERVICES_REGISTRY}
                       art_Persistency_Common canvas
                       art_Persistency_Provenance canvas
-                      ${ART_FRAMEWORK_SERVICES_BASIC}
                       ${ART_ROOT_IO_TFILE_SUPPORT} ${ROOT_CORE}
                       ${ART_FRAMEWORK_SERVICES_OPTIONAL_RANDOMNUMBERGENERATOR_SERVICE}
                       ${ART_ROOT_IO_TFILESERVICE_SERVICE}
@@ -70,7 +68,7 @@ art_make( BASENAME_ONLY
                             art_Persistency_Provenance canvas
 			    art_Utilities canvas
 			    ${FHICLCPP}
-			    ${ROOT_BASIC_LIB_LIST}
+
 )
 
 install_headers()
