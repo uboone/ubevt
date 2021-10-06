@@ -144,7 +144,7 @@ def main():
   #
   #-----------------------------------------------------
   
-  host   = 'ifdb04.fnal.gov'
+  host   = 'ifdb07.fnal.gov'
   port   = '5437'
   dbname = 'microboone_dev'
   user   = os.environ['USER']
@@ -192,7 +192,7 @@ def main():
     elif o in ("--is_playlist"):
       is_playlist = True
     elif o in ("--production"):
-      host = "ifdb05.fnal.gov"
+      host = "ifdb08.fnal.gov"
       dbname = "microboone_prod"
     else:
       assert False, "unhandled option "+o
