@@ -32,9 +32,6 @@ services.DetectorClocksService.TrigModuleName:               "daq"
 
 services.PmtGainService.PmtGainProvider.UseDB:               true
 
-services.Geometry.ForceUseFCLOnly: true
-
-
 source:
 {
   module_type: RootInput
