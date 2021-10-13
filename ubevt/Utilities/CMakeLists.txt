@@ -5,6 +5,7 @@ art_make ( NO_PLUGINS
 	   LIB_LIBRARIES lardata_Utilities_LArFFT_service
 	   	         ${ART_FRAMEWORK_CORE}
                          ${ART_FRAMEWORK_PRINCIPAL}
+                         ${ART_FRAMEWORK_SERVICES_BASIC}
                          ${ART_FRAMEWORK_SERVICES_REGISTRY}
 			 ${MF_MESSAGELOGGER}
 
@@ -32,6 +33,7 @@ set( uboone_util_lib_list lardata_Utilities_LArFFT_service
 			${ART_FRAMEWORK_SERVICES_REGISTRY}
 			art_Persistency_Common canvas
 			art_Persistency_Provenance canvas
+                        ${ART_FRAMEWORK_SERVICES_BASIC}
 			${ART_ROOT_IO_TFILE_SUPPORT} ${ROOT_CORE}
                         ${ART_FRAMEWORK_SERVICES_OPTIONAL_RANDOMNUMBERGENERATOR_SERVICE}
 			${ART_ROOT_IO_TFILESERVICE_SERVICE}
@@ -42,8 +44,7 @@ set( uboone_util_lib_list lardata_Utilities_LArFFT_service
 			${FHICLCPP}
 			cetlib cetlib_except
 			${Boost_FILESYSTEM_LIBRARY}
-                        ${CLHEP}
-
+                        ${ROOT_BASIC_LIB_LIST}
     )
 
 

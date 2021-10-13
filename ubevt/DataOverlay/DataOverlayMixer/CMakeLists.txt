@@ -25,6 +25,7 @@ simple_plugin(OverlayRawDataMicroBooNE "module"
               LIBRARIES
                 ub_RawDigitMixer
                 ub_OpDetWaveformMixer
+		ub_CRTMixer
                 lardataobj_RawData
                 nusimdata_SimulationBase
                 lardataobj_MCBase

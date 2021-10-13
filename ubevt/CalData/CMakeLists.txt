@@ -6,6 +6,7 @@ art_make( BASENAME_ONLY
                         lardata_Utilities
                         ${FHICLCPP}
                         cetlib cetlib_except
+                        ${ROOT_BASIC_LIB_LIST}
 
           MODULE_LIBRARIES larcorealg_Geometry
                         CalData

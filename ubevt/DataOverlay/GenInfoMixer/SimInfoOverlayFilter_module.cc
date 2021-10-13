@@ -523,8 +523,7 @@ bool mix::SimInfoOverlayFilter::filter(art::Event & e)
   // this could be empty if running a "downstream" SimInfoMixer instance
   if(fMCTruthInputModuleLabels.empty() && !fMCTruthMCParticleAssnsInputModuleLabels.empty()) {
     // assume "generator" module generated the mctruth already
-    std::vector<art::Handle<std::vector<simb::MCTruth>>> mclists;
-    e.getManyByType(mclists);
+    auto mclists = e.getMany<std::vector<simb::MCTruth>>();
     for(size_t mcl = 0; mcl < mclists.size(); ++mcl){
       art::Handle< std::vector<simb::MCTruth> > mclistHandle = mclists[mcl];
       std::string process_name = mclistHandle.provenance()->processName();
