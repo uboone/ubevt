@@ -15,7 +15,7 @@ simple_plugin(RetrieveOverlayDataMicroBooNE "module"
                 art_Persistency_Provenance
                 art_root_io_detail
                 art_Utilities canvas
-                ifdh
+                ifdh::ifdh
                 ${MF_MESSAGELOGGER}
                 ${FHICLCPP}
                 cetlib::cetlib
@@ -42,7 +42,7 @@ simple_plugin(OverlayRawDataMicroBooNE "module"
                 art_Utilities
                 art_root_io_detail
                 canvas
-                ifdh
+                ifdh::ifdh
                 ${MF_MESSAGELOGGER}
                 ${FHICLCPP}
                 cetlib::cetlib

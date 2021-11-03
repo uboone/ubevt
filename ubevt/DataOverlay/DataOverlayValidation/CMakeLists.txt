@@ -4,7 +4,6 @@ art_make(
 			${ART_FRAMEWORK_CORE}
 			art_Utilities canvas
 			${MF_MESSAGELOGGER}
-
 			cetlib cetlib_except
 
           MODULE_LIBRARIES
@@ -16,7 +15,7 @@ art_make(
 			lardata_RecoObjects
 			lardata_Utilities
 			larevt_Filters
-			nusimdata_SimulationBase
+			nusimdata::SimulationBase
 			${LARRECO_LIB}
 			${LARDATA_LIB}
                         ${ART_FRAMEWORK_CORE}
@@ -29,14 +28,13 @@ art_make(
 			art_Persistency_Provenance canvas
 			art_Utilities canvas
 			${MF_MESSAGELOGGER}
-
 	                ${FHICLCPP}
 			cetlib cetlib_except
 			${CLHEP}
                         ${ROOT_GEOM}
                         ${ROOT_XMLIO}
                         ${ROOT_GDML}
-
+                        ROOT::Tree
         )
 
 install_headers()
