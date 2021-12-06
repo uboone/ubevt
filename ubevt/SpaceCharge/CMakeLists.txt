@@ -12,19 +12,19 @@ art_make(BASENAME_ONLY
               lardata_Utilities
               lardataalg_DetectorInfo
               larevt_SpaceCharge
-              ${ART_FRAMEWORK_CORE}
-              ${ART_FRAMEWORK_PRINCIPAL}
-              ${ART_FRAMEWORK_SERVICES_REGISTRY}
-              art_Persistency_Common
-              art_Persistency_Provenance
-              ${ART_ROOT_IO_TFILE_SUPPORT}
-              ${ROOT_CORE}
-              ${ART_ROOT_IO_TFILESERVICE_SERVICE}
-              art_Utilities canvas
-              ${MF_MESSAGELOGGER}
+              art::Framework_Core
+              art::Framework_Principal
+              art::Framework_Services_Registry
+              art::Persistency_Common
+              art::Persistency_Provenance
+              art_root_io::tfile_support
+              ROOT::Core
+              art_root_io::TFileService_service
+              art::Utilities canvas::canvas
+              messagefacility::MF_MessageLogger
               cetlib::cetlib
               larcorealg_Geometry
-              ${FHICLCPP}
+              fhiclcpp::fhiclcpp
               GSL
         )
 

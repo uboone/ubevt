@@ -3,16 +3,16 @@ simple_plugin(MicrobooneResp "module"
                         lardata_Utilities_LArFFT_service
                         larcore_Geometry_Geometry_service
                         larcorealg_Geometry
-			${ART_FRAMEWORK_SERVICES_REGISTRY}
-			${ART_ROOT_IO_TFILE_SUPPORT} ${ROOT_CORE}
-			${ART_ROOT_IO_TFILESERVICE_SERVICE}
-			art_Persistency_Common canvas
-			art_Persistency_Provenance canvas
-			art_Utilities canvas
-			${MF_MESSAGELOGGER}
+			art::Framework_Services_Registry
+			art_root_io::tfile_support ROOT::Core
+			art_root_io::TFileService_service
+			art::Persistency_Common canvas::canvas
+			art::Persistency_Provenance canvas::canvas
+			art::Utilities canvas::canvas
+			messagefacility::MF_MessageLogger
 
-	                ${FHICLCPP}
-			cetlib cetlib_except
+	                fhiclcpp::fhiclcpp
+			cetlib::cetlib cetlib_except
 
               BASENAME_ONLY
 )
