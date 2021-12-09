@@ -23,7 +23,7 @@
 #include "art/Framework/Principal/Handle.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
-#include "IFDH_service.h"
+#include "ifdh_art/IFDHService/IFDH_service.h"
 
 #include <memory>
 #include <string>

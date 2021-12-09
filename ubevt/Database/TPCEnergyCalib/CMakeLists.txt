@@ -8,12 +8,12 @@ art_make( BASENAME_ONLY
 			larevt_CalibrationDBI_Providers
 			larcorealg_Geometry
 			LIBWDA
-                        ${MF_MESSAGELOGGER}
-	                ${FHICLCPP}
-			cetlib cetlib_except
-			${ART_FRAMEWORK_SERVICES_REGISTRY}
+                        messagefacility::MF_MessageLogger
+	                fhiclcpp::fhiclcpp
+			cetlib::cetlib cetlib_except
+			art::Framework_Services_Registry
 
-			art_Utilities canvas
+			art::Utilities canvas::canvas
           MODULE_LIBRARIES larcorealg_Geometry
                         larcore_Geometry_Geometry_service
                         larsim_Simulation nutools_ParticleNavigation lardataobj_Simulation
@@ -23,51 +23,51 @@ art_make( BASENAME_ONLY
                         SignalShapingServiceMicroBooNE_service
 			larevt_CalibrationDBI_Providers
 			ubevt_Database
-                        nurandom_RandomUtils_NuRandomService_service
-                        ${ART_FRAMEWORK_CORE}
-                        ${ART_FRAMEWORK_PRINCIPAL}
-                        ${ART_FRAMEWORK_SERVICES_REGISTRY}
-                        ${ART_ROOT_IO_TFILE_SUPPORT} ${ROOT_CORE}
-                        ${ART_FRAMEWORK_SERVICES_OPTIONAL_RANDOMNUMBERGENERATOR_SERVICE}
-                        ${ART_ROOT_IO_TFILESERVICE_SERVICE}
-                        art_Persistency_Common canvas
-                        art_Persistency_Provenance canvas
-                        art_Utilities canvas
-                        ${MF_MESSAGELOGGER}
+                        nurandom::RandomUtils_NuRandomService_service
+                        art::Framework_Core
+                        art::Framework_Principal
+                        art::Framework_Services_Registry
+                        art_root_io::tfile_support ROOT::Core
+                        art::Framework_Services_Optional_RandomNumberGenerator_service
+                        art_root_io::TFileService_service
+                        art::Persistency_Common canvas::canvas
+                        art::Persistency_Provenance canvas::canvas
+                        art::Utilities canvas::canvas
+                        messagefacility::MF_MessageLogger
 
-                        ${FHICLCPP}
-                        cetlib cetlib_except
-                        ${CLHEP}
-                        ${ROOT_GEOM}
-                        ${ROOT_XMLIO}
-                        ${ROOT_GDML}
+                        fhiclcpp::fhiclcpp
+                        cetlib::cetlib cetlib_except
+                        CLHEP::CLHEP
+                        ROOT::Geom
+                        ROOT::XMLIO
+                        ROOT::Gdml
 
 	  SERVICE_LIBRARIES
 	              larevt_CalibrationDBI_Providers
 		      ubevt_Database
 		      ubevt_Database_TPCEnergyCalib
-                      ${ART_FRAMEWORK_PRINCIPAL}
-                      ${ART_FRAMEWORK_SERVICES_REGISTRY}
-                      art_Persistency_Common canvas
-                      art_Persistency_Provenance canvas
-                      ${ART_ROOT_IO_TFILE_SUPPORT} ${ROOT_CORE}
-                      ${ART_FRAMEWORK_SERVICES_OPTIONAL_RANDOMNUMBERGENERATOR_SERVICE}
-                      ${ART_ROOT_IO_TFILESERVICE_SERVICE}
+                      art::Framework_Principal
+                      art::Framework_Services_Registry
+                      art::Persistency_Common canvas::canvas
+                      art::Persistency_Provenance canvas::canvas
+                      art_root_io::tfile_support ROOT::Core
+                      art::Framework_Services_Optional_RandomNumberGenerator_service
+                      art_root_io::TFileService_service
                       ${ART_FRAMEWORK_SERVICES_SYSTEM_FILECATALOGMETADATA_SERVICE}
-                      art_Utilities canvas
+                      art::Utilities canvas::canvas
 	                    larevt_CalibrationDBI_IOVData
 			    lardataobj_RawData
 			    larcorealg_Geometry
 			    larcore_Geometry_Geometry_service
-			    ${ART_FRAMEWORK_SERVICES_REGISTRY}
-			    ${ART_FRAMEWORK_CORE}
-                            ${ART_FRAMEWORK_PRINCIPAL}
-                            ${ART_ROOT_IO_TFILE_SUPPORT} ${ROOT_CORE}
-                            ${ART_ROOT_IO_TFILESERVICE_SERVICE}
-                            art_Persistency_Common canvas
-                            art_Persistency_Provenance canvas
-			    art_Utilities canvas
-			    ${FHICLCPP}
+			    art::Framework_Services_Registry
+			    art::Framework_Core
+                            art::Framework_Principal
+                            art_root_io::tfile_support ROOT::Core
+                            art_root_io::TFileService_service
+                            art::Persistency_Common canvas::canvas
+                            art::Persistency_Provenance canvas::canvas
+			    art::Utilities canvas::canvas
+			    fhiclcpp::fhiclcpp
 
 )
 

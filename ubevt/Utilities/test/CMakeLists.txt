@@ -3,21 +3,21 @@ cet_enable_asserts()
 art_make( BASENAME_ONLY
 	  MODULE_LIBRARIES lardata_Utilities
                         SignalShapingServiceMicroBooNE_service
-                        ${ART_FRAMEWORK_CORE}
-			${ART_FRAMEWORK_PRINCIPAL}
-			${ART_FRAMEWORK_SERVICES_REGISTRY}
-			${ART_ROOT_IO_TFILE_SUPPORT} ${ROOT_CORE}
-			${ART_ROOT_IO_TFILESERVICE_SERVICE}
-			art_Persistency_Common canvas
-			art_Persistency_Provenance canvas
-			art_Utilities canvas
-			${MF_MESSAGELOGGER}
+                        art::Framework_Core
+			art::Framework_Principal
+			art::Framework_Services_Registry
+			art_root_io::tfile_support ROOT::Core
+			art_root_io::TFileService_service
+			art::Persistency_Common canvas::canvas
+			art::Persistency_Provenance canvas::canvas
+			art::Utilities canvas::canvas
+			messagefacility::MF_MessageLogger
 
-	                ${FHICLCPP}
-			cetlib cetlib_except
-                        ${ROOT_GEOM}
-                        ${ROOT_XMLIO}
-                        ${ROOT_GDML}
+	                fhiclcpp::fhiclcpp
+			cetlib::cetlib cetlib_except
+                        ROOT::Geom
+                        ROOT::XMLIO
+                        ROOT::Gdml
 
         )
 

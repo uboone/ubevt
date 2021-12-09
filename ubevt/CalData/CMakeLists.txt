@@ -4,8 +4,8 @@ art_make( BASENAME_ONLY
                         lardataobj_RawData
                         lardataobj_RecoBase
                         lardata_Utilities
-                        ${FHICLCPP}
-                        cetlib cetlib_except
+                        fhiclcpp::fhiclcpp
+                        cetlib::cetlib cetlib_except
 
           MODULE_LIBRARIES larcorealg_Geometry
                         CalData
@@ -22,20 +22,20 @@ art_make( BASENAME_ONLY
                         lardataobj_RecoBase
                         lardata_ArtDataHelper
                         SignalShapingServiceMicroBooNE_service
-                        ${ART_FRAMEWORK_CORE}
-                        ${ART_FRAMEWORK_PRINCIPAL}
-                        ${ART_FRAMEWORK_SERVICES_REGISTRY}
+                        art::Framework_Core
+                        art::Framework_Principal
+                        art::Framework_Services_Registry
                         art_root_io::TFileService_service
-                        art_Persistency_Common
-                        art_Persistency_Provenance
-                        art_Utilities canvas
-                        ${MF_MESSAGELOGGER}
-                        ${FHICLCPP}
+                        art::Persistency_Common
+                        art::Persistency_Provenance
+                        art::Utilities canvas::canvas
+                        messagefacility::MF_MessageLogger
+                        fhiclcpp::fhiclcpp
                         cetlib::cetlib
-                        ${ROOT_GEOM}
-                        ${ROOT_XMLIO}
-                        ${ROOT_GDML}
-                        ${ROOT_FFTW}
+                        ROOT::Geom
+                        ROOT::XMLIO
+                        ROOT::Gdml
+                        ROOT::FFTW
                         ROOT::Tree
         )
 
