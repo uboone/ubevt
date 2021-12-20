@@ -11,24 +11,20 @@ art_make( BASENAME_ONLY
                          lardataobj_RecoBase
                          larcore_Geometry_Geometry_service
                          lardata_Utilities
-                         nurandom_RandomUtils_NuRandomService_service
-                         ${ART_FRAMEWORK_CORE}
-                         ${ART_FRAMEWORK_PRINCIPAL}
-                         ${ART_FRAMEWORK_SERVICES_REGISTRY}
-                         art_Persistency_Common
-                         art_Persistency_Provenance
-                         ${ART_FRAMEWORK_SERVICES_BASIC}
-                         ${ART_ROOT_IO_TFILE_SUPPORT} ${ROOT_CORE}
-                         ${ART_FRAMEWORK_SERVICES_OPTIONAL_RANDOMNUMBERGENERATOR_SERVICE}
-                         ${ART_ROOT_IO_TFILESERVICE_SERVICE}
+                         nurandom::RandomUtils_NuRandomService_service
+                         art::Framework_Core
+                         art::Framework_Principal
+                         art::Framework_Services_Registry
+                         art::Persistency_Common
+                         art::Persistency_Provenance
+                         art_root_io::TFileService_service
                          ${ART_FRAMEWORK_SERVICES_SYSTEM_FILECATALOGMETADATA_SERVICE}
-                         art_Utilities
-                         canvas
-                         ${MF_MESSAGELOGGER}
-                         ${CETLIB}
-                         ${Boost_FILESYSTEM_LIBRARY}
+                         art::Utilities
+                         canvas::canvas
+                         messagefacility::MF_MessageLogger
+                         cetlib::cetlib
+                         Boost::filesystem
                          CLHEP::CLHEP
-                         ${ROOT_BASIC_LIB_LIST}
     )
 
 install_headers()

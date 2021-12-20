@@ -3,19 +3,18 @@ cet_enable_asserts()
 art_make ( NO_PLUGINS
            BASENAME_ONLY
 	   LIB_LIBRARIES lardata_Utilities_LArFFT_service
-	   	         ${ART_FRAMEWORK_CORE}
-                         ${ART_FRAMEWORK_PRINCIPAL}
-                         ${ART_FRAMEWORK_SERVICES_BASIC}
-                         ${ART_FRAMEWORK_SERVICES_REGISTRY}
-			 ${MF_MESSAGELOGGER}
+	   	         art::Framework_Core
+                         art::Framework_Principal
+                         art::Framework_Services_Registry
+			 messagefacility::MF_MessageLogger
 
-			 art_Persistency_Common canvas
-			 art_Persistency_Provenance canvas
-			 art_Utilities canvas
-			 cetlib cetlib_except
+			 art::Persistency_Common canvas::canvas
+			 art::Persistency_Provenance canvas::canvas
+			 art::Utilities canvas::canvas
+			 cetlib::cetlib cetlib_except
 
-	                 ${FHICLCPP}
-			 ${Boost_FILESYSTEM_LIBRARY}
+	                 fhiclcpp::fhiclcpp
+			 Boost::filesystem
 	  )
 
 set( uboone_util_lib_list lardata_Utilities_LArFFT_service
@@ -27,24 +26,24 @@ set( uboone_util_lib_list lardata_Utilities_LArFFT_service
 			larcore_Geometry_Geometry_service
 			lardata_Utilities
 			ubevt_Utilities
-			nurandom_RandomUtils_NuRandomService_service
-  			${ART_FRAMEWORK_CORE}
-			${ART_FRAMEWORK_PRINCIPAL}
-			${ART_FRAMEWORK_SERVICES_REGISTRY}
-			art_Persistency_Common canvas
-			art_Persistency_Provenance canvas
-                        ${ART_FRAMEWORK_SERVICES_BASIC}
-			${ART_ROOT_IO_TFILE_SUPPORT} ${ROOT_CORE}
-                        ${ART_FRAMEWORK_SERVICES_OPTIONAL_RANDOMNUMBERGENERATOR_SERVICE}
-			${ART_ROOT_IO_TFILESERVICE_SERVICE}
+			nurandom::RandomUtils_NuRandomService_service
+  			art::Framework_Core
+			art::Framework_Principal
+			art::Framework_Services_Registry
+			art::Persistency_Common canvas::canvas
+			art::Persistency_Provenance canvas::canvas
+			art_root_io::tfile_support ROOT::Core
+                        art::Framework_Services_Optional_RandomNumberGenerator_service
+			art_root_io::TFileService_service
 			${ART_FRAMEWORK_SERVICES_SYSTEM_FILECATALOGMETADATA_SERVICE}
-			art_Utilities canvas
-			${MF_MESSAGELOGGER}
+			art::Utilities canvas::canvas
+			messagefacility::MF_MessageLogger
 
-			${FHICLCPP}
-			cetlib cetlib_except
-			${Boost_FILESYSTEM_LIBRARY}
-                        ${ROOT_BASIC_LIB_LIST}
+			fhiclcpp::fhiclcpp
+			cetlib::cetlib cetlib_except
+			Boost::filesystem
+                        CLHEP::CLHEP
+
     )
 
 

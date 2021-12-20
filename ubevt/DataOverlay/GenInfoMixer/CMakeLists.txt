@@ -3,25 +3,24 @@
 art_make(
 	MODULE_LIBRARIES
                         lardataobj_Simulation
-			nusimdata_SimulationBase
-			larcoreobj_SummaryData
-                        ${ART_FRAMEWORK_CORE}
+			nusimdata::SimulationBase
+                        art::Framework_Core
 			${ART_FRAMEWORK_IO_PRODUCTMIX}
-			${ART_ROOT_IO}
+			art_root_io::art_root_io
                         art_root_io_detail
 			${ART_FRAMEWORK_MODULES}
-                        ${ART_FRAMEWORK_PRINCIPAL}
-                        ${ART_FRAMEWORK_SERVICES_REGISTRY}
+                        art::Framework_Principal
+                        art::Framework_Services_Registry
                         ${ART_FRAMEWORK_SERVICES_SYSTEM_FILECATALOGMETADATA_SERVICE}
-                        art_Persistency_Provenance
-                        art_Persistency_Common
-                        art_Utilities
-                        canvas
+                        art::Persistency_Provenance
+                        art::Persistency_Common
+                        art::Utilities
+                        canvas::canvas
 			gallery
-                        ${MF_MESSAGELOGGER}
+                        messagefacility::MF_MessageLogger
                         ${BOOST_LIB}
-                        ${FHICLCPP}
-                        cetlib cetlib_except
+                        fhiclcpp::fhiclcpp
+                        cetlib::cetlib cetlib_except
 
 )
 
