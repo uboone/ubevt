@@ -2,6 +2,7 @@
 
 art_make(
 	MODULE_LIBRARIES
+                        larcoreobj_SummaryData
                         lardataobj_Simulation
 			nusimdata::SimulationBase
                         art::Framework_Core
