@@ -15,8 +15,6 @@ art_make(
 			lardata_Utilities
 			larevt_Filters
 			nusimdata::SimulationBase
-			${LARRECO_LIB}
-			${LARDATA_LIB}
                         art::Framework_Core
 			art::Framework_Principal
 			art::Framework_Services_Registry

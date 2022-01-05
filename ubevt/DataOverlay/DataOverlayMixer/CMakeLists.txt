@@ -6,11 +6,10 @@ simple_plugin(RetrieveOverlayDataMicroBooNE "module"
                 nusimdata::SimulationBase
                 lardataobj_MCBase
                 art::Framework_Core
-                ${ART_FRAMEWORK_IO_PRODUCTMIX}
+                art::Framework_IO_ProductMix
                 art_root_io::art_root_io
                 art::Framework_Principal
                 art::Framework_Services_Registry
-                ${ART_FRAMEWORK_SERVICES_SYSTEM_FILECATALOGMETADATA_SERVICE}
                 art::Persistency_Common
                 art::Persistency_Provenance
                 art_root_io_detail
@@ -32,11 +31,10 @@ simple_plugin(OverlayRawDataMicroBooNE "module"
                 larevt_CalibrationDBI_IOVData
                 larevt_CalibrationDBI_Providers
                 art::Framework_Core
-                ${ART_FRAMEWORK_IO_PRODUCTMIX}
+                art::Framework_IO_ProductMix
                 art_root_io::art_root_io
                 art::Framework_Principal
                 art::Framework_Services_Registry
-                ${ART_FRAMEWORK_SERVICES_SYSTEM_FILECATALOGMETADATA_SERVICE}
                 ubevt_Utilities
                 art::Persistency_Common
                 art::Persistency_Provenance

@@ -6,13 +6,11 @@ art_make(
                         lardataobj_Simulation
 			nusimdata::SimulationBase
                         art::Framework_Core
-			${ART_FRAMEWORK_IO_PRODUCTMIX}
+			art::Framework_IO_ProductMix
 			art_root_io::art_root_io
                         art_root_io_detail
-			${ART_FRAMEWORK_MODULES}
                         art::Framework_Principal
                         art::Framework_Services_Registry
-                        ${ART_FRAMEWORK_SERVICES_SYSTEM_FILECATALOGMETADATA_SERVICE}
                         art::Persistency_Provenance
                         art::Persistency_Common
                         art::Utilities

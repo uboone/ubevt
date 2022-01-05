@@ -18,7 +18,6 @@ art_make( BASENAME_ONLY
                          art::Persistency_Common
                          art::Persistency_Provenance
                          art_root_io::TFileService_service
-                         ${ART_FRAMEWORK_SERVICES_SYSTEM_FILECATALOGMETADATA_SERVICE}
                          art::Utilities
                          canvas::canvas
                          messagefacility::MF_MessageLogger

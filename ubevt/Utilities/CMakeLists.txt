@@ -35,7 +35,6 @@ set( uboone_util_lib_list lardata_Utilities_LArFFT_service
 			art_root_io::tfile_support ROOT::Core
                         art::Framework_Services_Optional_RandomNumberGenerator_service
 			art_root_io::TFileService_service
-			${ART_FRAMEWORK_SERVICES_SYSTEM_FILECATALOGMETADATA_SERVICE}
 			art::Utilities canvas::canvas
 			messagefacility::MF_MessageLogger
 
