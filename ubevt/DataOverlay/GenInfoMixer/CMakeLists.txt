@@ -17,7 +17,6 @@ art_make(
                         canvas::canvas
 			gallery
                         messagefacility::MF_MessageLogger
-                        ${BOOST_LIB}
                         fhiclcpp::fhiclcpp
                         cetlib::cetlib cetlib_except
 
