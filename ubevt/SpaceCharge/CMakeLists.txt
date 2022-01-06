@@ -20,7 +20,8 @@ art_make(BASENAME_ONLY
               art_root_io::tfile_support
               ROOT::Core
               art_root_io::TFileService_service
-              art::Utilities canvas::canvas
+              art::Utilities
+              canvas::canvas
               messagefacility::MF_MessageLogger
               cetlib::cetlib
               larcorealg_Geometry

@@ -8,9 +8,10 @@ art_make ( NO_PLUGINS
                          art::Framework_Services_Registry
 			 messagefacility::MF_MessageLogger
 
-			 art::Persistency_Common canvas::canvas
-			 art::Persistency_Provenance canvas::canvas
-			 art::Utilities canvas::canvas
+			 art::Persistency_Common
+			 art::Persistency_Provenance
+			 art::Utilities
+                         canvas::canvas
 			 cetlib::cetlib
                          cetlib_except::cetlib_except
 
@@ -31,12 +32,13 @@ set( uboone_util_lib_list lardata_Utilities_LArFFT_service
   			art::Framework_Core
 			art::Framework_Principal
 			art::Framework_Services_Registry
-			art::Persistency_Common canvas::canvas
-			art::Persistency_Provenance canvas::canvas
+			art::Persistency_Common
+			art::Persistency_Provenance
 			art_root_io::tfile_support ROOT::Core
                         art::Framework_Services_Optional_RandomNumberGenerator_service
 			art_root_io::TFileService_service
-			art::Utilities canvas::canvas
+			art::Utilities
+                        canvas::canvas
 			messagefacility::MF_MessageLogger
 
 			fhiclcpp::fhiclcpp

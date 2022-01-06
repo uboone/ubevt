@@ -1,7 +1,8 @@
 art_make(
 	  LIB_LIBRARIES
 			art::Framework_Core
-			art::Utilities canvas::canvas
+			art::Utilities
+                        canvas::canvas
 			messagefacility::MF_MessageLogger
 			cetlib::cetlib
                         cetlib_except::cetlib_except
@@ -22,9 +23,10 @@ art_make(
 			art_root_io::tfile_support ROOT::Core
 			art::Framework_Services_Optional_RandomNumberGenerator_service
 			art_root_io::TFileService_service
-			art::Persistency_Common canvas::canvas
-			art::Persistency_Provenance canvas::canvas
-			art::Utilities canvas::canvas
+			art::Persistency_Common
+			art::Persistency_Provenance
+			art::Utilities
+                        canvas::canvas
 			messagefacility::MF_MessageLogger
 	                fhiclcpp::fhiclcpp
 			cetlib::cetlib

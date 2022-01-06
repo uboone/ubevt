@@ -4,11 +4,12 @@ simple_plugin(SpaceChargeServiceMicroBooNE "service"
 	      art::Framework_Core
 	      art::Framework_Principal
 	      art::Framework_Services_Registry
-	      art::Persistency_Common canvas::canvas
-	      art::Persistency_Provenance canvas::canvas
+	      art::Persistency_Common
+	      art::Persistency_Provenance
 	      art_root_io::tfile_support ROOT::Core
 	      art_root_io::TFileService_service
-	      art::Utilities canvas::canvas
+	      art::Utilities
+              canvas::canvas
 	      messagefacility::MF_MessageLogger
 
   	      cetlib::cetlib

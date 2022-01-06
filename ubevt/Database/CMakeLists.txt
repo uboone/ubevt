@@ -13,7 +13,8 @@ art_make( BASENAME_ONLY
                         cetlib::cetlib
                         art::Framework_Services_Registry
 
-                        art::Utilities canvas::canvas
+                        art::Utilities
+                        canvas::canvas
           MODULE_LIBRARIES larcorealg_Geometry
                         larcore_Geometry_Geometry_service
                         lardata_Utilities
@@ -28,9 +29,10 @@ art_make( BASENAME_ONLY
                         art_root_io::tfile_support ROOT::Core
                         art::Framework_Services_Optional_RandomNumberGenerator_service
                         art_root_io::TFileService_service
-                        art::Persistency_Common canvas::canvas
-                        art::Persistency_Provenance canvas::canvas
-                        art::Utilities canvas::canvas
+                        art::Persistency_Common
+                        art::Persistency_Provenance
+                        art::Utilities
+                        canvas::canvas
                         messagefacility::MF_MessageLogger
 
                         fhiclcpp::fhiclcpp
@@ -44,28 +46,22 @@ art_make( BASENAME_ONLY
           SERVICE_LIBRARIES
                       larevt_CalibrationDBI_Providers
                       ubevt_Database
-                      art::Framework_Principal
+                      larevt_CalibrationDBI_IOVData
+                      lardataobj_RawData
+                      larcorealg_Geometry
+                      larcore_Geometry_Geometry_service
                       art::Framework_Services_Registry
-                      art::Persistency_Common canvas::canvas
-                      art::Persistency_Provenance canvas::canvas
-                      art_root_io::tfile_support ROOT::Core
+                      art::Framework_Core
+                      art::Framework_Principal
+                      art_root_io::tfile_support
                       art::Framework_Services_Optional_RandomNumberGenerator_service
                       art_root_io::TFileService_service
-                      art::Utilities canvas::canvas
-                            larevt_CalibrationDBI_IOVData
-                            lardataobj_RawData
-                            larcorealg_Geometry
-                            larcore_Geometry_Geometry_service
-                            art::Framework_Services_Registry
-                            art::Framework_Core
-                            art::Framework_Principal
-                            art_root_io::tfile_support ROOT::Core
-                            art_root_io::TFileService_service
-                            art::Persistency_Common canvas::canvas
-                            art::Persistency_Provenance canvas::canvas
-                            art::Utilities canvas::canvas
-                            fhiclcpp::fhiclcpp
-
+                      art::Persistency_Common
+                      art::Persistency_Provenance
+                      art::Utilities
+                      canvas::canvas
+                      fhiclcpp::fhiclcpp
+                      ROOT::Core
 )
 
 install_headers()

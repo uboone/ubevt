@@ -29,7 +29,8 @@ art_make( BASENAME_ONLY
                         art_root_io::TFileService_service
                         art::Persistency_Common
                         art::Persistency_Provenance
-                        art::Utilities canvas::canvas
+                        art::Utilities
+                        canvas::canvas
                         messagefacility::MF_MessageLogger
                         fhiclcpp::fhiclcpp
                         cetlib::cetlib

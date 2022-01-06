@@ -13,7 +13,8 @@ simple_plugin(RetrieveOverlayDataMicroBooNE "module"
                 art::Persistency_Common
                 art::Persistency_Provenance
                 art_root_io_detail
-                art::Utilities canvas::canvas
+                art::Utilities
+                canvas::canvas
                 ifdh::ifdh
                 messagefacility::MF_MessageLogger
                 fhiclcpp::fhiclcpp
