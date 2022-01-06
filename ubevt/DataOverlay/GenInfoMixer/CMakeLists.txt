@@ -15,7 +15,7 @@ art_make(
                         art::Persistency_Common
                         art::Utilities
                         canvas::canvas
-			gallery
+			gallery::gallery
                         messagefacility::MF_MessageLogger
                         fhiclcpp::fhiclcpp
                         cetlib::cetlib
