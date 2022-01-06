@@ -11,7 +11,8 @@ simple_plugin(SpaceChargeServiceMicroBooNE "service"
 	      art::Utilities canvas::canvas
 	      messagefacility::MF_MessageLogger
 
-  	      cetlib::cetlib cetlib_except
+  	      cetlib::cetlib
+              cetlib_except::cetlib_except
 
 
 )

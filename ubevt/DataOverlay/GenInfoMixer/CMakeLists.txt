@@ -18,7 +18,8 @@ art_make(
 			gallery
                         messagefacility::MF_MessageLogger
                         fhiclcpp::fhiclcpp
-                        cetlib::cetlib cetlib_except
+                        cetlib::cetlib
+                        cetlib_except::cetlib_except
 
 )
 

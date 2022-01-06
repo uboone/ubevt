@@ -12,7 +12,8 @@ simple_plugin(MicrobooneResp "module"
 			messagefacility::MF_MessageLogger
 
 	                fhiclcpp::fhiclcpp
-			cetlib::cetlib cetlib_except
+			cetlib::cetlib
+                        cetlib_except::cetlib_except
 
               BASENAME_ONLY
 )

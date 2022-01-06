@@ -5,7 +5,8 @@ art_make( BASENAME_ONLY
                         lardataobj_RecoBase
                         lardata_Utilities
                         fhiclcpp::fhiclcpp
-                        cetlib::cetlib cetlib_except
+                        cetlib::cetlib
+                        cetlib_except::cetlib_except
 
           MODULE_LIBRARIES larcorealg_Geometry
                         CalData

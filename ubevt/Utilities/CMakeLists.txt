@@ -11,7 +11,8 @@ art_make ( NO_PLUGINS
 			 art::Persistency_Common canvas::canvas
 			 art::Persistency_Provenance canvas::canvas
 			 art::Utilities canvas::canvas
-			 cetlib::cetlib cetlib_except
+			 cetlib::cetlib
+                         cetlib_except::cetlib_except
 
 	                 fhiclcpp::fhiclcpp
 			 Boost::filesystem
@@ -39,7 +40,8 @@ set( uboone_util_lib_list lardata_Utilities_LArFFT_service
 			messagefacility::MF_MessageLogger
 
 			fhiclcpp::fhiclcpp
-			cetlib::cetlib cetlib_except
+			cetlib::cetlib
+                        cetlib_except::cetlib_except
 			Boost::filesystem
                         CLHEP::CLHEP
 
