@@ -33,14 +33,15 @@ ubcore                  v09_41_00
 larevt                  v09_04_02
 gallery                 v1_18_04
 ifdh_art		v2_13_01
+nurandom                v1_08_01
 cetbuildtools	        v8_18_09	-	only_for_build
 end_product_list
 
-qualifier      ubcore         larevt         gallery	   ifdh_art
-c7:debug       c7:debug       c7:debug       c7:debug	   c7:debug
-c7:prof        c7:prof        c7:prof        c7:prof 	   c7:prof
-e20:debug      e20:debug      e20:debug      e20:debug	   e20:debug
-e20:prof       e20:prof       e20:prof       e20:prof	   e20:prof
+qualifier      ubcore         larevt         gallery	   ifdh_art     nurandom
+c7:debug       c7:debug       c7:debug       c7:debug	   c7:debug     c7:debug
+c7:prof        c7:prof        c7:prof        c7:prof 	   c7:prof      c7:prof
+e20:debug      e20:debug      e20:debug      e20:debug	   e20:debug    e20:debug
+e20:prof       e20:prof       e20:prof       e20:prof	   e20:prof     e20:prof
 end_qualifier_list
 
 # Preserve tabs and formatting in emacs and vi / vim:
