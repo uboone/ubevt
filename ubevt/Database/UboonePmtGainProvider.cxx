@@ -8,6 +8,7 @@
 #include "cetlib_except/exception.h"
 #include "larcore/Geometry/Geometry.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
+#include "art/Framework/Services/Registry/ServiceHandle.h" 
 
 
 #include <fstream>

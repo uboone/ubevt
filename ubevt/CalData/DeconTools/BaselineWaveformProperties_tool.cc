@@ -11,6 +11,7 @@
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "cetlib_except/exception.h"
 #include "ubevt/CalData/DeconTools/WaveformPropertiesAlg.h"
+#include "larcore/CoreUtils/ServiceUtil.h" // lar::providerFrom<>()
 
 #include "TH1D.h"
 
