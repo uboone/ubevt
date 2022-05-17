@@ -62,7 +62,6 @@
 #include "art/Framework/Services/Registry/ServiceHandle.h"
 #include "art/Framework/Services/System/FileCatalogMetadata.h"
 #include "art/Utilities/OutputFileInfo.h"
-#include "art_root_io/RootDB/SQLite3Wrapper.h"
 #include "art_root_io/RootDB/SQLErrMsg.h"
 #include "cetlib_except/exception.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
