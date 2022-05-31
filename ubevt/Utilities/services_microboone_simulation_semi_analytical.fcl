@@ -1,0 +1,35 @@
+#include "services_microboone_simulation.fcl"
+
+
+# ****************************************************************************************************************************************
+# Based on the service_microboone_simulation.fcl, modified to include the semi-analytical approach for the light simulation.
+# ****************************************************************************************************************************************
+
+BEGIN_PROLOG
+
+
+#
+# Define optical simulation
+#
+
+# Define microboone_g4_services ... (1*)
+microboone_g4_semi_analytical_services:                         @local::microboone_g4_services
+microboone_g4_semi_analytical_services.PhotonVisibilityService: @local::microboone_Nhits_vuv_prop_photonvisibilityservice
+microboone_g4_semi_analytical_services.LArPropertiesService.ScintPreScale: 0.0055 # 0.0055(https://arxiv.org/pdf/1711.01230.pdf) 
+
+
+# Define microboone_simulation_semi_analytical_services ... (all*) = (1*) + (2) + (2*)
+microboone_simulation_semi_analytical_services:                                 @local::microboone_g4_semi_analytical_services
+microboone_simulation_semi_analytical_services.LArFFT:                          @local::microboone_larfft
+microboone_simulation_semi_analytical_services.SignalShapingServiceMicroBooNE:  @local::microboone_signalshapingservice
+microboone_simulation_semi_analytical_services.UBOpticalChConfig:               @local::microboone_optical_ch_config
+microboone_simulation_semi_analytical_services.UBOpReadoutMap:                  @local::microboone_opreadoutmap_mc
+microboone_simulation_semi_analytical_services.ExptGeoHelperInterface:          @local::microboone_geometry_helper
+microboone_simulation_semi_analytical_services.GeometryConfigurationWriter:     {}
+microboone_simulation_semi_analytical_services.DetPedestalService:              @local::microboone_detpedestalservice
+microboone_simulation_semi_analytical_services.ChannelStatusService:            @local::microboone_channelstatus_service
+microboone_simulation_semi_analytical_services.PmtGainService:                  @local::microboone_pmtgain_service
+microboone_simulation_semi_analytical_services.ElectronicsCalibService:         @local::microboone_electronicscalib_service
+
+
+END_PROLOG

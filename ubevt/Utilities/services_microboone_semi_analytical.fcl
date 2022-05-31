@@ -1,0 +1,25 @@
+#include "services_microboone.fcl"
+#include "services_microboone_simulation_semi_analytical.fcl"
+
+
+BEGIN_PROLOG
+
+# Define microboone_services (exclude simulatio specific component)
+microboone_semi_analytical_services:                @local::microboone_services
+
+microboone_semi_analytical_services_ana:            @local::microboone_simulation_semi_analytical_services
+microboone_semi_analytical_services_ana.BackTrackerService:         @local::microboone_backtrackerservice  
+microboone_semi_analytical_services_ana.ParticleInventoryService:   @local::standard_particleinventoryservice
+#microboone_semi_analytical_services_ana.MemoryPeakReporter:        {}
+
+microboone_services_semi_analytical_reco:           @local::microboone_services_reco
+
+# Define microboone_full_services ... this includes ALL services and we don't care about resource usage!
+microboone_semi_analytical_full_services:           @local::microboone_simulation_semi_analytical_services
+microboone_semi_analytical_full_services.BackTrackerService:        @local::microboone_backtrackerservice
+microboone_semi_analytical_full_services.ParticleInventoryService:  @local::standard_particleinventoryservice
+microboone_semi_analytical_full_services.ChannelStatusService:      @local::microboone_channelstatus_service
+microboone_semi_analytical_full_services.TPCEnergyCalibService:     @local::microboone_tpcenergycalib_service
+#microboone_semi_analytical_full_services.MemoryPeakReporter:       {}
+
+END_PROLOG
