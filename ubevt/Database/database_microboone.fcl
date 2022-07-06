@@ -179,7 +179,7 @@ microboone_lightyield_provider:
     
 }
 microboone_lightyield_provider.DatabaseRetrievalAlg.DBFolderName: "lightyieldscale_data"
-microboone_lightyield_provider.DatabaseRetrievalAlg.DBTag: "v2r2"
+microboone_lightyield_provider.DatabaseRetrievalAlg.DBTag: "v2r3"
 microboone_lightyield_provider.DatabaseRetrievalAlg.UseSQLite: true
 
 microboone_lightyield_service:
