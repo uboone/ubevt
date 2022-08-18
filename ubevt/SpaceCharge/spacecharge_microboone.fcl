@@ -13,4 +13,7 @@ microboone_spacecharge.EnableCalEfieldSCE: true
 microboone_spacecharge.EnableCalSpatialSCE: true
 microboone_spacecharge.EnableCorrSCE: true
 
+#Scale factor to fix E-field bug.
+microboone_spacecharge.EfieldOffsetScale: 3.65096750639
+
 END_PROLOG
