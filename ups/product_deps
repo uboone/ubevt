@@ -30,10 +30,10 @@ table_fragment_end
 
 product                 version
 ubcore                  v09_60_00
-larevt                  v09_05_09
-gallery                 v1_18_04
-ifdh_art		v2_13_09
-nurandom                v1_08_01
+larevt                  v09_06_01
+gallery                 v1_18_05
+ifdh_art		v2_13_12
+nurandom                v1_09_00
 cetbuildtools	        v8_18_09	-	only_for_build
 end_product_list
 
