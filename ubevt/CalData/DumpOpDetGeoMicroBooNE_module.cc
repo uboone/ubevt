@@ -59,13 +59,12 @@ void DumpOpDetGeoMicroBooNE::analyze(art::Event const & e)
 {
   art::ServiceHandle<geo::Geometry> geoHandle;
   geo::Geometry const& geo(*geoHandle);
-  double xyz[3] = {0.};
-  int NOpDets = (int)geo.Cryostat(0).NOpDet();
+  int NOpDets = (int)geo.Cryostat().NOpDet();
   std::cout << "OpDet (x,y,z) positions" << std::endl;
   std::cout << "-----------------------" << std::endl;
   for(int i = 0; i<NOpDets; ++i) {
-    geo.Cryostat(0).OpDet(i).GetCenter(xyz);
-    std::cout << "OptDet " << i << ": (" << xyz[0] << "," << xyz[1] << "," << xyz[2] << ")" << std::endl;
+    auto const xyz = geo.Cryostat().OpDet(i).GetCenter();
+    std::cout << "OptDet " << i << ": (" << xyz.X() << "," << xyz.Y() << "," << xyz.Z() << ")" << std::endl;
   }
   // Implementation of required member function here.
 }

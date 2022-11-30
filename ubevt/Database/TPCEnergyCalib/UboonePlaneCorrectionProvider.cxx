@@ -48,9 +48,8 @@ namespace lariov {
       defaultCalib.SetCorrectionErr(default_correction_err);
       
       art::ServiceHandle<geo::Geometry> geo;
-      geo::plane_id_iterator itP = geo->begin_plane_id();
-      for (; itP != geo->end_plane_id(); ++itP) {
-	DBChannelID_t plane = itP.get()->ID().Plane;
+      for (auto const& planeID : geo->Iterate<geo::PlaneID>()) {
+        DBChannelID_t plane = planeID.Plane;
 	defaultCalib.SetChannel(plane);
 	fData.AddOrReplaceRow(defaultCalib);
       }
@@ -134,4 +133,3 @@ namespace lariov {
 }//end namespace lariov
 	
 #endif
-        

@@ -174,13 +174,15 @@ void CalWireROI::reconfigure(fhicl::ParameterSet const& p)
         fNumROIsHistVec.resize(3);
         fROILenHistVec.resize(3);
     
+        constexpr geo::TPCID tpcid{0, 0};
         for(size_t planeIdx = 0; planeIdx < 3; planeIdx++)
         {
+            auto const n_wires = fGeometry->Nwires(geo::PlaneID(tpcid, planeIdx));
             fPedestalOffsetVec[planeIdx] = tfs->make<TH1D>(    Form("PedPlane_%02zu",planeIdx),            ";Pedestal Offset (ADC);", 100, -5., 5.);
             fTruncRMSVec[planeIdx]       = tfs->make<TH1D>(    Form("RMSPlane_%02zu",planeIdx),            ";RMS (ADC);", 100, 0., 10.);
             fNumTruncBinsVec[planeIdx]   = tfs->make<TH1D>(    Form("NTruncBins_%02zu",planeIdx),          ";# bins",     640, 0., 6400.);
-            fPedByChanVec[planeIdx]      = tfs->make<TProfile>(Form("PedByWirePlane_%02zu",planeIdx),      ";Wire#", fGeometry->Nwires(planeIdx), 0., fGeometry->Nwires(planeIdx), -5., 5.);
-            fTruncRMSByChanVec[planeIdx] = tfs->make<TProfile>(Form("TruncRMSByWirePlane_%02zu",planeIdx), ";Wire#", fGeometry->Nwires(planeIdx), 0., fGeometry->Nwires(planeIdx),  0., 10.);
+            fPedByChanVec[planeIdx]      = tfs->make<TProfile>(Form("PedByWirePlane_%02zu",planeIdx),      ";Wire#", n_wires, 0., n_wires, -5., 5.);
+            fTruncRMSByChanVec[planeIdx] = tfs->make<TProfile>(Form("TruncRMSByWirePlane_%02zu",planeIdx), ";Wire#", n_wires, 0., n_wires,  0., 10.);
             fNumROIsHistVec[planeIdx]    = tfs->make<TH1D>(    Form("NROISplane_%02zu",planeIdx),          ";# ROIs;",   100, 0, 100);
             fROILenHistVec[planeIdx]     = tfs->make<TH1D>(    Form("ROISIZEplane_%02zu",planeIdx),        ";ROI size;", 500, 0, 500);
         }

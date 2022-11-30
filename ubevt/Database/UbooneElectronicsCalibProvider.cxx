@@ -71,9 +71,8 @@ namespace lariov {
       defaultCalib.SetExtraInfo(extra_info);
       
       art::ServiceHandle<geo::Geometry> geo;
-      geo::wire_id_iterator itW = geo->begin_wire_id();
-      for (; itW != geo->end_wire_id(); ++itW) {
-	DBChannelID_t ch = geo->PlaneWireToChannel(*itW);
+      for (auto const& wid : geo->Iterate<geo::WireID>()) {
+        DBChannelID_t ch = geo->PlaneWireToChannel(wid);
 	defaultCalib.SetChannel(ch);
 	fData.AddOrReplaceRow(defaultCalib);
       }
@@ -242,4 +241,3 @@ namespace lariov {
 }//end namespace lariov
 	
 #endif
-        
