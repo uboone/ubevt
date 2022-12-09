@@ -82,6 +82,10 @@ simple_plugin( FileCatalogMetadataRawDigit "plugin"
                ${uboone_util_lib_list}
 	       BASENAME_ONLY
 	)	
+simple_plugin( ChannelStatusAna "module"
+               ${uboone_util_lib_list}
+	       BASENAME_ONLY
+	)
              
             
  
