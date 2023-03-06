@@ -36,7 +36,7 @@
 
 // LArSoft libraries
 #include "larcoreobj/SimpleTypesAndConstants/RawTypes.h" // raw::ChannelID_t
-#include "larcore/Geometry/Geometry.h"
+#include "larcore/Geometry/WireReadout.h"
 #include "lardataobj/RawData/RawDigit.h"
 #include "lardataobj/RawData/raw.h"
 #include "lardataobj/RecoBase/Wire.h"
@@ -98,7 +98,7 @@ class CalWireROI : public art::EDProducer
     std::unique_ptr<uboone_tool::IROIFinder>                 fROIFinder;
     std::unique_ptr<uboone_tool::IDeconvolution>             fDeconvolution;
     
-    const geo::GeometryCore*                                 fGeometry = lar::providerFrom<geo::Geometry>();
+    const geo::WireReadoutGeom* fWireReadoutGeom = &art::ServiceHandle<geo::WireReadout const>()->Get();
     art::ServiceHandle<util::LArFFT>                         fFFT;
     art::ServiceHandle<util::SignalShapingServiceMicroBooNE> fSignalShaping;
     
@@ -177,7 +177,7 @@ void CalWireROI::reconfigure(fhicl::ParameterSet const& p)
         constexpr geo::TPCID tpcid{0, 0};
         for(size_t planeIdx = 0; planeIdx < 3; planeIdx++)
         {
-            auto const n_wires = fGeometry->Nwires(geo::PlaneID(tpcid, planeIdx));
+            auto const n_wires = fWireReadoutGeom->Nwires(geo::PlaneID(tpcid, planeIdx));
             fPedestalOffsetVec[planeIdx] = tfs->make<TH1D>(    Form("PedPlane_%02zu",planeIdx),            ";Pedestal Offset (ADC);", 100, -5., 5.);
             fTruncRMSVec[planeIdx]       = tfs->make<TH1D>(    Form("RMSPlane_%02zu",planeIdx),            ";RMS (ADC);", 100, 0., 10.);
             fNumTruncBinsVec[planeIdx]   = tfs->make<TH1D>(    Form("NTruncBins_%02zu",planeIdx),          ";# bins",     640, 0., 6400.);
@@ -304,7 +304,7 @@ void CalWireROI::produce(art::Event& evt)
             if (fOutputHistograms)
             {
                 // First up, determine what kind of wire we have
-                std::vector<geo::WireID> wids    = fGeometry->ChannelToWire(channel);
+                std::vector<geo::WireID> wids    = fWireReadoutGeom->ChannelToWire(channel);
                 const geo::PlaneID&      planeID = wids[0].planeID();
                 
                 fNumROIsHistVec.at(planeID.Plane)->Fill(candRoiVec.size(), 1.);
@@ -446,7 +446,7 @@ float CalWireROI::fixTheFreakingWaveform(const std::vector<float>& waveform, raw
     // Fill histograms
     if (fOutputHistograms)
     {
-        std::vector<geo::WireID> wids = fGeometry->ChannelToWire(channel);
+        std::vector<geo::WireID> wids = fWireReadoutGeom->ChannelToWire(channel);
     
         // Recover plane and wire in the plane
         size_t plane = wids[0].Plane;

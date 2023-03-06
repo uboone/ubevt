@@ -204,7 +204,7 @@ void RawDigitCorrelatedCorrectionAlg::smoothCorrectionVec(std::vector<float>& co
     float diffThreshold = diffMean + 5. * diffRMS;
 
     // Recover plane/wire from channel
-    std::vector<geo::WireID> wids = fGeometry->ChannelToWire(channel);
+    std::vector<geo::WireID> wids = fWireReadoutGeom->ChannelToWire(channel);
     
     unsigned int plane = wids[0].Plane;
     unsigned int wire  = wids[0].Wire;
@@ -308,7 +308,7 @@ void RawDigitCorrelatedCorrectionAlg::removeCorrelatedNoise(detinfo::DetectorClo
     WireToAdcIdxMap&      wireToAdcIdxMap      = digitIdxPair.second;
     
     // Recover plane/wire from channel
-    std::vector<geo::WireID> wids = fGeometry->ChannelToWire(channel);
+    std::vector<geo::WireID> wids = fWireReadoutGeom->ChannelToWire(channel);
 
     unsigned int plane = wids[0].Plane;
 //    unsigned int wire  = wids[0].Wire;

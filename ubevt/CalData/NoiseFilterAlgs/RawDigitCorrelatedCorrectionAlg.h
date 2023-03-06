@@ -34,7 +34,7 @@
 #include "art/Framework/Services/Registry/ServiceHandle.h"
 #include "art_root_io/TFileService.h"
 #include "larcore/CoreUtils/ServiceUtil.h"
-#include "larcore/Geometry/Geometry.h"
+#include "larcore/Geometry/WireReadout.h"
 namespace detinfo {
   class DetectorClocksData;
   class DetectorPropertiesData;
@@ -143,7 +143,7 @@ private:
     RawDigitFFTAlg fFFTAlg;
     
     // Useful services, keep copies for now (we can update during begin run periods)
-    art::ServiceHandle<geo::Geometry>            fGeometry;             ///< pointer to Geometry service
+    geo::WireReadoutGeom const* fWireReadoutGeom = &art::ServiceHandle<geo::WireReadout const>()->Get();
 };
     
 } // end caldata namespace
