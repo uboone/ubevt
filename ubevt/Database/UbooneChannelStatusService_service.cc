@@ -96,21 +96,20 @@ namespace lariov{
 
     // Loop over raw digits, calculate the baseline rms of each one, and 
     // declare a channel noisy if its rms is above user-defined threshold 
-    for(size_t rdIter = 0; rdIter < digitVecHandle->size(); ++rdIter) {
+    for(raw::RawDigit const& digit : *digitVecHandle) {
 
 
       // get the reference to the current raw::RawDigit and check that it isn't already dead or disconnected
-      art::Ptr<raw::RawDigit> digitVec(digitVecHandle, rdIter);
-      raw::ChannelID_t channel = digitVec->Channel();
+      raw::ChannelID_t channel = digit.Channel();
       if (fProvider.IsBad(channel) || !fProvider.IsPresent(channel)) continue;
 
-      unsigned int dataSize = digitVec->Samples();
+      unsigned int dataSize = digit.Samples();
 
 
       // vector holding uncompressed adc values
       std::vector<short> rawadc;
       rawadc.resize(dataSize);
-      raw::Uncompress(digitVec->ADCs(), rawadc, digitVec->Compression());
+      raw::Uncompress(digit.ADCs(), rawadc, digit.Compression());
 
 
       // The strategy for finding the average for a given wire will be to

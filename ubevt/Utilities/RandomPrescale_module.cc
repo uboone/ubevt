@@ -61,7 +61,8 @@ util::RandomPrescale::RandomPrescale(fhicl::ParameterSet const & pset) : EDFilte
   // Obain the random seed from NuRandomService, unless overridden in configuration
   // with key "Seed."
   fEngine(art::ServiceHandle<rndm::NuRandomService>{}
-          ->createEngine(*this, "HepJamesRandom", "RandomPrescale", pset, "Seed"))
+          ->registerAndSeedEngine(createEngine(0, "HepJamesRandom", "RandomPrescale"),
+                                  "HepJamesRandom", "RandomPrescale",pset, "Seed"))
 {
   mf::LogInfo("RandomPrescale")
     << "RandomPrescale module configured with pass probability " << fProb;

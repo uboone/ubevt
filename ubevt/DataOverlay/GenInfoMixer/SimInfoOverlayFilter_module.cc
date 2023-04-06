@@ -595,7 +595,7 @@ bool mix::SimInfoOverlayFilter::endSubRun(art::SubRun & sr)
     srpot_ptr->totgoodpot = fPOTSum_totgoodpot;
     srpot_ptr->totspills = (int)fPOTSum_totspills;
     srpot_ptr->goodspills = (int)fPOTSum_goodspills;
-    sr.put(std::move(srpot_ptr));
+    sr.put(std::move(srpot_ptr), art::subRunFragment());
   }
   return true;
 }
