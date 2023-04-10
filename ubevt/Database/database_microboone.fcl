@@ -119,7 +119,7 @@ microboone_electronlifetime_provider:
     DefaultLifetimeErr:    0.0
 }
 microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBFolderName: "elifetime_data"
-microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBTag: "v4r0"
+microboone_electronlifetime_provider.DatabaseRetrievalAlg.DBTag: "v4r1"
 microboone_electronlifetime_provider.DatabaseRetrievalAlg.UseSQLite: true
 
 microboone_electronlifetime_service:
