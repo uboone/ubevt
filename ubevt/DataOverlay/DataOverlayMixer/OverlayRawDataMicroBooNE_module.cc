@@ -37,8 +37,8 @@
 #include "larevt/CalibrationDBI/Interface/PmtGainService.h"
 #include "larevt/CalibrationDBI/Interface/PmtGainProvider.h"
 
-#include "DataOverlay/RawDigitMixer.h"
-#include "DataOverlay/CRTMixer.h"
+#include "ubevt/DataOverlay/DataOverlay/RawDigitMixer.h"
+#include "ubevt/DataOverlay/DataOverlay/CRTMixer.h"
 #include "lardataobj/RawData/RawDigit.h"
 #include "lardataobj/RawData/TriggerData.h"
 #include "larcoreobj/SimpleTypesAndConstants/RawTypes.h"
@@ -46,7 +46,7 @@
 #include "ubobj/CRT/CRTSimData.hh"
 #include "ubobj/CRT/CRTHit.hh"
 
-#include "DataOverlay/OpDetWaveformMixer.h"
+#include "ubevt/DataOverlay/DataOverlay/OpDetWaveformMixer.h"
 #include "lardataobj/RawData/OpDetWaveform.h"
 #include "larevt/CalibrationDBI/Interface/PmtGainService.h"
 #include "larevt/CalibrationDBI/Interface/PmtGainProvider.h"

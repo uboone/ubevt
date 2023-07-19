@@ -22,7 +22,7 @@
 #include "TH1S.h"
 #include <sstream>
 
-#include "DataOverlay/RawDigitAdderAna.hh"
+#include "ubevt/DataOverlay/DataOverlay/RawDigitAdderAna.hh"
 
 namespace mix {
   class RawDigitOverlayMicroBooNEAna;

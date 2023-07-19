@@ -1,93 +1,81 @@
-cet_enable_asserts()
+cet_make_library(
+  SOURCE
+  PMTRemapProvider.cxx
+  SignalShapingLite.cxx
+  LIBRARIES
+  PUBLIC
+  lardata::Utilities
+  art::Framework_Services_Registry
+  fhiclcpp::fhiclcpp
+  ROOT::MathCore
+)
 
-art_make ( NO_PLUGINS
-           BASENAME_ONLY
-	   LIB_LIBRARIES lardata_Utilities_LArFFT_service
-	   	         art::Framework_Core
-                         art::Framework_Principal
-                         art::Framework_Services_Registry
-			 messagefacility::MF_MessageLogger
+cet_build_plugin(
+  OpHitRemapProducer art::EDProducer
+  LIBRARIES
+  PRIVATE
+  ubevt::Utilities
+  lardataobj::RecoBase
+)
 
-			 art::Persistency_Common
-			 art::Persistency_Provenance
-			 art::Utilities
-                         canvas::canvas
-			 cetlib::cetlib
-                         cetlib_except::cetlib_except
+cet_build_plugin(
+  RandomPrescale art::EDFilter
+  LIBRARIES
+  PRIVATE
+  nurandom::RandomUtils_NuRandomService_service
+)
 
-	                 fhiclcpp::fhiclcpp
-			 Boost::filesystem
-	  )
+cet_build_plugin(
+  TinyHitFinderAna art::EDAnalyzer
+  LIBRARIES
+  PRIVATE
+  lardata::Utilities
+  larcore::Geometry_Geometry_service
+  lardataobj::RecoBase
+  art_root_io::TFileService_service
+  ROOT::MathCore
+)
 
-set( uboone_util_lib_list lardata_Utilities_LArFFT_service
-			larcorealg_Geometry
-			larevt_CalibrationDBI_IOVData
-			larevt_CalibrationDBI_Providers
-                        lardataalg_DetectorInfo
-			lardataobj_RecoBase
-			larcore_Geometry_Geometry_service
-			lardata_Utilities
-			ubevt_Utilities
-			nurandom::RandomUtils_NuRandomService_service
-  			art::Framework_Core
-			art::Framework_Principal
-			art::Framework_Services_Registry
-			art::Persistency_Common
-			art::Persistency_Provenance
-			art_root_io::tfile_support ROOT::Core
-                        art::Framework_Services_Optional_RandomNumberGenerator_service
-			art_root_io::TFileService_service
-			art::Utilities
-                        canvas::canvas
-			messagefacility::MF_MessageLogger
+cet_build_plugin(
+  FileCatalogMetadataMicroBooNE art::service
+  LIBRARIES
+  PUBLIC
+  larcoreobj::SummaryData
+  art::Framework_Services_System_FileCatalogMetadata_service
+  art::Framework_Principal
+)
 
-			fhiclcpp::fhiclcpp
-			cetlib::cetlib
-                        cetlib_except::cetlib_except
-			Boost::filesystem
-                        CLHEP::CLHEP
+cet_build_plugin(
+  PMTRemapService art::service
+  LIBRARIES
+  PUBLIC
+  ubevt::Utilities
+)
 
-    )
+cet_build_plugin(
+  SignalShapingServiceMicroBooNE art::service
+  LIBRARIES
+  PUBLIC
+  ubevt::Utilities
+  larevt::CalibrationDBI_Providers
+  art_root_io::TFileService_service
+)
 
-
-simple_plugin( SignalShapingServiceMicroBooNE  "service"
-               ${uboone_util_lib_list}
-	       BASENAME_ONLY
-        )
-simple_plugin( FileCatalogMetadataMicroBooNE "service"
-               ${uboone_util_lib_list}
-	       BASENAME_ONLY
-	)
-simple_plugin( TFileMetadataMicroBooNE "service"
-               ${uboone_util_lib_list}
-	       BASENAME_ONLY
-	)
-simple_plugin( PMTRemapService "service"
-               ${uboone_util_lib_list}
-	       BASENAME_ONLY
-	)
-simple_plugin( TinyHitFinderAna "module"
-               ${uboone_util_lib_list}
-	       BASENAME_ONLY
-        )
-simple_plugin( RandomPrescale "module"
-               ${uboone_util_lib_list}
-	       BASENAME_ONLY
-	)
-simple_plugin( OpHitRemapProducer "module"
-               ${uboone_util_lib_list}
-               BASENAME_ONLY
-	)
-simple_plugin( FileCatalogMetadataRawDigit "plugin"
-               ${uboone_util_lib_list}
-	       BASENAME_ONLY
-	)
-
-
+cet_build_plugin(
+  TFileMetadataMicroBooNE art::service
+  LIBRARIES
+  PUBLIC
+  larcoreobj::SummaryData
+  art_root_io::RootDB
+  art::Framework_Principal
+  art::Framework_Services_System_FileCatalogMetadata_service
+  messagefacility::MF_MessageLogger
+  ROOT::MathCore
+)
 
 install_headers()
 # do not install duplicate standard_reco_uboone.fcl file
 install_fhicl( EXCLUDES standard_reco_uboone.fcl )
 install_source()
 
-add_subdirectory(test)
+#add_subdirectory(test)

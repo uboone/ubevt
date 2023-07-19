@@ -1,67 +1,112 @@
-cet_find_library( LIBWDA NAMES wda PATHS ENV LIBWDA_LIB NO_DEFAULT_PATH )
+cet_make_library(
+  SOURCE
+  UbooneElectronLifetimeProvider.cxx
+  UbooneElectronicsCalibProvider.cxx
+  UbooneLightYieldProvider.cxx
+  UboonePmtGainProvider.cxx
+  WireCellChannelStatusProvider.cxx
+  LIBRARIES
+  PUBLIC
+  larevt::CalibrationDBI_IOVData
+  larevt::CalibrationDBI_Providers
+  larcore::Geometry_Geometry_service
+  larcorealg::CoreUtils
+  fhiclcpp::fhiclcpp
+  messagefacility::MF_MessageLogger
+)
 
-include_directories( $ENV{LIBWDA_FQ_DIR}/include )
+cet_build_plugin(
+  TestDBI art::EDAnalyzer
+  LIBRARIES
+  PRIVATE
+  larevt::CalibrationDBI_Providers
+  larcore::Geometry_Geometry_service
+  lardataobj::RawData
+  art_root_io::TFileService_service
+  ROOT::Gpad
+)
 
-art_make( BASENAME_ONLY
-          LIB_LIBRARIES
-                        larevt_CalibrationDBI_IOVData
-                        larevt_CalibrationDBI_Providers
-                        larcorealg_Geometry
-                        LIBWDA
-                        messagefacility::MF_MessageLogger
-                        fhiclcpp::fhiclcpp
-                        cetlib::cetlib
-                        art::Framework_Services_Registry
+cet_build_plugin(
+  UbooneCRTChannelStatusService art::service
+  LIBRARIES
+  PUBLIC
+  larevt::CalibrationDBI_Providers
+  larcore::ServiceUtil
+  lardataobj::RawData
+  larcorealg::CoreUtils
+  art::Framework_Principal
+  ROOT::Geom
+  CLHEP::Geometry
+)
 
-                        art::Utilities
-                        canvas::canvas
-          MODULE_LIBRARIES larcorealg_Geometry
-                        larcore_Geometry_Geometry_service
-                        lardata_Utilities
-                        larevt_Filters
-                        lardataobj_RawData
-                        SignalShapingServiceMicroBooNE_service
-                        larevt_CalibrationDBI_Providers
-                        ubevt_Database
-                        art::Framework_Core
-                        art::Framework_Principal
-                        art::Framework_Services_Registry
-                        art_root_io::tfile_support ROOT::Core
-                        art::Framework_Services_Optional_RandomNumberGenerator_service
-                        art_root_io::TFileService_service
-                        art::Persistency_Common
-                        art::Persistency_Provenance
-                        art::Utilities
-                        canvas::canvas
-                        messagefacility::MF_MessageLogger
+include(lar::ChannelStatusService)
 
-                        fhiclcpp::fhiclcpp
-                        cetlib::cetlib
-                        CLHEP::CLHEP
-                        ROOT::Geom
-                        ROOT::XMLIO
-                        ROOT::Gdml
-                        ROOT::EG
+cet_build_plugin(
+  UbooneChannelStatusService lar::ChannelStatusService
+  LIBRARIES
+  PUBLIC
+  larevt::CalibrationDBI_Providers
+  larcorealg::Geometry
+  lardataobj::RawData
+  art::Framework_Principal
+  ROOT::Geom
+  CLHEP::Geometry
+)
 
-          SERVICE_LIBRARIES
-                      larevt_CalibrationDBI_Providers
-                      ubevt_Database
-                      larevt_CalibrationDBI_IOVData
-                      lardataobj_RawData
-                      larcorealg_Geometry
-                      larcore_Geometry_Geometry_service
-                      art::Framework_Services_Registry
-                      art::Framework_Core
-                      art::Framework_Principal
-                      art_root_io::tfile_support
-                      art::Framework_Services_Optional_RandomNumberGenerator_service
-                      art_root_io::TFileService_service
-                      art::Persistency_Common
-                      art::Persistency_Provenance
-                      art::Utilities
-                      canvas::canvas
-                      fhiclcpp::fhiclcpp
-                      ROOT::Core
+include(lar::DetPedestalService)
+
+cet_build_plugin(
+  UbooneDetPedestalService lar::DetPedestalService
+  LIBRARIES
+  PUBLIC
+  larevt::CalibrationDBI_Providers
+  art::Framework_Principal
+)
+
+cet_build_plugin(
+  UbooneElectronLifetimeService art::service
+  LIBRARIES
+  PUBLIC
+  ubevt::Database
+  art::Framework_Principal
+)
+
+include(lar::ElectronicsCalibService)
+
+cet_build_plugin(
+  UbooneElectronicsCalibService lar::ElectronicsCalibService
+  LIBRARIES
+  PUBLIC
+  ubevt::Database
+  art::Framework_Principal
+)
+
+cet_build_plugin(
+  UbooneLightYieldService art::service
+  LIBRARIES
+  PUBLIC
+  ubevt::Database
+  art::Framework_Principal
+)
+
+include(lar::PmtGainService)
+
+cet_build_plugin(
+  UboonePmtGainService lar::PmtGainService
+  LIBRARIES
+  PUBLIC
+  ubevt::Database
+  art::Framework_Principal
+)
+
+include(lar::ChannelStatusService)
+
+cet_build_plugin(
+  WireCellChannelStatusService lar::ChannelStatusService
+  LIBRARIES
+  PUBLIC
+  ubevt::Database
+  art::Framework_Principal
 )
 
 install_headers()

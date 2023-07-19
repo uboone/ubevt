@@ -16,7 +16,7 @@ simple_plugin(MicrobooneResp "module"
                         cetlib_except::cetlib_except
 
               BASENAME_ONLY
-)
+) ### MIGRATE-ACTION-RECOMMENDED (migrate-3.21.01) - deprecated: use cet_build_plugin() with explicit source lists and plugin base types
 
 install_headers()
 install_fhicl()

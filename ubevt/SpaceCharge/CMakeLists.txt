@@ -1,34 +1,36 @@
-art_make(BASENAME_ONLY
-         MODULE_LIBRARIES
-              lardataobj_RecoBase
-              lardata_Utilities
-              lardataalg_DetectorInfo
-              larevt_SpaceCharge
-              ubevt_SpaceCharge
-              cetlib::cetlib
-              ROOT::Tree
-          LIB_LIBRARIES
-              lardataobj_RecoBase
-              lardata_Utilities
-              lardataalg_DetectorInfo
-              larevt_SpaceCharge
-              art::Framework_Core
-              art::Framework_Principal
-              art::Framework_Services_Registry
-              art::Persistency_Common
-              art::Persistency_Provenance
-              art_root_io::tfile_support
-              ROOT::Core
-              art_root_io::TFileService_service
-              art::Utilities
-              canvas::canvas
-              messagefacility::MF_MessageLogger
-              cetlib::cetlib
-              larcorealg_Geometry
-              fhiclcpp::fhiclcpp
-              GSL
-        )
+include_directories( $ENV{GSL_INC} )
 
+cet_make_library(
+  SOURCE
+  SpaceChargeMicroBooNE.cxx
+  LIBRARIES
+  PUBLIC
+  larevt::SpaceCharge
+  lardataalg::DetectorInfo
+  GSL
+)
+
+cet_build_plugin(
+  SCECorrReco art::EDProducer
+  LIBRARIES
+  PRIVATE
+  larevt::SpaceCharge
+  lardata::DetectorInfoServices_DetectorPropertiesServiceStandard_service
+  larcore::ServiceUtil
+  lardataobj::RecoBase
+  art_root_io::TFileService_service
+)
+
+cet_build_plugin(
+  ShiftEdepSCE art::EDProducer
+  LIBRARIES
+  PRIVATE
+  larevt::SpaceCharge
+  larcore::ServiceUtil
+  lardataobj::Simulation
+  art_root_io::TFileService_service
+  ROOT::Tree
+)
 
 install_headers()
 install_fhicl()

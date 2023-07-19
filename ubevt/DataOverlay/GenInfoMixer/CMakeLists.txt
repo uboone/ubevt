@@ -1,26 +1,38 @@
-# basic source code CMakeLists.txt
+cet_build_plugin(
+  G4InfoMixerLocal art::module
+  LIBRARIES
+  PRIVATE
+  lardataobj::Simulation
+  nusimdata::SimulationBase
+  art::Framework_IO_ProductMix
+  art_root_io::art_root_io
+)
 
-art_make(
-	MODULE_LIBRARIES
-                        larcoreobj_SummaryData
-                        lardataobj_Simulation
-			nusimdata::SimulationBase
-                        art::Framework_Core
-			art::Framework_IO_ProductMix
-			art_root_io::art_root_io
-                        art_root_io_detail
-                        art::Framework_Principal
-                        art::Framework_Services_Registry
-                        art::Persistency_Provenance
-                        art::Persistency_Common
-                        art::Utilities
-                        canvas::canvas
-			gallery::gallery
-                        messagefacility::MF_MessageLogger
-                        fhiclcpp::fhiclcpp
-                        cetlib::cetlib
-                        cetlib_except::cetlib_except
+cet_build_plugin(
+  GenInfoMixerLocal art::module
+  LIBRARIES
+  PRIVATE
+  lardataobj::Simulation
+  nusimdata::SimulationBase
+  art::Framework_IO_ProductMix
+  art_root_io::art_root_io
+)
 
+cet_build_plugin(
+  SimInfoOverlayFilter art::EDFilter
+  LIBRARIES
+  PRIVATE
+  larcoreobj::SummaryData
+  lardataobj::Simulation
+  nusimdata::SimulationBase
+  gallery::gallery
+)
+
+cet_build_plugin(
+  SubRunPOTInEvent art::EDProducer
+  LIBRARIES
+  PRIVATE
+  larcoreobj::SummaryData
 )
 
 install_headers()

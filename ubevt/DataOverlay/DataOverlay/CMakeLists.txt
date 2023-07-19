@@ -1,39 +1,14 @@
-# basic source code CMakeLists.txt
-
-art_make_library( LIBRARY_NAME  ub_RawDigitAdderAna
-	SOURCE RawDigitAdderAna.cxx
-	LIBRARIES
-                 lardataobj_RawData
-
-)
-
-art_make_library( LIBRARY_NAME  ub_RawDigitAdder
-	SOURCE RawDigitAdder.cxx
-	             RawDigitAdder_HardSaturate.cxx
-	LIBRARIES
-
-)
-
-art_make_library( LIBRARY_NAME  ub_RawDigitMixer
-	SOURCE RawDigitMixer.cxx
-	LIBRARIES
-		ub_RawDigitAdder
-		lardataobj_RawData
-
-)
-
-art_make_library( LIBRARY_NAME  ub_OpDetWaveformMixer
-	SOURCE OpDetWaveformMixer.cxx
-	LIBRARIES
-		ub_RawDigitAdder
-		lardataobj_RawData
-
-)
-
-art_make_library( LIBRARY_NAME  ub_CRTMixer
-        SOURCE CRTMixer.cxx
-        LIBRARIES
-        ROOT::Core
+cet_make_library(
+  SOURCE
+  CRTMixer.cxx
+  OpDetWaveformMixer.cxx
+  RawDigitAdder.cxx
+  RawDigitAdderAna.cxx
+  RawDigitAdder_HardSaturate.cxx
+  RawDigitMixer.cxx
+  LIBRARIES
+  PUBLIC
+  lardataobj::RawData
 )
 
 install_headers()

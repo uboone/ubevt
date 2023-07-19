@@ -1,45 +1,101 @@
-art_make( BASENAME_ONLY
-          LIBRARY_NAME CalData
-          LIB_LIBRARIES
-                        lardataobj_RawData
-                        lardataobj_RecoBase
-                        lardata_Utilities
-                        fhiclcpp::fhiclcpp
-                        cetlib::cetlib
-                        cetlib_except::cetlib_except
+cet_make_library(
+  SOURCE
+  ROIAlg.cxx
+  RawDigitAndWireComparisonAlg.cxx
+  LIBRARIES
+  PUBLIC
+  lardata::Utilities
+  fhiclcpp::fhiclcpp
+)
 
-          MODULE_LIBRARIES larcorealg_Geometry
-                        CalData
-                        ubevt_CalData_DeconTools
-                        ubobj_Trigger
-                        ubobj_RawData
-                        NoiseFilterAlgs
-                        larcore_Geometry_Geometry_service
-                        lardata_Utilities
-                        larevt_Filters
-                        lardataobj_RawData
-                        larevt_CalibrationDBI_IOVData
-                        larevt_CalibrationDBI_Providers
-                        lardataobj_RecoBase
-                        lardata_ArtDataHelper
-                        SignalShapingServiceMicroBooNE_service
-                        art::Framework_Core
-                        art::Framework_Principal
-                        art::Framework_Services_Registry
-                        art_root_io::TFileService_service
-                        art::Persistency_Common
-                        art::Persistency_Provenance
-                        art::Utilities
-                        canvas::canvas
-                        messagefacility::MF_MessageLogger
-                        fhiclcpp::fhiclcpp
-                        cetlib::cetlib
-                        ROOT::Geom
-                        ROOT::XMLIO
-                        ROOT::Gdml
-                        ROOT::FFTW
-                        ROOT::Tree
-        )
+cet_build_plugin(
+  CalWireInvert art::EDProducer
+  LIBRARIES
+  PRIVATE
+  larevt::Filters
+  lardata::ArtDataHelper
+  larcore::Geometry_Geometry_service
+  lardataobj::RawData
+  art_root_io::TFileService_service
+  ROOT::MathCore
+)
+
+cet_build_plugin(
+  CalWireMicroBooNE art::EDProducer
+  LIBRARIES
+  PRIVATE
+  ubevt::Utilities
+  ubevt::Utilities_SignalShapingServiceMicroBooNE_service
+  larevt::DetPedestalService
+  lardata::ArtDataHelper
+  lardata::Utilities_LArFFT_service
+  larcore::Geometry_Geometry_service
+  lardataalg::DetectorInfo
+  lardataobj::RawData
+  art_root_io::TFileService_service
+  ROOT::MathCore
+)
+
+cet_build_plugin(
+  CalWireROI art::EDProducer
+  LIBRARIES
+  PRIVATE
+  ubobj::RawData
+  larevt::DetPedestalProvider
+  lardataalg::DetectorInfo
+  lardataobj::RawData
+  larcore::Geometry_Geometry_service
+  lardata::ArtDataHelper
+  lardata::Utilities_LArFFT_service
+  art_root_io::TFileService_service
+  ROOT::Hist
+)
+
+cet_build_plugin(
+  DumpOpDetGeoMicroBooNE art::EDAnalyzer
+  LIBRARIES
+  PRIVATE
+  larcore::Geometry_Geometry_service
+)
+
+cet_build_plugin(
+  RawDigitAndWireComparison art::EDAnalyzer
+  LIBRARIES
+  PRIVATE
+  ubevt::CalData
+  lardata::Utilities
+  lardataobj::RawData
+  art_root_io::TFileService_service
+  ROOT::Tree
+)
+
+cet_build_plugin(
+  RawDigitFilterUBooNE art::EDProducer
+  LIBRARIES
+  PRIVATE
+  ubevt::CalData_NoiseFilterAlgs
+  larcore::Geometry_Geometry_service
+  lardata::DetectorPropertiesService
+  larevt::DetPedestalService
+  art_root_io::TFileService_service
+)
+
+cet_build_plugin(
+  ShowWire art::EDAnalyzer
+  LIBRARIES
+  PRIVATE
+  lardataobj::RecoBase
+  larevt::DetPedestalService
+  art_root_io::TFileService_service
+)
+
+cet_build_plugin(
+  TestCFI art::EDAnalyzer
+  LIBRARIES
+  PRIVATE
+  larevt::ChannelStatusService
+  larcore::Geometry_Geometry_service
+)
 
 add_subdirectory(NoiseFilterAlgs)
 add_subdirectory(DeconTools)
