@@ -26,8 +26,7 @@ find_package( larevt REQUIRED EXPORT )
 find_package( nurandom REQUIRED EXPORT )
 find_package( ifdh_art REQUIRED EXPORT )
 find_package( gallery REQUIRED EXPORT )
-
-cet_find_library( GSL NAMES gsl PATHS ENV GSL_LIB NO_DEFAULT_PATH )
+find_package( GSL REQUIRED EXPORT )
 
 # macros for dictionary and simple_plugin
 include(ArtDictionary)

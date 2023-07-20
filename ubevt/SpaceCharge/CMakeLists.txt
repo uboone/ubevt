@@ -1,5 +1,3 @@
-include_directories( $ENV{GSL_INC} )
-
 cet_make_library(
   SOURCE
   SpaceChargeMicroBooNE.cxx
@@ -7,7 +5,7 @@ cet_make_library(
   PUBLIC
   larevt::SpaceCharge
   lardataalg::DetectorInfo
-  GSL
+  GSL::gsl
 )
 
 cet_build_plugin(
@@ -19,6 +17,7 @@ cet_build_plugin(
   larcore::ServiceUtil
   lardataobj::RecoBase
   art_root_io::TFileService_service
+  GSL::gsl
 )
 
 cet_build_plugin(

@@ -1,4 +1,3 @@
-include_directories( $ENV{GSL_INC} )
 include(lar::SpaceChargeService)
 
 cet_build_plugin(
