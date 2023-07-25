@@ -85,4 +85,4 @@ install_headers()
 install_fhicl( EXCLUDES standard_reco_uboone.fcl )
 install_source()
 
-#add_subdirectory(test)
+add_subdirectory(test)
