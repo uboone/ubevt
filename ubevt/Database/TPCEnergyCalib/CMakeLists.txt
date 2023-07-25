@@ -15,7 +15,7 @@ cet_make_library(
 cet_build_plugin(
   UbooneTPCEnergyCalibService art::service
   LIBRARIES
-  PUBLIC
+  PRIVATE
   ubevt::Database_TPCEnergyCalib
   art::Framework_Principal
 )

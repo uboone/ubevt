@@ -29,7 +29,7 @@ cet_build_plugin(
 cet_build_plugin(
   UbooneCRTChannelStatusService art::service
   LIBRARIES
-  PUBLIC
+  PRIVATE
   larevt::CalibrationDBI_Providers
   larcore::ServiceUtil
   lardataobj::RawData
@@ -44,7 +44,7 @@ include(lar::ChannelStatusService)
 cet_build_plugin(
   UbooneChannelStatusService lar::ChannelStatusService
   LIBRARIES
-  PUBLIC
+  PRIVATE
   larevt::CalibrationDBI_Providers
   larcorealg::Geometry
   lardataobj::RawData
@@ -58,7 +58,7 @@ include(lar::DetPedestalService)
 cet_build_plugin(
   UbooneDetPedestalService lar::DetPedestalService
   LIBRARIES
-  PUBLIC
+  PRIVATE
   larevt::CalibrationDBI_Providers
   art::Framework_Principal
 )
@@ -76,7 +76,7 @@ include(lar::ElectronicsCalibService)
 cet_build_plugin(
   UbooneElectronicsCalibService lar::ElectronicsCalibService
   LIBRARIES
-  PUBLIC
+  PRIVATE
   ubevt::Database
   art::Framework_Principal
 )
@@ -84,7 +84,7 @@ cet_build_plugin(
 cet_build_plugin(
   UbooneLightYieldService art::service
   LIBRARIES
-  PUBLIC
+  PRIVATE
   ubevt::Database
   art::Framework_Principal
 )
@@ -94,7 +94,7 @@ include(lar::PmtGainService)
 cet_build_plugin(
   UboonePmtGainService lar::PmtGainService
   LIBRARIES
-  PUBLIC
+  PRIVATE
   ubevt::Database
   art::Framework_Principal
 )
@@ -104,7 +104,7 @@ include(lar::ChannelStatusService)
 cet_build_plugin(
   WireCellChannelStatusService lar::ChannelStatusService
   LIBRARIES
-  PUBLIC
+  PRIVATE
   ubevt::Database
   art::Framework_Principal
 )
