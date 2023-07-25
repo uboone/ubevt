@@ -73,6 +73,13 @@ cet_build_plugin(
   ROOT::MathCore
 )
 
+cet_build_plugin(
+  FileCatalogMetadataRawDigit art::FileCatalogMetadataPlugin
+  LIBRARIES
+  PRIVATE
+  lardataobj::RawData
+)
+
 install_headers()
 # do not install duplicate standard_reco_uboone.fcl file
 install_fhicl( EXCLUDES standard_reco_uboone.fcl )
