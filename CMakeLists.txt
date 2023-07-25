@@ -28,6 +28,8 @@ find_package( ifdh_art REQUIRED EXPORT )
 find_package( gallery REQUIRED EXPORT )
 find_package( GSL REQUIRED EXPORT )
 
+cet_cmake_module_directories(Modules BINARY)
+
 # macros for dictionary and simple_plugin
 include(ArtDictionary)
 include(CetMakeLibrary)
