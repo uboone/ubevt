@@ -32,7 +32,7 @@ cet_cmake_module_directories(Modules BINARY)
 
 # macros for dictionary and simple_plugin
 include(ArtDictionary)
-include(CetMakeLibrary)
+include(ArtMake)
 include(BuildPlugins)
 
 # ADD SOURCE CODE SUBDIRECTORIES HERE
