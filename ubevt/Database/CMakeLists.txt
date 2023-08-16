@@ -27,13 +27,29 @@ cet_build_plugin(
   ROOT::Gpad
 )
 
+cet_make_library(
+  LIBRARY_NAME CRTChannelStatusService INTERFACE
+  SOURCE CRTChannelStatusService.h
+  LIBRARIES
+  INTERFACE
+  larcore::ServiceUtil
+)
+
+cet_write_plugin_builder(
+  uboone::CRTChannelStatusService art::service Modules
+  INSTALL_BUILDER
+  LIBRARIES CONDITIONAL
+  ubevt::CRTChannelStatusService
+)
+
+include(uboone::CRTChannelStatusService)
+
 cet_build_plugin(
-  UbooneCRTChannelStatusService art::service
+  UbooneCRTChannelStatusService uboone::CRTChannelStatusService
   LIBRARIES
   PRIVATE
   ubobj::DataOverlay
   larevt::CalibrationDBI_Providers
-  larcore::ServiceUtil
   lardataobj::RawData
   larcorealg::CoreUtils
   art::Framework_Principal
@@ -87,8 +103,25 @@ cet_build_plugin(
   art::Framework_Principal
 )
 
+cet_make_library(
+  LIBRARY_NAME LightYieldService INTERFACE
+  SOURCE LightYieldService.h
+  LIBRARIES
+  INTERFACE
+  larcore::ServiceUtil
+)
+
+cet_write_plugin_builder(
+  uboone::LightYieldService art::service Modules
+  INSTALL_BUILDER
+  LIBRARIES CONDITIONAL
+  ubevt::LightYieldService
+)
+
+include(uboone::LightYieldService)
+
 cet_build_plugin(
-  UbooneLightYieldService art::service
+  UbooneLightYieldService uboone::LightYieldService
   LIBRARIES
   PRIVATE
   ubobj::DataOverlay
