@@ -24,6 +24,7 @@ cet_build_plugin(
   RetrieveOverlayDataMicroBooNE art::module
   LIBRARIES
   PRIVATE
+  ubobj::DataOverlay
   lardataobj::Simulation
   lardataobj::MCBase
   nusimdata::SimulationBase

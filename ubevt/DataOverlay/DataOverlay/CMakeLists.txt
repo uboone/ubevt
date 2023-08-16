@@ -8,6 +8,7 @@ cet_make_library(
   RawDigitMixer.cxx
   LIBRARIES
   PUBLIC
+  ubobj::CRT
   lardataobj::RawData
 )
 

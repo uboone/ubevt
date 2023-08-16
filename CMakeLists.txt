@@ -22,6 +22,7 @@ cet_set_compiler_flags(DIAGS CAUTIOUS
 
 cet_report_compiler_flags(REPORT_THRESHOLD VERBOSE)
 
+find_package( ubobj REQUIRED EXPORT )
 find_package( larevt REQUIRED EXPORT )
 find_package( nurandom REQUIRED EXPORT )
 find_package( ifdh_art REQUIRED EXPORT )

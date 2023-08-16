@@ -16,6 +16,7 @@ cet_build_plugin(
   UbooneTPCEnergyCalibService art::service
   LIBRARIES
   PRIVATE
+  ubobj::DataOverlay
   ubevt::Database_TPCEnergyCalib
   art::Framework_Principal
 )

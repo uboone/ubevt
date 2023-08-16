@@ -1,5 +1,8 @@
 cet_build_plugin(
   CRTpreOverlay art::EDProducer
+  LIBRARIES
+  PRIVATE
+  ubobj::CRT
 )
 
 cet_build_plugin(

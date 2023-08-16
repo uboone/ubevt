@@ -19,6 +19,7 @@ cet_build_plugin(
   TestDBI art::EDAnalyzer
   LIBRARIES
   PRIVATE
+  ubobj::DataOverlay
   larevt::CalibrationDBI_Providers
   larcore::Geometry_Geometry_service
   lardataobj::RawData
@@ -30,6 +31,7 @@ cet_build_plugin(
   UbooneCRTChannelStatusService art::service
   LIBRARIES
   PRIVATE
+  ubobj::DataOverlay
   larevt::CalibrationDBI_Providers
   larcore::ServiceUtil
   lardataobj::RawData
@@ -45,6 +47,7 @@ cet_build_plugin(
   UbooneChannelStatusService lar::ChannelStatusService
   LIBRARIES
   PRIVATE
+  ubobj::DataOverlay
   larevt::CalibrationDBI_Providers
   larcorealg::Geometry
   lardataobj::RawData
@@ -59,6 +62,7 @@ cet_build_plugin(
   UbooneDetPedestalService lar::DetPedestalService
   LIBRARIES
   PRIVATE
+  ubobj::DataOverlay
   larevt::CalibrationDBI_Providers
   art::Framework_Principal
 )
@@ -67,6 +71,7 @@ cet_build_plugin(
   UbooneElectronLifetimeService art::service
   LIBRARIES
   PUBLIC
+  ubobj::DataOverlay
   ubevt::Database
   art::Framework_Principal
 )
@@ -77,6 +82,7 @@ cet_build_plugin(
   UbooneElectronicsCalibService lar::ElectronicsCalibService
   LIBRARIES
   PRIVATE
+  ubobj::DataOverlay
   ubevt::Database
   art::Framework_Principal
 )
@@ -85,6 +91,7 @@ cet_build_plugin(
   UbooneLightYieldService art::service
   LIBRARIES
   PRIVATE
+  ubobj::DataOverlay
   ubevt::Database
   art::Framework_Principal
 )
@@ -95,6 +102,7 @@ cet_build_plugin(
   UboonePmtGainService lar::PmtGainService
   LIBRARIES
   PRIVATE
+  ubobj::DataOverlay
   ubevt::Database
   art::Framework_Principal
 )
