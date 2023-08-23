@@ -449,7 +449,12 @@ namespace lariov {
       int ret_val = 0;
       int dim_product = 1;
       for (int n_dim=coord.size()-1; n_dim >= 0; --n_dim) {
-        ret_val += ((int)(fNbins[n_dim]*(coord[n_dim]-fCoord_min[n_dim])/(fCoord_max[n_dim]-fCoord_min[n_dim])))*dim_product;
+        int igrid = int(fNbins[n_dim]*(coord[n_dim]-fCoord_min[n_dim])/(fCoord_max[n_dim]-fCoord_min[n_dim]));
+        if(igrid < 0)
+          igrid = 0;
+        if(igrid >= int(fNbins[n_dim]))
+          igrid = fNbins[n_dim] - 1;
+        ret_val += igrid*dim_product;
 	dim_product *= fNbins[n_dim];
       }
       /*std::cout<<"Chosen bin "<<ret_val<<std::endl;
