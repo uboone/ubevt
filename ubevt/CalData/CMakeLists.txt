@@ -34,6 +34,7 @@ cet_build_plugin(
   lardataobj::RawData
   art_root_io::TFileService_service
   ROOT::MathCore
+  ROOT::FFTW
 )
 
 cet_build_plugin(
