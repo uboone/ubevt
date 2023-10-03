@@ -80,17 +80,13 @@
 
 #include <vector>
 #include <map>
-#include "fhiclcpp/ParameterSet.h"
-#include "art/Framework/Services/Registry/ActivityRegistry.h"
+#include "fhiclcpp/fwd.h"
 #include "art/Framework/Services/Registry/ServiceMacros.h"
 #include "SignalShapingLite.h"
 #include "TF1.h"
 #include "TH1D.h"
 
 // LArSoft include
-#include "larcore/Geometry/Geometry.h"
-#include "larcorealg/Geometry/TPCGeo.h"
-#include "larcorealg/Geometry/PlaneGeo.h"
 namespace detinfo {
   class DetectorClocksData;
 }
@@ -152,10 +148,9 @@ namespace util {
     public:
 
       //------------------------------------------------------------
-      // Constructor, destructor, and configuration.
+      // Constructor and configuration.
       //------------------------------------------------------------
-      SignalShapingServiceMicroBooNE(const fhicl::ParameterSet& pset, art::ActivityRegistry& reg);
-      ~SignalShapingServiceMicroBooNE();
+      SignalShapingServiceMicroBooNE(const fhicl::ParameterSet& pset);
 
       void reconfigure(const fhicl::ParameterSet& pset);
 

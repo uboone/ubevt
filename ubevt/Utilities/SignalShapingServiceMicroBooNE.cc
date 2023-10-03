@@ -6,26 +6,29 @@
 /// Response_Offset, Response_Sampling, FieldBins from histogram
 ////////////////////////////////////////////////////////////////////////
 
-#include <cmath>
 #include "ubevt/Utilities/SignalShapingServiceMicroBooNE.h"
-#include "art/Framework/Services/Registry/ServiceHandle.h"
-#include "messagefacility/MessageLogger/MessageLogger.h"
-#include "cetlib_except/exception.h"
-#include "larcore/CoreUtils/ServiceUtil.h" // lar::providerFrom<>()
-#include "art_root_io/TFileService.h"
+
+#include "larcore/Geometry/WireReadout.h"
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
 #include "lardata/DetectorInfoServices/DetectorClocksService.h"
 #include "lardata/Utilities/LArFFT.h"
 #include "larevt/CalibrationDBI/Interface/ElectronicsCalibService.h"
 #include "larevt/CalibrationDBI/Interface/ElectronicsCalibProvider.h"
+
+#include "art/Framework/Services/Registry/ServiceHandle.h"
+#include "messagefacility/MessageLogger/MessageLogger.h"
+#include "cetlib_except/exception.h"
+#include "art_root_io/TFileService.h"
+#include "fhiclcpp/ParameterSet.h"
+
 #include "TFile.h"
 
+#include <cmath>
 #include <fstream>
 
 //----------------------------------------------------------------------
 // Constructor.
-util::SignalShapingServiceMicroBooNE::SignalShapingServiceMicroBooNE(const fhicl::ParameterSet& pset,
-                                                                     art::ActivityRegistry& /* reg */)
+util::SignalShapingServiceMicroBooNE::SignalShapingServiceMicroBooNE(const fhicl::ParameterSet& pset)
 : fInitForConvolution(false),
   fInitForDeconvolution(false),
   fConvFFTSize(0)
@@ -61,18 +64,12 @@ util::SignalShapingServiceMicroBooNE::SignalShapingServiceMicroBooNE(const fhicl
 
 
 //----------------------------------------------------------------------
-// Destructor.
-util::SignalShapingServiceMicroBooNE::~SignalShapingServiceMicroBooNE()
-{}
-
-
-//----------------------------------------------------------------------
 // Reconfigure method.
 void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet& pset)
 {
   //Services
-  art::ServiceHandle<geo::Geometry> geo;
-  size_t NViews = geo->Nplanes();
+  auto const& wireReadout = art::ServiceHandle<geo::WireReadout const>()->Get();
+  size_t NViews = wireReadout.Nplanes();
 
   art::ServiceHandle<art::TFileService> tfs;
 
@@ -91,8 +88,8 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
   //Convolution- and deconvolution-related objects
   fDeconvPol          = pset.get<std::vector<int> >("DeconvPol");
 
-  fSignalShapingVec.resize(geo->Nchannels());
-  for (unsigned int channel=0; channel!=geo->Nchannels(); ++channel) {
+  fSignalShapingVec.resize(wireReadout.Nchannels());
+  for (unsigned int channel=0; channel!=wireReadout.Nchannels(); ++channel) {
     fSignalShapingVec[channel].ResetAll();
   }
 
@@ -102,7 +99,7 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
   fMaxElectResponseBins     = pset.get<unsigned int>("MaxElectResponseBins");
   fIgnoreMisconfigStatus    = pset.get<bool>("IgnoreMisconfigStatus");
 
-  fElectResponse.resize(geo->Nchannels());
+  fElectResponse.resize(wireReadout.Nchannels());
   fHist_ElectResponse       = tfs->make<TH1D>("ER","ER", fMaxElectResponseBins, 0.0, (float)fMaxElectResponseBins);
 
 
@@ -287,7 +284,7 @@ void util::SignalShapingServiceMicroBooNE::reconfigure(const fhicl::ParameterSet
 
       //make a diagnostic histogram
       if (fDiagnosticChannel!=-1 && response_name==fDiagnosticResponse) {
-        unsigned int diagnostic_view = geo->View(fDiagnosticChannel);
+        unsigned int diagnostic_view = wireReadout.View(fDiagnosticChannel);
         if (vw==diagnostic_view) {
           for (unsigned int bin=1; bin<=1000; ++bin) {
             fHist_FieldResponseHist->SetBinContent(bin, resp->GetBinContent(bin));
@@ -355,7 +352,7 @@ void util::SignalShapingServiceMicroBooNE::init()
   //do nothing if already initialized
   if (fInitForConvolution && fInitForDeconvolution) return;
 
-  art::ServiceHandle<geo::Geometry> geo;
+  auto const& wireReadout = art::ServiceHandle<geo::WireReadout const>()->Get();
 
   // re-initialize the FFT service for the request size
   art::ServiceHandle<util::LArFFT> fFFT;
@@ -375,8 +372,8 @@ void util::SignalShapingServiceMicroBooNE::init()
     SetElectResponse();
 
     //Add the convolution responses to fSignalShapingVec
-    for(unsigned int channel=0; channel!=geo->Nchannels(); ++channel) {
-      size_t view = geo->View(channel);
+    for(unsigned int channel=0; channel!=wireReadout.Nchannels(); ++channel) {
+      size_t view = wireReadout.View(channel);
 
       //check the fft sampling for when we calculate convolution kernels later
       if ( (size_t)fFFT->FFTSize() < fElectResponse[channel].size()) {
@@ -398,8 +395,8 @@ void util::SignalShapingServiceMicroBooNE::init()
     SetResponseSampling();
 
     // Calculate convolution kernels
-    for (unsigned int channel=0; channel!=geo->Nchannels(); ++channel) {
-      size_t view = geo->View(channel);
+    for (unsigned int channel=0; channel!=wireReadout.Nchannels(); ++channel) {
+      size_t view = wireReadout.View(channel);
       for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
         std::string resp_name = itResp->first;
         if ( StoreThisResponse(resp_name,channel) ) {
@@ -424,7 +421,7 @@ void util::SignalShapingServiceMicroBooNE::init()
 
     // Make some histograms
     if ( fDiagnosticChannel!=-1 && StoreThisResponse(fDiagnosticResponse, fDiagnosticChannel) ) {
-      size_t diagnostic_view = geo->View(fDiagnosticChannel);
+      size_t diagnostic_view = wireReadout.View(fDiagnosticChannel);
       for (unsigned int bin=0; bin!=1000; ++bin) {
         fHist_FieldResponseVec->SetBinContent(bin+1, fFieldResponseVec[diagnostic_view][fDiagnosticResponse][bin]);
       }
@@ -441,7 +438,7 @@ void util::SignalShapingServiceMicroBooNE::init()
     //Print responses if desired
     if(fPrintResponses) {
       unsigned int print_channel = fDiagnosticChannel;
-      size_t print_view = geo->View(print_channel);
+      size_t print_view = wireReadout.View(print_channel);
       for(size_t i = 0; i<100; ++i) {
         std::cout << "Electronic Response for channel "<<print_channel <<": "<< fElectResponse[print_channel][i] << " " ;
         if((i+1)%10==0) std::cout << std::endl;
@@ -475,8 +472,8 @@ void util::SignalShapingServiceMicroBooNE::init()
     SetFilters();
 
     // Configure deconvolution kernels.
-    for (unsigned int channel=0; channel!=geo->Nchannels(); ++channel) {
-      size_t view = geo->View(channel);
+    for (unsigned int channel=0; channel!=wireReadout.Nchannels(); ++channel) {
+      size_t view = wireReadout.View(channel);
       for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
         std::string resp_name = itResp->first;
         if ( StoreThisResponse(resp_name,channel) ) {
@@ -510,7 +507,7 @@ void util::SignalShapingServiceMicroBooNE::SetDecon(size_t datasize)
   init();
 
   art::ServiceHandle<util::LArFFT> fft;
-  art::ServiceHandle<geo::Geometry> geo;
+  auto const& wireReadout = art::ServiceHandle<geo::WireReadout const>()->Get();
 
   // streamline this method:
   // if the deconvolution kernel is already appropriate for the datasize do nothing
@@ -530,8 +527,8 @@ void util::SignalShapingServiceMicroBooNE::SetDecon(size_t datasize)
   fft->ReinitializeFFT( fConvFFTSize, fft->FFTOptions(), fft->FFTFitBins() );
 
   //during convolution kernel initialization, we lost the original responses and have to remake them
-  for (unsigned int channel=0; channel!=geo->Nchannels(); ++channel) {
-    size_t view = geo->View(channel);
+  for (unsigned int channel=0; channel!=wireReadout.Nchannels(); ++channel) {
+    size_t view = wireReadout.View(channel);
     fSignalShapingVec[channel].ResetAll();
     for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
       std::string resp_name = itResp->first;
@@ -550,8 +547,8 @@ void util::SignalShapingServiceMicroBooNE::SetDecon(size_t datasize)
   SetResponseSampling();
 
   //Calculate convolution kernels
-  for (unsigned int channel=0; channel!=geo->Nchannels(); ++channel) {
-    size_t view = geo->View(channel);
+  for (unsigned int channel=0; channel!=wireReadout.Nchannels(); ++channel) {
+    size_t view = wireReadout.View(channel);
     for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
       std::string resp_name = itResp->first;
       if ( StoreThisResponse(resp_name,channel) ) {
@@ -564,8 +561,8 @@ void util::SignalShapingServiceMicroBooNE::SetDecon(size_t datasize)
   SetFilters();
 
   // Configure deconvolution kernels.
-  for (unsigned int channel=0; channel!=geo->Nchannels(); ++channel) {
-    size_t view = geo->View(channel);
+  for (unsigned int channel=0; channel!=wireReadout.Nchannels(); ++channel) {
+    size_t view = wireReadout.View(channel);
     for (auto itResp = fFieldResponseVec[view].begin(); itResp != fFieldResponseVec[view].end(); ++itResp) {
       std::string resp_name = itResp->first;
       if ( StoreThisResponse(resp_name,channel) ) {
@@ -589,8 +586,8 @@ void util::SignalShapingServiceMicroBooNE::SetFieldResponse()
 
   art::ServiceHandle<art::TFileService> tfs;
 
-  art::ServiceHandle<geo::Geometry> geo;
-  size_t NViews = geo->Nplanes();
+  auto const& wireReadout = art::ServiceHandle<geo::WireReadout const>()->Get();
+  size_t NViews = wireReadout.Nplanes();
 
   char buff0[80];
 
@@ -660,7 +657,7 @@ void util::SignalShapingServiceMicroBooNE::SetElectResponse()
 
   MF_LOG_DEBUG("SignalShapingMicroBooNE") << "Setting MicroBooNE electronics response function...";
 
-  art::ServiceHandle<geo::Geometry> geo;
+  auto const& wireReadout = art::ServiceHandle<geo::WireReadout const>()->Get();
 
   const lariov::ElectronicsCalibProvider& elec_provider
     = art::ServiceHandle<lariov::ElectronicsCalibService>()->GetProvider();
@@ -682,8 +679,8 @@ void util::SignalShapingServiceMicroBooNE::SetElectResponse()
   // peak broader
 
   std::string nominal_resp_name = "nominal";
-  for (unsigned int channel=0; channel!=geo->Nchannels(); ++channel) {
-    size_t view = geo->View(channel);
+  for (unsigned int channel=0; channel!=wireReadout.Nchannels(); ++channel) {
+    size_t view = wireReadout.View(channel);
     unsigned int NFieldBins = fFieldResponseHistVec[view][nominal_resp_name]->GetXaxis()->GetNbins();
 
     if (4*NFieldBins < fMaxElectResponseBins) {
@@ -759,13 +756,13 @@ void util::SignalShapingServiceMicroBooNE::SetFilters()
 
   art::ServiceHandle<detinfo::DetectorClocksService> clocks;
   art::ServiceHandle<util::LArFFT> fft;
-  art::ServiceHandle<geo::Geometry> geo;
+  auto const& wireReadout = art::ServiceHandle<geo::WireReadout const>()->Get();
 
   double ts = sampling_rate(clocks->DataForJob());
   size_t nFFT2 = fft->FFTSize() / 2;
 
   // Calculate collection filter.
-  fFilterVec.resize(geo->Nplanes());
+  fFilterVec.resize(wireReadout.Nplanes());
   for(auto& filter : fFilterVec) {
     filter.resize(nFFT2+1);
   }
@@ -813,7 +810,7 @@ void util::SignalShapingServiceMicroBooNE::SetFilters()
 void util::SignalShapingServiceMicroBooNE::SetResponseSampling()
 {
   // Get services
-  auto const* geo = lar::providerFrom<geo::Geometry>();
+  auto const& wireReadout = art::ServiceHandle<geo::WireReadout const>()->Get();
   art::ServiceHandle<detinfo::DetectorClocksService> clocks;
   double const samplingRate = sampling_rate(clocks->DataForJob());
   art::ServiceHandle<util::LArFFT> fft;
@@ -828,9 +825,9 @@ void util::SignalShapingServiceMicroBooNE::SetResponseSampling()
 
   //Loop over channels and responses, resampling each one
   std::string nominal_resp_name = "nominal";
-  for(size_t ch=0; ch<geo->Nchannels(); ++ch) {
+  for(size_t ch=0; ch<wireReadout.Nchannels(); ++ch) {
 
-    size_t view = geo->View(ch);
+    size_t view = wireReadout.View(ch);
     double deltaInputTime = fFieldResponseHistVec[view][nominal_resp_name]->GetBinWidth(1)*1000.0;
 
     double timeFactor = f3DCorrectionVec[view];
@@ -917,8 +914,8 @@ double util::SignalShapingServiceMicroBooNE::GetRawNoise(unsigned int const chan
 {
   //no init needed - fFieldResponseTOffset is initialized in reconfigure()
 
-  art::ServiceHandle<geo::Geometry> geom;
-  geo::View_t view = geom->View(channel);
+  auto const& wireReadout = art::ServiceHandle<geo::WireReadout const>()->Get();
+  geo::View_t view = wireReadout.View(channel);
 
   const lariov::ElectronicsCalibProvider& elec_provider
     = art::ServiceHandle<lariov::ElectronicsCalibService>()->GetProvider();
@@ -978,8 +975,8 @@ int util::SignalShapingServiceMicroBooNE::FieldResponseTOffset(detinfo::Detector
 {
   //no init needed - fFieldResponseTOffset is initialized in reconfigure()
 
-  art::ServiceHandle<geo::Geometry> geom;
-  geo::View_t view = geom->View(channel);
+  auto const& wireReadout = art::ServiceHandle<geo::WireReadout const>()->Get();
+  geo::View_t view = wireReadout.View(channel);
 
   double time_offset = 0;
   switch(view){
@@ -1077,8 +1074,8 @@ std::string util::SignalShapingServiceMicroBooNE::DetermineResponseName(unsigned
 
   if (!fYZdependentResponse) return resp_name;
 
-  art::ServiceHandle<geo::Geometry> geo;
-  size_t view = (size_t)geo->View(chan);
+  auto const& wireReadout = art::ServiceHandle<geo::WireReadout const>()->Get();
+  size_t view = (size_t)wireReadout.View(chan);
 
   if (view==0) { //U-plane
 
