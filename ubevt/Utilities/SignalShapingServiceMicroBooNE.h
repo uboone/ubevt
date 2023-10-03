@@ -39,7 +39,7 @@
 ///                 4. Convolute the field and electronic responses,
 ///                    and then sample the convoluted function with
 ///                    the nominal sampling rate (detinfo::DetectorPropertiesService).
-///                    NOTE: Currently this doesn't include the filter 
+///                    NOTE: Currently this doesn't include the filter
 ///                    function and the deconvolution kernel.
 ///                    We may want to include them later?
 ///                 5. Disable fColSignalShaping.SetPeakResponseTime(0.),
@@ -58,21 +58,21 @@
 ///                              the input field response waveforms
 /// InputFieldRespSamplingRate - The sampling rate in the input field response
 /// UseHistogramFieldShape     - Use the field response from an input histogram,
-///                              if both UseFunctionFieldShape and 
+///                              if both UseFunctionFieldShape and
 ///                              UseHistogramFieldShape are false, we will
 ///                              use the toy field responses (a bipolar square
 ///                              function for induction planes, a ramp function
 ///                              for collection planes.)
-/// FieldResponseFname         - Name of the file containing the input field 
+/// FieldResponseFname         - Name of the file containing the input field
 ///                              response histograms
 /// FieldResponseHistoName     - Name of the field response histograms,
-///                              the format in the code will be 
+///                              the format in the code will be
 ///                              FieldResponseHistoName_U(V,Y)
-///update notes: Jyoti Joshi (jjoshi@bnl.gov), Jan 13, 2015 
+///update notes: Jyoti Joshi (jjoshi@bnl.gov), Jan 13, 2015
 //               1. Modification to GetShapingTime function to read in different
 //                  shaping time for different planes
-//               2. Modification to GetASICGain fucntion to read in different gain 
-//                  settings for different planes    
+//               2. Modification to GetASICGain fucntion to read in different gain
+//                  settings for different planes
 ////////////////////////////////////////////////////////////////////////
 
 #ifndef SIGNALSHAPINGSERVICEMICROBOONE_H
@@ -104,34 +104,34 @@ namespace util {
 
   // helper class
   class SignalShapingContainer {
-  
+
     public:
-    
+
       SignalShapingContainer() {
         this->ResetAll();
       }
-      
+
       ~SignalShapingContainer() {}
-      
+
       SignalShapingLite& Response(const std::string& response_name) {
         return fResponseMap[response_name];
       }
-      
+
       const SignalShapingLite& Response(const std::string& response_name) const {
         return fResponseMap.at(response_name);
       }
-      
+
       void ResetAll() {
         for (auto& resp : fResponseMap) {
-	  resp.second.Reset();
-	}
+          resp.second.Reset();
+        }
       }
-      
+
     private:
-      
+
       std::map<std::string, SignalShapingLite> fResponseMap;
   };
-  
+
   // little helper class to hold the parameters for charge deposition
   class ResponseParams {
     public:
@@ -148,13 +148,13 @@ namespace util {
   };
 
   class SignalShapingServiceMicroBooNE {
- 
+
     public:
 
       //------------------------------------------------------------
       // Constructor, destructor, and configuration.
       //------------------------------------------------------------
-      SignalShapingServiceMicroBooNE(const fhicl::ParameterSet& pset, art::ActivityRegistry& reg);   
+      SignalShapingServiceMicroBooNE(const fhicl::ParameterSet& pset, art::ActivityRegistry& reg);
       ~SignalShapingServiceMicroBooNE();
 
       void reconfigure(const fhicl::ParameterSet& pset);
@@ -185,15 +185,15 @@ namespace util {
 
       // Responses and Kernels
       const util::SignalShapingLite& SignalShaping(size_t channel, const std::string& response_name="") const;
-      const std::vector<ComplexF>&   GetConvKernel(unsigned int channel, const std::string& response_name ) const;  // M. Mooney 
+      const std::vector<ComplexF>&   GetConvKernel(unsigned int channel, const std::string& response_name ) const;  // M. Mooney
       void  SetDecon(size_t datasize);
-      const std::vector<unsigned int>&   GetNResponses() const { return fNResponses; } 
-      
+      const std::vector<unsigned int>&   GetNResponses() const { return fNResponses; }
+
       int FieldResponseTOffset(detinfo::DetectorClocksData const& clockData,
                                unsigned int const channel, const std::string& response_name) const;
 
 
-      // Filter-related    
+      // Filter-related
       double Get2DFilterVal(detinfo::DetectorClocksData const& clockData,
                             size_t planeNum, size_t freqDimension, double binFrac) const;  // M. Mooney
       double Get2DFilterNorm(size_t planeNum) const;  // M. Mooney
@@ -203,19 +203,19 @@ namespace util {
       const DoubleVec2& GetNoiseFactVec() const { return fNoiseFactVec; }
       double     GetDeconNorm() const { return fDeconNorm; }
       double     GetRawNoise(unsigned int const channel) const;
-      double     GetDeconNoise(unsigned int const channel) const; 
-      
-      
+      double     GetDeconNoise(unsigned int const channel) const;
+
+
       //U- and Y-Shorted Channels and YZ-Regions
       // Determine if YZ coordinate overlaps with the U-shorted YZ region
       static bool IsUShortedYZRegion(double y, double z);
-      
+
       // Determine if Z coordinate overlaps with the Y-shorted Z region
       static bool IsYShortedZRegion(double z);
-      
+
       // Determine if channel's wire overlaps with the U-shorted wires
       static bool IsUShortedOverlapChannel(unsigned int channel);
-      
+
       // Determine if channel's wire overlaps with the Y-shorted wires
       static bool IsYShortedOverlapChannel(unsigned int channel);
 
@@ -239,18 +239,18 @@ namespace util {
       // drift velocity of electrons
       void SetResponseSampling();
 
-      // Get the name of the (possibly YZ-dependent) response to use, 
+      // Get the name of the (possibly YZ-dependent) response to use,
       // as well as a charge_fraction for scaling before convolution/deconvolution
       std::string DetermineResponseName(unsigned int chan, double y, double z, double& charge_fraction) const;
-      
+
       // Determine whether the response indicated by response_name should be stored for channel
       bool StoreThisResponse(const std::string& response_name, unsigned int channel) const;
-      
+
 
 
       //------------------------------------------------------------
       // Private Attributes.
-      //------------------------------------------------------------     
+      //------------------------------------------------------------
 
       bool fInitForConvolution;       ///< True if initialized for convolution
       bool fInitForDeconvolution;     ///< True if initialized for deconvolution
@@ -258,23 +258,23 @@ namespace util {
 
 
       //Convolution and Deconvolution
-      std::vector<util::SignalShapingContainer> fSignalShapingVec; ///< Stores the convolution and deconvolution kernels   
-      unsigned int fConvFFTSize;                                   ///< Stores the FFTSize used for convolution 
+      std::vector<util::SignalShapingContainer> fSignalShapingVec; ///< Stores the convolution and deconvolution kernels
+      unsigned int fConvFFTSize;                                   ///< Stores the FFTSize used for convolution
       std::vector<int>                          fDeconvPol;        ///< switch for DeconvKernel normalization sign (+ -> max pos ADC, - -> max neg ADC). Entry 0,1,2 = U,V,Y plane settings
 
 
-      // Electronics Response    
+      // Electronics Response
       std::vector<FloatVec>  fElectResponse;            ///< Stores electronics response. Vector elements correspond to channel, then response bins
       unsigned int           fMaxElectResponseBins;     ///< Maximum number of bins to use to store the electronics response
       double                 fADCPerPCAtLowestASICGain; ///< Pulse amplitude gain for a 1 pc charge impulse after convoluting it the with field and electronics response with the lowest ASIC gain setting of 4.7 mV/fC
       bool                   fIgnoreMisconfigStatus;    ///< If true, use nominal (default) gain and shaping time to calculate electronics response of misconfigured channels.  Useful for deconvolution if noise filtering already performed the correction
-      
+
 
       // Field Response
       std::vector< std::map<std::string, FloatVec> >  fFieldResponseVec;      ///< Stores adjusted field response. Vector elements corespond to plane, map key is a response name
       std::vector< std::map<std::string, TH1F*> >     fFieldResponseHistVec;  ///< Stores input field response.  Vector elements correspond to planes, map key is a response name
       std::vector<unsigned int>                       fNResponses;            ///< Number of input field responses per view
-      DoubleVec                                       fFieldRespAmpVec;       ///< Amplitudes applied to adjusted field response   
+      DoubleVec                                       fFieldRespAmpVec;       ///< Amplitudes applied to adjusted field response
       bool                                            fYZdependentResponse;   ///< Using YZ-dependent responses
       bool                                            fdatadrivenResponse;    ///< Using data-driven responses
       size_t                                          fViewForNormalization;
@@ -282,13 +282,13 @@ namespace util {
 
       // Time offset and scaling of field responses
       std::vector< std::map<std::string, double> > fFieldResponseTOffset;  ///< Time offset for field response in ns. Vector elements correspond to plane, map key is a response name
-      DoubleVec  	      	      	           f3DCorrectionVec;	   ///< correction factor to account for 3D path of electrons, 1 for each plane (default = 1.0)  
-      DoubleVec  	      	      	           fCalibResponseTOffset;  ///< calibrated time offset to align U/V/Y Signals						 
-      bool       	      	      	           fStretchFullResponse;												 
-      double     	      	      	           fTimeScaleFactor;													 
-      DoubleVec  	      	      	           fTimeScaleParams;													 
-      double     	      	      	           fDefaultEField;													 
-      double     	      	      	           fDefaultTemperature; 												 
+      DoubleVec                                    f3DCorrectionVec;	   ///< correction factor to account for 3D path of electrons, 1 for each plane (default = 1.0)
+      DoubleVec                                    fCalibResponseTOffset;  ///< calibrated time offset to align U/V/Y Signals
+      bool                                         fStretchFullResponse;
+      double                                       fTimeScaleFactor;
+      DoubleVec                                    fTimeScaleParams;
+      double                                       fDefaultEField;
+      double                                       fDefaultTemperature;
 
 
       // Filter Parameters
@@ -322,27 +322,27 @@ namespace util {
       // Diagnostics
       int fDiagnosticChannel;
       std::string fDiagnosticResponse;
-      
+
       bool fPrintResponses;
       bool fHistDone[3];
-      bool fHistDoneF[3];   
+      bool fHistDoneF[3];
       TH1D* fHRawResponse[3];
       TH1D* fHStretchedResponse[3];
       TH1D* fHFullResponse[3];
       TH1D* fHSampledResponse[3];
-      
+
       TH1D* fHist_FieldResponseHist;
       TH1D* fHist_FieldResponseVec;
       TH1D* fHist_ElectResponse;
       TH1D* fHist_ResampledConvKernelRe;
       TH1D* fHist_ResampledConvKernelIm;
-      
+
       TH1D* fHist_PreConv;
       TH1D* fHist_PostConv;
       TH1D* fHist_PostOffset;
       TH1D* fHist_PreDeconv;
       TH1D* fHist_PostDeconvOffset;
-    
+
   };
 } //namespace util
 
@@ -352,8 +352,8 @@ namespace util {
 // Do convolution.
 template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(detinfo::DetectorClocksData const& clockData,
                                                                                size_t channel,
-									       std::vector<T>& func, 
-									       const std::vector<std::unique_ptr<util::ResponseParams> >& params) const
+                                                                               std::vector<T>& func,
+                                                                               const std::vector<std::unique_ptr<util::ResponseParams> >& params) const
 {
 
   //loop over params and construct input functions for each of the channel's responses
@@ -361,28 +361,28 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(d
   for (const auto& item : params) {
     double charge_fraction = 1.0;
     std::string response_name = this->DetermineResponseName(channel, item->getY(), item->getZ(), charge_fraction);
-    
+
     if (input_map.find(response_name)==input_map.end()) {
       input_map[response_name].resize(func.size(), 0.0);
     }
-    
+
     if (item->getIndex() < 0 || item->getIndex() >= func.size()) continue;
     input_map[response_name].at(item->getIndex()) += item->getCharge()*charge_fraction;
   }
-  
+
   //convolute each input function, and add to output
   std::vector<T> output;
   output.resize(func.size(), 0.0);
   for (auto input : input_map) {
     this->Convolute(clockData, channel, input.second, input.first);
-    std::transform(input.second.begin(), input.second.end(), output.begin(), output.begin(), std::plus<T>()); 
+    std::transform(input.second.begin(), input.second.end(), output.begin(), output.begin(), std::plus<T>());
   }
-  
+
   //copy to func
   func = output;
 }
-    
-      
+
+
 //----------------------------------------------------------------------
 // Do convolution.
 template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(detinfo::DetectorClocksData const& clockData,
@@ -407,18 +407,18 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(d
 {
 
   init();
-  
+
   if ( !StoreThisResponse(response_name, channel) ) {
     throw cet::exception(__FUNCTION__) << "You requested to use an invalid response "<<response_name<<" for channel "<<channel<<std::endl;
   }
-  
+
   //make diagnostic histogram
   if ((int)channel==fDiagnosticChannel && response_name==fDiagnosticResponse) {
     for (unsigned int bin=0; bin!=func.size(); ++bin) {
       fHist_PreConv->SetBinContent(bin+1, func.at(bin));
     }
   }
-  
+
   //convolute
   fSignalShapingVec[channel].Response(response_name).Convolute(func);
 
@@ -428,7 +428,7 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(d
       fHist_PostConv->SetBinContent(bin+1, func.at(bin));
     }
   }
-  
+
   //Add time offset
   int time_offset = FieldResponseTOffset(clockData, channel,response_name);
   std::vector<T> temp;
@@ -442,14 +442,14 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(d
     func.erase(func.end()-time_offset,func.end());
     func.insert(func.begin(),temp.begin(),temp.end());
   }
-  
+
   //make diagnostic histogram
   if ((int)channel==fDiagnosticChannel && response_name==fDiagnosticResponse) {
     for (unsigned int bin=0; bin!=func.size(); ++bin) {
       fHist_PostOffset->SetBinContent(bin+1, func.at(bin));
     }
   }
-  
+
 }
 
 
@@ -458,7 +458,7 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Convolute(d
 template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute(detinfo::DetectorClocksData const& clockData,
                                                                                  size_t channel, std::vector<T>& func, double y, double z)
 {
-  
+
   double charge_fraction = 1.0;
   std::string response_name = this->DetermineResponseName(channel, y, z, charge_fraction);
   if (charge_fraction != 1.0 && charge_fraction > 0.0) {
@@ -468,8 +468,8 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute
   }
 
   this->Deconvolute(clockData, channel, func, response_name);
-}  
-  
+}
+
 
 //----------------------------------------------------------------------
 // Do deconvolution.
@@ -478,23 +478,23 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute
 {
 
   init();
-  
+
   if ( !StoreThisResponse(response_name, channel) ) {
     throw cet::exception(__FUNCTION__) << "You requested to use an invalid response "<<response_name<<" for channel "<<channel<<std::endl;
   }
-  
+
   //Initialize deconvolution kernels (necessary if this wasn't done in init())
   if (!fInitForDeconvolution) {
     this->SetDecon(func.size());
   }
-  
+
   //make diagnostic histogram
   if ((int)channel==fDiagnosticChannel && response_name==fDiagnosticResponse) {
     for (unsigned int bin=0; bin!=func.size(); ++bin) {
       fHist_PreDeconv->SetBinContent(bin+1, func.at(bin));
     }
   }
-  
+
   //Do deconvolution
   fSignalShapingVec[channel].Response(response_name).Deconvolute(func);
 
@@ -509,9 +509,9 @@ template <class T> inline void util::SignalShapingServiceMicroBooNE::Deconvolute
   else{
     temp.assign(func.begin(),func.begin()+time_offset);
     func.erase(func.begin(),func.begin()+time_offset);
-    func.insert(func.end(),temp.begin(),temp.end());   
+    func.insert(func.end(),temp.begin(),temp.end());
   }
-  
+
   //make diagnostic histogram
   if ((int)channel==fDiagnosticChannel && response_name==fDiagnosticResponse) {
     for (unsigned int bin=0; bin!=func.size(); ++bin) {
