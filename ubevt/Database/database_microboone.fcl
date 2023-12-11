@@ -151,7 +151,7 @@ microboone_pmtgain_provider:
 }
 microboone_pmtgain_provider.DatabaseRetrievalAlg.DBFolderName: "detpmtgains_data"
 microboone_pmtgain_provider.DatabaseRetrievalAlg.DBUrl: "https://dbdata0vm.fnal.gov:8443/uboonecon_prod/app/"
-microboone_pmtgain_provider.DatabaseRetrievalAlg.DBTag: "v1r2"
+microboone_pmtgain_provider.DatabaseRetrievalAlg.DBTag: "v1r4"
 microboone_pmtgain_provider.DatabaseRetrievalAlg.UseSQLite: true
 
 microboone_pmtgain_service:
