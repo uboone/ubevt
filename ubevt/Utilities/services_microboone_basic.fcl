@@ -28,17 +28,16 @@ BEGIN_PROLOG
 # Define base set of microboone services shared in all inheriting configuration
 microboone_basic_services:
 {
- ExptGeoHelperInterface:         @local::microboone_geometry_helper
- GeometryConfigurationWriter:    {}
- Geometry:                       @local::microboone_geo
- AuxDetGeometry:                 @local::microboone_crt_geometry
- AuxDetExptGeoHelperInterface:    @local::microboone_crt_geo_interface
- DetectorPropertiesService:             @local::microboone_detproperties
- LArPropertiesService:                  @local::microboone_properties
- DatabaseUtil:                   @local::microboone_database
- DetectorClocksService:                    @local::microboone_detectorclocks
- SpaceCharge:                    @local::microboone_spacecharge
- NuRandomService:                    @local::microboone_seedservice
+ WireReadout:                 @local::microboone_wire_readout
+ GeometryConfigurationWriter: {}
+ Geometry:                    @local::microboone_geo
+ AuxDetGeometry:              @local::microboone_crt_geometry
+ DetectorPropertiesService:   @local::microboone_detproperties
+ LArPropertiesService:        @local::microboone_properties
+ DatabaseUtil:                @local::microboone_database
+ DetectorClocksService:       @local::microboone_detectorclocks
+ SpaceCharge:                 @local::microboone_spacecharge
+ NuRandomService:             @local::microboone_seedservice
  PMTRemapService:
  {
    PMTRemapProvider: {}
@@ -48,4 +47,3 @@ microboone_basic_services:
 microboone_basic_services.DetectorPropertiesService.Electronlifetime: 999999 #1 s lifetime
 
 END_PROLOG
-

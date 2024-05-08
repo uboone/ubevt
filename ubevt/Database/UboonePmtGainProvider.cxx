@@ -6,6 +6,7 @@
 
 // art/LArSoft libraries
 #include "cetlib_except/exception.h"
+#include "larcore/Geometry/WireReadout.h"
 #include "larcore/Geometry/Geometry.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h" 
@@ -74,8 +75,9 @@ namespace lariov {
       defaultGain.SetExtraInfo(extra_info);
       
       art::ServiceHandle<geo::Geometry> geo;
+      auto const& channelMapAlg = art::ServiceHandle<geo::WireReadout const>()->Get();
       for (unsigned int od=0; od!=geo->NOpDets(); ++od) {
-        if (geo->IsValidOpChannel(od)) {
+        if (channelMapAlg.IsValidOpChannel(od)) {
 	  defaultGain.SetChannel(od);
 	  fData.AddOrReplaceRow(defaultGain);
 	}
@@ -253,4 +255,3 @@ namespace lariov {
 }//end namespace lariov
 	
 #endif
-        

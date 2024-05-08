@@ -38,7 +38,7 @@
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h" 
 #include "fhiclcpp/ParameterSet.h"
-#include "larcore/Geometry/Geometry.h"
+#include "larcore/Geometry/WireReadout.h"
 #include "larevt/CalibrationDBI/Interface/ChannelStatusService.h"
 #include "larevt/CalibrationDBI/Interface/ChannelStatusProvider.h"
 #include "ubevt/Database/WireCellChannelStatusProvider.h"
@@ -112,8 +112,7 @@ namespace lariov{
 
     // Update number of channels.
 
-    art::ServiceHandle<geo::Geometry> geo;
-    unsigned int nchannels = geo->Nchannels();
+    unsigned int nchannels = art::ServiceHandle<geo::WireReadout const>()->Get().Nchannels();
     fProvider.updateNumChannels(nchannels);
 
     // Clear bad channel list.

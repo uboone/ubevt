@@ -35,7 +35,7 @@
 
 // LArSoft libraries
 #include "larcoreobj/SimpleTypesAndConstants/RawTypes.h" // raw::ChannelID_t
-#include "larcore/Geometry/Geometry.h"
+#include "larcore/Geometry/WireReadout.h"
 #include "lardataobj/RawData/RawDigit.h"
 #include "lardataobj/RawData/raw.h"
 #include "lardataobj/RecoBase/Wire.h"
@@ -160,7 +160,7 @@ namespace caldata {
     const lariov::DetPedestalProvider& pedestalRetrievalAlg = art::ServiceHandle<lariov::DetPedestalService>()->GetPedestalProvider();
 
     // get the geometry
-    art::ServiceHandle<geo::Geometry> geom;
+    auto const& channelMapAlg = art::ServiceHandle<geo::WireReadout const>()->Get();
 
     // get the FFT service to have access to the FFT size
     art::ServiceHandle<util::LArFFT> fFFT;
@@ -323,7 +323,7 @@ namespace caldata {
           channel = digitVec->Channel();
 
           // get plane number associated with channel and skip channel if not current plane being considered
-	  auto view = (size_t)geom->View(channel);
+          auto view = (size_t)channelMapAlg.View(channel);
           if(view != planeNum) {continue;}
           if(firstChannel == raw::InvalidChannelID) {firstChannel = channel;}
 
@@ -372,7 +372,7 @@ namespace caldata {
           channel = digitVec->Channel();
 
           // again, get plane number associated with channel and skip channel if not current plane being considered
-	  auto view = (size_t)geom->View(channel);
+          auto view = (size_t)channelMapAlg.View(channel);
           if(view != planeNum) {continue;}
 
           // NB: should skip bad channels again here
@@ -762,10 +762,10 @@ template <class T> void caldata::CalWireMicroBooNE::DeconvoluteInducedCharge(det
   // setup services
   art::ServiceHandle<util::LArFFT> fft;
   art::ServiceHandle<util::SignalShapingServiceMicroBooNE> sss;
-  art::ServiceHandle<geo::Geometry> geom;
+  auto const& channelMapAlg = art::ServiceHandle<geo::WireReadout const>()->Get();
 
   // additional setup
-  auto planeNum = (size_t)geom->View(firstChannel);
+  auto planeNum = (size_t)channelMapAlg.View(firstChannel);
   int numBins = signal.at(0).size();
   int numWires = signal.size();
   int numResp = sss->GetNResponses().at(planeNum);

@@ -269,7 +269,7 @@ void RawDigitCharacterizationAlg::getMeanRmsMinMaxAndPedCor(const RawDigitVector
     // Fill some histograms here
     if (fHistsInitialized)
     {
-        std::vector<geo::WireID> wids = fGeometry->ChannelToWire(channel);
+        std::vector<geo::WireID> wids = fWireReadoutGeom->ChannelToWire(channel);
         
         // Recover plane and wire in the plane
         unsigned int view = wids[0].Plane;

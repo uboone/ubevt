@@ -35,7 +35,7 @@
 
 // LArSoft libraries
 #include "larcoreobj/SimpleTypesAndConstants/RawTypes.h" // raw::ChannelID_t
-#include "larcore/Geometry/Geometry.h"
+#include "larcore/Geometry/WireReadout.h"
 #include "larevt/Filters/ChannelFilter.h"
 #include "lardataobj/RawData/RawDigit.h"
 #include "lardataobj/RawData/raw.h"
@@ -154,7 +154,7 @@ void CalWireInvert::produce(art::Event& evt)
     // Regions of Interest to snip out. It removes the deconvolution as we're only looking
     // at the collection plane here and should not need it (for looking at PMT pickup).
     // get the geometry
-    art::ServiceHandle<geo::Geometry> geom;
+    auto const& channelMapAlg = art::ServiceHandle<geo::WireReadout const>()->Get();
   
     // make a collection of Wires
     std::unique_ptr<std::vector<recob::Wire> > wirecol(new std::vector<recob::Wire>);
@@ -200,7 +200,7 @@ void CalWireInvert::produce(art::Event& evt)
             // vector holding uncompressed adc values
             std::vector<short> rawadc(dataSize);
     
-            std::vector<geo::WireID> wids = geom->ChannelToWire(channel);
+            std::vector<geo::WireID> wids = channelMapAlg.ChannelToWire(channel);
             unsigned int thePlane = wids[0].Plane;
             //unsigned int theWire = wids[0].Wire;
       
