@@ -150,6 +150,12 @@ private:
   double fPOTSum_totspills;
   double fPOTSum_goodspills;
 
+  void MakePOTMap();
+  std::map<unsigned int,double> fSR_POTPerEvent;
+  std::map<unsigned int,double> fSR_GoodPOTPerEvent;
+  std::map<unsigned int,double> fSR_SpillsPerEvent;
+  std::map<unsigned int,double> fSR_GoodSpillsPerEvent;
+
   void FillInputModuleLabels(fhicl::ParameterSet const &,
 			     std::string,
 			     std::vector<art::InputTag> &);
@@ -209,6 +215,7 @@ mix::SimInfoOverlayFilter::SimInfoOverlayFilter(fhicl::ParameterSet const & p)
     fPOTSum_goodspills = 0.0;
 
     this->produces<sumdata::POTSummary,art::InSubRun>();
+    MakePOTMap();
   }
 
 }
@@ -506,16 +513,24 @@ bool mix::SimInfoOverlayFilter::filter(art::Event & e)
   }
 
   if(fFillPOTInfo){
-    auto eventsInGalleryFile = gEvent.numberOfEventsInFile();
-    gallery::Handle< sumdata::POTSummary > potsum_handle;
-    if(!gEvent.getByLabel<sumdata::POTSummary>(fPOTSummaryTag,potsum_handle))
-      throw cet::exception("SimInfoOverlayFilter") << "No POTSummary object with tag " << fPOTSummaryTag;
-    
-    auto const& potsum(*potsum_handle);
-    fPOTSum_totpot += potsum.totpot/eventsInGalleryFile;
-    fPOTSum_totgoodpot += potsum.totgoodpot/eventsInGalleryFile;
-    fPOTSum_totspills += double(potsum.totspills)/eventsInGalleryFile;
-    fPOTSum_goodspills += double(potsum.goodspills)/eventsInGalleryFile;
+    /*
+       auto eventsInGalleryFile = gEvent.numberOfEventsInFile();
+       gallery::Handle< sumdata::POTSummary > potsum_handle;
+       if(!gEvent.getByLabel<sumdata::POTSummary>(fPOTSummaryTag,potsum_handle))
+       throw cet::exception("SimInfoOverlayFilter") << "No POTSummary object with tag " << fPOTSummaryTag;
+
+       auto const& potsum(*potsum_handle);
+       fPOTSum_totpot += potsum.totpot/eventsInGalleryFile;
+       fPOTSum_totgoodpot += potsum.totgoodpot/eventsInGalleryFile;
+       fPOTSum_totspills += double(potsum.totspills)/eventsInGalleryFile;
+       fPOTSum_goodspills += double(potsum.goodspills)/eventsInGalleryFile;
+       */
+
+    fPOTSum_totpot += fSR_POTPerEvent[gEvent.eventAuxiliary().subRun()];
+    fPOTSum_totgoodpot += fSR_GoodPOTPerEvent[gEvent.eventAuxiliary().subRun()];
+    fPOTSum_totspills += fSR_SpillsPerEvent[gEvent.eventAuxiliary().subRun()];
+    fPOTSum_goodspills += fSR_GoodSpillsPerEvent[gEvent.eventAuxiliary().subRun()];
+
   }
 
   auto mctruth_artptr_lookup = FillCollectionMap<simb::MCTruth>(fMCTruthInputModuleLabels,
@@ -653,6 +668,67 @@ bool mix::SimInfoOverlayFilter::filter(art::Event & e)
   PutCollectionsOntoEvent(e);
   gEvent.next();
   return true;
+}
+
+// POT map creation updated to handle multiple subruns in auxillary event file
+void mix::SimInfoOverlayFilter::MakePOTMap(){
+
+   gEvent.first();
+
+   // Reset everything
+   fSR_POTPerEvent.clear();
+   fSR_GoodPOTPerEvent.clear();
+   fSR_SpillsPerEvent.clear();
+   fSR_GoodSpillsPerEvent.clear();
+
+   unsigned int current_sr = 0;
+   unsigned int events_in_sr = 0;
+
+   double current_sr_POT = 0;
+   double current_sr_GoodPOT = 0;
+   int current_sr_Spills = 0;
+   int current_sr_GoodSpills = 0;
+
+   // Iterate through all events in auxillary file, count how many are in each subrun
+   while(!gEvent.atEnd()){
+
+      if(gEvent.eventAuxiliary().subRun() != current_sr){
+         if(current_sr != 0){
+            fSR_POTPerEvent[current_sr] = current_sr_POT/events_in_sr;
+            fSR_GoodPOTPerEvent[current_sr] = current_sr_GoodPOT/events_in_sr;
+            fSR_SpillsPerEvent[current_sr] = (double)current_sr_Spills/events_in_sr;
+            fSR_GoodSpillsPerEvent[current_sr] = (double)current_sr_GoodSpills/events_in_sr;
+         }
+         events_in_sr = 0;
+         current_sr = gEvent.eventAuxiliary().subRun();
+      }
+
+      gallery::Handle< sumdata::POTSummary > potsum_handle;
+      if(!gEvent.getByLabel<sumdata::POTSummary>(fPOTSummaryTag,potsum_handle))
+         throw cet::exception("SimInfoOverlayFilterGenG4") << "No POTSummary object with tag " << fPOTSummaryTag;
+
+      auto const& potsum(*potsum_handle);
+      current_sr_POT = potsum.totpot;
+      current_sr_GoodPOT = potsum.totgoodpot;
+      current_sr_Spills = potsum.totspills;
+      current_sr_GoodSpills = potsum.goodspills;
+    
+      events_in_sr++;
+      gEvent.next();
+   }
+
+   // Add the last sr
+   if(current_sr != 0){
+      fSR_POTPerEvent[current_sr] = current_sr_POT/events_in_sr;
+      fSR_GoodPOTPerEvent[current_sr] = current_sr_GoodPOT/events_in_sr;
+      fSR_SpillsPerEvent[current_sr] = (double)current_sr_Spills/events_in_sr;
+      fSR_GoodSpillsPerEvent[current_sr] = (double)current_sr_GoodSpills/events_in_sr;
+   }
+
+   // std::map<unsigned int,double>::iterator it;
+   // for (it = fSR_POTPerEvent.begin(); it != fSR_POTPerEvent.end(); it++) std::cout << "SR=" << it->first << " POT/Event=" << it->second << std::endl;
+
+   gEvent.first();
 }
 
 void mix::SimInfoOverlayFilter::beginJob()
