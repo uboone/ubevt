@@ -115,7 +115,10 @@ private:
   std::vector<art::InputTag>    fMCTruthMCFluxAssnsInputModuleLabels;
   std::vector<art::InputTag>    fMCTruthGTruthAssnsInputModuleLabels;
   std::vector<art::InputTag>    fMCTruthMCParticleAssnsInputModuleLabels;
-  
+
+  // Added by C Thorpe: New fhicl parameters needed to handle separate gen/g4 stages in auxiallary file 
+  bool fAuxHasSeparateGenG4; 
+  std::vector<art::InputTag>    fMCTruthMCParticleAssnsMCTruthLookupLabel;
   
   template<class T>
   using CollectionMap = std::unordered_map< std::string, std::unique_ptr<T> >;
@@ -146,6 +149,12 @@ private:
   double fPOTSum_totgoodpot;
   double fPOTSum_totspills;
   double fPOTSum_goodspills;
+
+  void MakePOTMap();
+  std::map<unsigned int,double> fSR_POTPerEvent;
+  std::map<unsigned int,double> fSR_GoodPOTPerEvent;
+  std::map<unsigned int,double> fSR_SpillsPerEvent;
+  std::map<unsigned int,double> fSR_GoodSpillsPerEvent;
 
   void FillInputModuleLabels(fhicl::ParameterSet const &,
 			     std::string,
@@ -191,6 +200,7 @@ mix::SimInfoOverlayFilter::SimInfoOverlayFilter(fhicl::ParameterSet const & p)
   : EDFilter{p},
   fSimInputFileNames(p.get<std::vector<std::string>>("SimInputFileNames")),
   gEvent(fSimInputFileNames),
+  fAuxHasSeparateGenG4(p.get<bool>("AuxHasSeparateGenG4",false)),
   fVerbosity(p.get<int>("Verbosity",-1))
 {
   FillInputModuleLabels(p);
@@ -205,6 +215,7 @@ mix::SimInfoOverlayFilter::SimInfoOverlayFilter(fhicl::ParameterSet const & p)
     fPOTSum_goodspills = 0.0;
 
     this->produces<sumdata::POTSummary,art::InSubRun>();
+    MakePOTMap();
   }
 
 }
@@ -232,6 +243,17 @@ void mix::SimInfoOverlayFilter::FillInputModuleLabels(fhicl::ParameterSet const 
   FillInputModuleLabels(p,"MCTruthMCFluxAssnsInputModuleLabels",fMCTruthMCFluxAssnsInputModuleLabels);
   FillInputModuleLabels(p,"MCTruthGTruthAssnsInputModuleLabels",fMCTruthGTruthAssnsInputModuleLabels);
   FillInputModuleLabels(p,"MCTruthMCParticleAssnsInputModuleLabels",fMCTruthMCParticleAssnsInputModuleLabels);
+
+
+  // New fhicl parameter needed to handle separate gen/g4 passes in the aux file, crashes when trying to construct
+  // assns otherwise 
+
+  if(fAuxHasSeparateGenG4){
+    FillInputModuleLabels(p,"MCTruthMCParticleAssnsMCTruthLookupLabel",fMCTruthMCParticleAssnsMCTruthLookupLabel);
+    if(!fMCTruthMCParticleAssnsMCTruthLookupLabel.size())
+      throw cet::exception("SimInfoOverlayFilter")
+        << "Expecting aux file produced with separate gen/g4 passes, MCTruthMCParticleAssnsMCTruthLookupLabel in config needs to point to gen info in aux file";
+  }
 }
 
 template<class T>
@@ -286,7 +308,21 @@ void mix::SimInfoOverlayFilter::InitializeCollectionMaps()
   InitializeCollectionMap(fSimChannelInputModuleLabels,fSimChannelMap);
   InitializeCollectionMap(fSimPhotonsInputModuleLabels,fSimPhotonsMap);
 
+  std::cout << "Filling fMCTruthMCParticleAssnsMap" << std::endl;
+  std::cout << "fMCTruthMCParticleAssnsInputModuleLabels.size()=" <<  fMCTruthMCParticleAssnsInputModuleLabels.size() <<  std::endl;
+  if(fMCTruthMCParticleAssnsInputModuleLabels.size()){
+    std::cout << "Using label " << fMCTruthMCParticleAssnsInputModuleLabels.at(0) << std::endl;
+    auto canonical_product_name =  art::canonicalProductName(
+        art::friendlyname::friendlyName("art::Assns<simb::MCTruth,simb::MCParticle,sim::GeneratedParticleInfo>"),
+        fMCTruthMCParticleAssnsInputModuleLabels.at(0).label(),
+        fMCTruthMCParticleAssnsInputModuleLabels.at(0).instance(),
+        fMCTruthMCParticleAssnsInputModuleLabels.at(0).process()
+        );
+    auto product_id = art::ProductID(canonical_product_name);
+    std::cout << "Equivalent ProductID: " << product_id << std::endl;
+  }
   InitializeCollectionMap(fMCTruthMCParticleAssnsInputModuleLabels,fMCTruthMCParticleAssnsMap);
+  std::cout << "fMCTruthMCParticleAssnsMap.size()=" << fMCTruthMCParticleAssnsMap.size() << std::endl;
 
   if(fVerbosity>1)
     std::cout << "Finished initializing collection maps." << std::endl;
@@ -382,7 +418,6 @@ void mix::SimInfoOverlayFilter::FillAssnsCollectionMap(std::vector<art::InputTag
 
   for(auto label : labels){
     auto & out_ptrAssns = colmap[label.instance()];
-    
 
     gallery::Handle< art::Assns<T,U,void> > handle;
     if(!gEvent.getByLabel< art::Assns<T,U,void> >(label,handle)) continue;
@@ -410,9 +445,25 @@ void mix::SimInfoOverlayFilter::FillAssnsCollectionMap(std::vector<art::InputTag
 						       orig_artptr_lookup_right)						       
 {
 
+  std::cout << "Starting FillAssnsCollectionMap" << std::endl;
+
+  // Notes on the inputs:
+  // colmap = fMCTruthMCParticleAssnsMap, CollectionMap filled with art::Assns<simb::MCTruth,simb::MCParticle,sim::GeneratedParticleInfo> 
+  // orig_artptr_lookup_left, mctruth_artptr_lookup, map between product id and art::Ptr<simb::MCTruth> filled before calling this function
+  // orig_artptr_lookup_right, mcpart_artptr_lookup, map between product id and art::Ptr<simb::MCParticle> filled at the start of filter 
+   
   for(auto label : labels){
+    std::cout << "label=" << label << std::endl;
     auto & out_ptrAssns = colmap[label.instance()];
-    
+
+    auto canonical_product_name =  art::canonicalProductName(
+        art::friendlyname::friendlyName("art::Assns<simb::MCTruth,simb::MCParticle,sim::GeneratedParticleInfo>"),
+        label.label(),
+        label.instance(),
+        label.process()
+        );
+    auto product_id = art::ProductID(canonical_product_name);
+    std::cout << "Equivalent ProductID: " << product_id << std::endl;
 
     gallery::Handle< art::Assns<T,U,D> > handle;
     if(!gEvent.getByLabel< art::Assns<T,U,D> >(label,handle)) continue;
@@ -422,8 +473,11 @@ void mix::SimInfoOverlayFilter::FillAssnsCollectionMap(std::vector<art::InputTag
       auto id_left  = std::make_pair(assns[i_assn].first.id(),assns[i_assn].first.key());
       auto id_right = std::make_pair(assns[i_assn].second.id(),assns[i_assn].second.key());
       auto const& data = assns.data(i_assn);
-
+    
+      std::cout << "Looking for Product ID " << id_left.first << " in mctruth_artptr_lookup" << std::endl;
       auto newptr_left = orig_artptr_lookup_left.at(id_left);
+	
+      std::cout << "Looking for Product ID " << id_right.first << " in mcpart_artptr_lookup" << std::endl;
       auto newptr_right = orig_artptr_lookup_right.at(id_right);
 
       out_ptrAssns->addSingle(newptr_left,newptr_right,data);
@@ -435,6 +489,9 @@ void mix::SimInfoOverlayFilter::FillAssnsCollectionMap(std::vector<art::InputTag
 
 bool mix::SimInfoOverlayFilter::filter(art::Event & e)
 {
+
+  std::cout << std::endl << "STARTING FILTER" << std::endl;
+
   InitializeCollectionMaps();
 
   //check if we have exhausted our simulation events. If so, we return false.
@@ -456,16 +513,24 @@ bool mix::SimInfoOverlayFilter::filter(art::Event & e)
   }
 
   if(fFillPOTInfo){
-    auto eventsInGalleryFile = gEvent.numberOfEventsInFile();
-    gallery::Handle< sumdata::POTSummary > potsum_handle;
-    if(!gEvent.getByLabel<sumdata::POTSummary>(fPOTSummaryTag,potsum_handle))
-      throw cet::exception("SimInfoOverlayFilter") << "No POTSummary object with tag " << fPOTSummaryTag;
-    
-    auto const& potsum(*potsum_handle);
-    fPOTSum_totpot += potsum.totpot/eventsInGalleryFile;
-    fPOTSum_totgoodpot += potsum.totgoodpot/eventsInGalleryFile;
-    fPOTSum_totspills += double(potsum.totspills)/eventsInGalleryFile;
-    fPOTSum_goodspills += double(potsum.goodspills)/eventsInGalleryFile;
+    /*
+       auto eventsInGalleryFile = gEvent.numberOfEventsInFile();
+       gallery::Handle< sumdata::POTSummary > potsum_handle;
+       if(!gEvent.getByLabel<sumdata::POTSummary>(fPOTSummaryTag,potsum_handle))
+       throw cet::exception("SimInfoOverlayFilter") << "No POTSummary object with tag " << fPOTSummaryTag;
+
+       auto const& potsum(*potsum_handle);
+       fPOTSum_totpot += potsum.totpot/eventsInGalleryFile;
+       fPOTSum_totgoodpot += potsum.totgoodpot/eventsInGalleryFile;
+       fPOTSum_totspills += double(potsum.totspills)/eventsInGalleryFile;
+       fPOTSum_goodspills += double(potsum.goodspills)/eventsInGalleryFile;
+       */
+
+    fPOTSum_totpot += fSR_POTPerEvent[gEvent.eventAuxiliary().subRun()];
+    fPOTSum_totgoodpot += fSR_GoodPOTPerEvent[gEvent.eventAuxiliary().subRun()];
+    fPOTSum_totspills += fSR_SpillsPerEvent[gEvent.eventAuxiliary().subRun()];
+    fPOTSum_goodspills += fSR_GoodSpillsPerEvent[gEvent.eventAuxiliary().subRun()];
+
   }
 
   auto mctruth_artptr_lookup = FillCollectionMap<simb::MCTruth>(fMCTruthInputModuleLabels,
@@ -495,10 +560,26 @@ bool mix::SimInfoOverlayFilter::filter(art::Event & e)
 						     mctruth_artptr_lookup,
 						     gtruth_artptr_lookup);
 
+  std::cout << "Filling mcpart_artptr_lookup" << std::endl; 
+  std::cout << "fMCParticleInputModuleLabels.size()= " << fMCParticleInputModuleLabels.size() << std::endl;
+  if(fMCParticleInputModuleLabels.size()){
+    std::cout << "Using label " << fMCParticleInputModuleLabels.at(0) << std::endl;
+    auto canonical_product_name =  art::canonicalProductName(
+        art::friendlyname::friendlyName("std::vector<simb::MCParticle>"),
+        fMCParticleInputModuleLabels.at(0).label(),
+        fMCParticleInputModuleLabels.at(0).instance(),
+        fMCParticleInputModuleLabels.at(0).process()
+        );
+    auto product_id = art::ProductID(canonical_product_name);
+    std::cout << "Equivalent ProductID: " << product_id << std::endl;
+  }
+
   auto mcpart_artptr_lookup = FillCollectionMap<simb::MCParticle>(fMCParticleInputModuleLabels,
 							          fMCParticleMap,
 							          "std::vector<simb::MCParticle>",
 							          e);
+  std::cout << "mcpart_artptr_lookup.size()=" << mcpart_artptr_lookup.size() << std::endl;
+
 
   FillCollectionMap<sim::SimEnergyDeposit>(fSimEnergyDepositInputModuleLabels,
 				       fSimEnergyDepositMap,
@@ -533,12 +614,27 @@ bool mix::SimInfoOverlayFilter::filter(art::Event & e)
       if(process_name != moduleDescription().processName()) {
         continue;
       }
+      std::cout << "Making mctruth_artptr_lookup" << std::endl;
+      std::cout << "Using label " << module_name << " " << instance_name << " " << fMCTruthMCParticleAssnsInputModuleLabels.begin()->process() << std::endl;
       auto canonical_product_name =  art::canonicalProductName(
           art::friendlyname::friendlyName("std::vector<simb::MCTruth>"),
 	  module_name,
 	  instance_name,
 	  fMCTruthMCParticleAssnsInputModuleLabels.begin()->process());
       auto product_id = art::ProductID(canonical_product_name);
+
+      // If the auxillary file was made with separate Gen/G4 steps - the wrong productID is assigned here
+      // causing a crash when tying to construct the assns, extra fhicl parameter to give the correct label 
+      if(fAuxHasSeparateGenG4){
+        std::cout << "Config indicates separate gen/g4 passes used in the aux file" << std::endl;
+        canonical_product_name =  art::canonicalProductName(
+            art::friendlyname::friendlyName("std::vector<simb::MCTruth>"),
+            fMCTruthMCParticleAssnsMCTruthLookupLabel.at(0).label(),
+            fMCTruthMCParticleAssnsMCTruthLookupLabel.at(0).instance(),
+            fMCTruthMCParticleAssnsMCTruthLookupLabel.at(0).process());
+          product_id = art::ProductID(canonical_product_name);
+      }
+      std::cout << "ProductID: " << product_id << std::endl;
       for(size_t m = 0; m < mclistHandle->size(); ++m){
         art::Ptr<simb::MCTruth> mct(mclistHandle, m);
 
@@ -546,16 +642,92 @@ bool mix::SimInfoOverlayFilter::filter(art::Event & e)
       }
     }
   }
+
+  std::cout << "List of ProductIDs in mctruth_artptr_lookup:" << std::endl;
+  std::map< std::pair<art::ProductID,size_t> , art::Ptr<simb::MCTruth> >::iterator it_T; 
+  for(it_T = mctruth_artptr_lookup.begin();it_T != mctruth_artptr_lookup.end();it_T++)
+        std::cout << it_T->first.first << std::endl;
+
+  std::cout << "List of ProductIDs in mcpart_artptr_lookup:" << std::endl;
+  std::map< std::pair<art::ProductID,size_t> , art::Ptr<simb::MCParticle> >::iterator it_U; 
+  for(it_U = mcpart_artptr_lookup.begin();it_U != mcpart_artptr_lookup.end();it_U++){
+        std::cout << it_U->first.first << std::endl;
+        break;
+  }
+
+  std::cout << "Calling FillAssnsCollectionMap" << std::endl;
   FillAssnsCollectionMap<simb::MCTruth,simb::MCParticle,sim::GeneratedParticleInfo>
     (fMCTruthMCParticleAssnsInputModuleLabels,
      fMCTruthMCParticleAssnsMap,
      mctruth_artptr_lookup,
      mcpart_artptr_lookup);
+  std::cout << "Finished FillAssnsCollectionMap" << std::endl;
 
   //put onto event and loop the gallery event
   PutCollectionsOntoEvent(e);
   gEvent.next();
   return true;
+}
+
+// POT map creation updated to handle multiple subruns in auxillary event file
+void mix::SimInfoOverlayFilter::MakePOTMap(){
+
+   gEvent.first();
+
+   // Reset everything
+   fSR_POTPerEvent.clear();
+   fSR_GoodPOTPerEvent.clear();
+   fSR_SpillsPerEvent.clear();
+   fSR_GoodSpillsPerEvent.clear();
+
+   unsigned int current_sr = 0;
+   unsigned int events_in_sr = 0;
+
+   double current_sr_POT = 0;
+   double current_sr_GoodPOT = 0;
+   int current_sr_Spills = 0;
+   int current_sr_GoodSpills = 0;
+
+   // Iterate through all events in auxillary file, count how many are in each subrun
+   while(!gEvent.atEnd()){
+
+      if(gEvent.eventAuxiliary().subRun() != current_sr){
+         if(current_sr != 0){
+            fSR_POTPerEvent[current_sr] = current_sr_POT/events_in_sr;
+            fSR_GoodPOTPerEvent[current_sr] = current_sr_GoodPOT/events_in_sr;
+            fSR_SpillsPerEvent[current_sr] = (double)current_sr_Spills/events_in_sr;
+            fSR_GoodSpillsPerEvent[current_sr] = (double)current_sr_GoodSpills/events_in_sr;
+         }
+         events_in_sr = 0;
+         current_sr = gEvent.eventAuxiliary().subRun();
+      }
+
+      gallery::Handle< sumdata::POTSummary > potsum_handle;
+      if(!gEvent.getByLabel<sumdata::POTSummary>(fPOTSummaryTag,potsum_handle))
+         throw cet::exception("SimInfoOverlayFilterGenG4") << "No POTSummary object with tag " << fPOTSummaryTag;
+
+      auto const& potsum(*potsum_handle);
+      current_sr_POT = potsum.totpot;
+      current_sr_GoodPOT = potsum.totgoodpot;
+      current_sr_Spills = potsum.totspills;
+      current_sr_GoodSpills = potsum.goodspills;
+    
+      events_in_sr++;
+      gEvent.next();
+   }
+
+   // Add the last sr
+   if(current_sr != 0){
+      fSR_POTPerEvent[current_sr] = current_sr_POT/events_in_sr;
+      fSR_GoodPOTPerEvent[current_sr] = current_sr_GoodPOT/events_in_sr;
+      fSR_SpillsPerEvent[current_sr] = (double)current_sr_Spills/events_in_sr;
+      fSR_GoodSpillsPerEvent[current_sr] = (double)current_sr_GoodSpills/events_in_sr;
+   }
+
+   // std::map<unsigned int,double>::iterator it;
+   // for (it = fSR_POTPerEvent.begin(); it != fSR_POTPerEvent.end(); it++) std::cout << "SR=" << it->first << " POT/Event=" << it->second << std::endl;
+
+   gEvent.first();
 }
 
 void mix::SimInfoOverlayFilter::beginJob()
