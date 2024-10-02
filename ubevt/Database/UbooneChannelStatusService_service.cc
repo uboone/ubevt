@@ -10,7 +10,7 @@
 #include "UbooneCalibrationServiceHelper.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h" 
 #include "art/Persistency/Provenance/ScheduleContext.h"
-#include "larcore/Geometry/Geometry.h"
+#include "larcore/Geometry/WireReadout.h"
 
 #include "lardataobj/RawData/RawDigit.h"
 #include "lardataobj/RawData/raw.h"
@@ -92,7 +92,7 @@ namespace lariov{
     // Require a valid handle
     if (!digitVecHandle.isValid()) return;
 
-    art::ServiceHandle<geo::Geometry > geo;
+    auto const& channelMapAlg = art::ServiceHandle<geo::WireReadout const>()->Get();
 
     // Loop over raw digits, calculate the baseline rms of each one, and 
     // declare a channel noisy if its rms is above user-defined threshold 
@@ -204,7 +204,7 @@ namespace lariov{
       }
 
       rmsVal = std::sqrt(std::max(0.,rmsVal / double(rmsBinCnt)));
-      if (rmsVal >= fRmsCut[geo->View(channel)]) {
+      if (rmsVal >= fRmsCut[channelMapAlg.View(channel)]) {
 	fProvider.AddNoisyChannel(channel);
       }
 
