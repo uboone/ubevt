@@ -24,6 +24,7 @@
 #include "lardataobj/RawData/raw.h"
 #include "lardataobj/RawData/TriggerData.h"
 #include "lardataobj/Simulation/SimChannel.h"
+#include "larcore/Geometry/WireReadout.h"
 #include "larcore/Geometry/Geometry.h"
 
 #include "larevt/CalibrationDBI/Interface/DetPedestalService.h"
@@ -88,6 +89,7 @@ void TestDBI::analyze(art::Event const & evt)
 {
 
   art::ServiceHandle<geo::Geometry> geo;
+  auto const& channelMapAlg = art::ServiceHandle<geo::WireReadout const>()->Get();
   art::Handle< std::vector<raw::RawDigit> > digitVecHandle;
   /*  
   evt.getByLabel(fRDModuleLabel, digitVecHandle);
@@ -135,7 +137,7 @@ void TestDBI::analyze(art::Event const & evt)
   
   const lariov::PmtGainProvider& gain_provider = art::ServiceHandle<lariov::PmtGainService>()->GetProvider();
   for (unsigned int i=0; i!= geo->NOpDets(); ++i) {
-    if (geo->IsValidOpChannel(i) && i<32) {
+    if (channelMapAlg.IsValidOpChannel(i) && i<32) {
       std::cout<<"Channel "<<i <<" "<<gain_provider.Gain(i)<<" "
                <<gain_provider.GainErr(i) <<" "
 	       <<gain_provider.ExtraInfo(i).GetStringData("gain_fit_status")<<" "
@@ -147,7 +149,7 @@ void TestDBI::analyze(art::Event const & evt)
 	       <<gain_provider.ExtraInfo(i).GetFloatData("pedestal_rms")<<" "
 	       <<gain_provider.ExtraInfo(i).GetFloatData("pedestal_rms_err")<<std::endl;
     }
-    else if (geo->IsValidOpChannel(i)) {
+    else if (channelMapAlg.IsValidOpChannel(i)) {
       std::cout<<"Channel "<<i<<std::endl;
     }
   }

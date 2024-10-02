@@ -46,7 +46,7 @@
 #include "canvas/Persistency/Common/Ptr.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
-#include "larcore/Geometry/Geometry.h"
+#include "larcore/Geometry/WireReadout.h"
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
 #include "larevt/CalibrationDBI/Interface/DetPedestalService.h"
 #include "larevt/CalibrationDBI/Interface/DetPedestalProvider.h"
@@ -104,7 +104,7 @@ private:
     caldata::RawDigitFFTAlg                      fFFTAlg;
     
     // Useful services, keep copies for now (we can update during begin run periods)
-    geo::GeometryCore const*           fGeometry;             ///< pointer to Geometry service
+    geo::WireReadoutGeom const*          fWireReadoutGeom;
     const lariov::DetPedestalProvider& fPedestalRetrievalAlg; ///< Keep track of an instance to the pedestal retrieval alg
 };
 
@@ -127,7 +127,7 @@ RawDigitFilterUBooNE::RawDigitFilterUBooNE(fhicl::ParameterSet const & pset) : E
                       fPedestalRetrievalAlg(*lar::providerFrom<lariov::DetPedestalService>())
 {
     
-    fGeometry = lar::providerFrom<geo::Geometry>();
+    fWireReadoutGeom = &art::ServiceHandle<geo::WireReadout const>()->Get();
     
     reconfigure(pset);
     produces<std::vector<raw::RawDigit> >();
@@ -205,7 +205,7 @@ void RawDigitFilterUBooNE::produce(art::Event & event)
     // Require a valid handle
     if (digitVecHandle.isValid())
     {
-        unsigned int maxChannels    = fGeometry->Nchannels();
+        unsigned int maxChannels    = fWireReadoutGeom->Nchannels();
         unsigned int maxTimeSamples = detProp.NumberTimeSamples();
         
         // Sadly, the RawDigits come to us in an unsorted condition which is not optimal for
@@ -252,7 +252,7 @@ void RawDigitFilterUBooNE::produce(art::Event & event)
             // Decode the channel and make sure we have a valid one
             std::vector<geo::WireID> wids;
             try {
-                wids = fGeometry->ChannelToWire(channel);
+                wids = fWireReadoutGeom->ChannelToWire(channel);
             }
             catch(...)
             {

@@ -11,7 +11,7 @@
 #include "messagefacility/MessageLogger/MessageLogger.h"
 #include "cetlib_except/exception.h"
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
-#include "larcore/Geometry/Geometry.h"
+#include "larcore/Geometry/WireReadout.h"
 #include "larcore/CoreUtils/ServiceUtil.h" // lar::providerFrom<>()
 
 #include "TH1F.h"
@@ -66,7 +66,7 @@ private:
     std::vector<TH1F*>              fRmsHistVec;
     
     // Services
-    const geo::GeometryCore*        fGeometry = lar::providerFrom<geo::Geometry>();
+    const geo::WireReadoutGeom* fWireReadoutGeom = &art::ServiceHandle<geo::WireReadout const>()->Get();
 };
     
 //----------------------------------------------------------------------
@@ -144,7 +144,7 @@ void ROIFinderMorphological::FindROIs(const Waveform& waveform, size_t channel, 
     // candidate ROI's
     
     // First up, determine what kind of wire we have
-    std::vector<geo::WireID> wids    = fGeometry->ChannelToWire(channel);
+    std::vector<geo::WireID> wids    = fWireReadoutGeom->ChannelToWire(channel);
     const geo::PlaneID&      planeID = wids[0].planeID();
 
     // Do the averaging

@@ -5,7 +5,7 @@
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
 
-#include "larcore/Geometry/Geometry.h"
+#include "larcore/Geometry/WireReadout.h"
 
 #include "larevt/CalibrationDBI/Interface/ChannelStatusService.h"
 #include "larevt/CalibrationDBI/Interface/ChannelStatusProvider.h"
@@ -25,13 +25,13 @@ class TestCFI : public art::EDAnalyzer {
 
 void TestCFI::analyze(art::Event const& evt) {
   
-  art::ServiceHandle<geo::Geometry> geo;
+  auto const& channelMapAlg = art::ServiceHandle<geo::WireReadout const>()->Get();
   art::ServiceHandle<lariov::ChannelStatusService> cf; 
   const lariov::ChannelStatusProvider& cp = cf->GetProvider();
   
   std::ofstream f("channelStatus.txt",std::ofstream::out);
   
-  for (unsigned int i=0; i < geo->Nchannels(); ++i) {
+  for (unsigned int i=0; i < channelMapAlg.Nchannels(); ++i) {
     
     unsigned short status = cp.Status(i);
     if (status == lariov::kNOISY) f <<i<<" "<<status<<std::endl;
@@ -41,6 +41,3 @@ void TestCFI::analyze(art::Event const& evt) {
 }
 
 DEFINE_ART_MODULE(TestCFI)
-    
-  
-  

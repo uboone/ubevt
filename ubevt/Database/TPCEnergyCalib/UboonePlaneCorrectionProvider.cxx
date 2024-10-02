@@ -6,7 +6,7 @@
 
 // art/LArSoft libraries
 #include "cetlib_except/exception.h"
-#include "larcore/Geometry/Geometry.h"
+#include "larcore/Geometry/WireReadout.h"
 #include "art/Framework/Services/Registry/ServiceHandle.h" 
 
 
@@ -47,8 +47,8 @@ namespace lariov {
       defaultCalib.SetCorrection(default_correction);
       defaultCalib.SetCorrectionErr(default_correction_err);
       
-      art::ServiceHandle<geo::Geometry> geo;
-      for (auto const& planeID : geo->Iterate<geo::PlaneID>()) {
+      auto const& channelMap = art::ServiceHandle<geo::WireReadout>()->Get();
+      for (auto const& planeID : channelMap.Iterate<geo::PlaneID>()) {
         DBChannelID_t plane = planeID.Plane;
 	defaultCalib.SetChannel(plane);
 	fData.AddOrReplaceRow(defaultCalib);
