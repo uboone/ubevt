@@ -681,7 +681,7 @@ void mix::SimInfoOverlayFilter::MakePOTMap(){
    fSR_SpillsPerEvent.clear();
    fSR_GoodSpillsPerEvent.clear();
 
-   unsigned int current_sr = 0;
+   int current_sr = -1;
    unsigned int events_in_sr = 0;
 
    double current_sr_POT = 0;
@@ -692,8 +692,8 @@ void mix::SimInfoOverlayFilter::MakePOTMap(){
    // Iterate through all events in auxillary file, count how many are in each subrun
    while(!gEvent.atEnd()){
 
-      if(gEvent.eventAuxiliary().subRun() != current_sr){
-         if(current_sr != 0){
+      if((int)gEvent.eventAuxiliary().subRun() != current_sr){
+         if(current_sr != -1){
             fSR_POTPerEvent[current_sr] = current_sr_POT/events_in_sr;
             fSR_GoodPOTPerEvent[current_sr] = current_sr_GoodPOT/events_in_sr;
             fSR_SpillsPerEvent[current_sr] = (double)current_sr_Spills/events_in_sr;
@@ -718,7 +718,7 @@ void mix::SimInfoOverlayFilter::MakePOTMap(){
    }
 
    // Add the last sr
-   if(current_sr != 0){
+   if(current_sr != -1){
       fSR_POTPerEvent[current_sr] = current_sr_POT/events_in_sr;
       fSR_GoodPOTPerEvent[current_sr] = current_sr_GoodPOT/events_in_sr;
       fSR_SpillsPerEvent[current_sr] = (double)current_sr_Spills/events_in_sr;
