@@ -307,22 +307,7 @@ void mix::SimInfoOverlayFilter::InitializeCollectionMaps()
   InitializeCollectionMap(fAuxDetSimChannelInputModuleLabels,fAuxDetSimChannelMap);
   InitializeCollectionMap(fSimChannelInputModuleLabels,fSimChannelMap);
   InitializeCollectionMap(fSimPhotonsInputModuleLabels,fSimPhotonsMap);
-
-  std::cout << "Filling fMCTruthMCParticleAssnsMap" << std::endl;
-  std::cout << "fMCTruthMCParticleAssnsInputModuleLabels.size()=" <<  fMCTruthMCParticleAssnsInputModuleLabels.size() <<  std::endl;
-  if(fMCTruthMCParticleAssnsInputModuleLabels.size()){
-    std::cout << "Using label " << fMCTruthMCParticleAssnsInputModuleLabels.at(0) << std::endl;
-    auto canonical_product_name =  art::canonicalProductName(
-        art::friendlyname::friendlyName("art::Assns<simb::MCTruth,simb::MCParticle,sim::GeneratedParticleInfo>"),
-        fMCTruthMCParticleAssnsInputModuleLabels.at(0).label(),
-        fMCTruthMCParticleAssnsInputModuleLabels.at(0).instance(),
-        fMCTruthMCParticleAssnsInputModuleLabels.at(0).process()
-        );
-    auto product_id = art::ProductID(canonical_product_name);
-    std::cout << "Equivalent ProductID: " << product_id << std::endl;
-  }
   InitializeCollectionMap(fMCTruthMCParticleAssnsInputModuleLabels,fMCTruthMCParticleAssnsMap);
-  std::cout << "fMCTruthMCParticleAssnsMap.size()=" << fMCTruthMCParticleAssnsMap.size() << std::endl;
 
   if(fVerbosity>1)
     std::cout << "Finished initializing collection maps." << std::endl;
@@ -445,26 +430,13 @@ void mix::SimInfoOverlayFilter::FillAssnsCollectionMap(std::vector<art::InputTag
 						       orig_artptr_lookup_right)						       
 {
 
-  std::cout << "Starting FillAssnsCollectionMap" << std::endl;
-
   // Notes on the inputs:
   // colmap = fMCTruthMCParticleAssnsMap, CollectionMap filled with art::Assns<simb::MCTruth,simb::MCParticle,sim::GeneratedParticleInfo> 
   // orig_artptr_lookup_left, mctruth_artptr_lookup, map between product id and art::Ptr<simb::MCTruth> filled before calling this function
   // orig_artptr_lookup_right, mcpart_artptr_lookup, map between product id and art::Ptr<simb::MCParticle> filled at the start of filter 
    
   for(auto label : labels){
-    std::cout << "label=" << label << std::endl;
     auto & out_ptrAssns = colmap[label.instance()];
-
-    auto canonical_product_name =  art::canonicalProductName(
-        art::friendlyname::friendlyName("art::Assns<simb::MCTruth,simb::MCParticle,sim::GeneratedParticleInfo>"),
-        label.label(),
-        label.instance(),
-        label.process()
-        );
-    auto product_id = art::ProductID(canonical_product_name);
-    std::cout << "Equivalent ProductID: " << product_id << std::endl;
-
     gallery::Handle< art::Assns<T,U,D> > handle;
     if(!gEvent.getByLabel< art::Assns<T,U,D> >(label,handle)) continue;
 
@@ -474,10 +446,8 @@ void mix::SimInfoOverlayFilter::FillAssnsCollectionMap(std::vector<art::InputTag
       auto id_right = std::make_pair(assns[i_assn].second.id(),assns[i_assn].second.key());
       auto const& data = assns.data(i_assn);
     
-      std::cout << "Looking for Product ID " << id_left.first << " in mctruth_artptr_lookup" << std::endl;
       auto newptr_left = orig_artptr_lookup_left.at(id_left);
 	
-      std::cout << "Looking for Product ID " << id_right.first << " in mcpart_artptr_lookup" << std::endl;
       auto newptr_right = orig_artptr_lookup_right.at(id_right);
 
       out_ptrAssns->addSingle(newptr_left,newptr_right,data);
@@ -490,7 +460,6 @@ void mix::SimInfoOverlayFilter::FillAssnsCollectionMap(std::vector<art::InputTag
 bool mix::SimInfoOverlayFilter::filter(art::Event & e)
 {
 
-  std::cout << std::endl << "STARTING FILTER" << std::endl;
 
   InitializeCollectionMaps();
 
@@ -513,7 +482,14 @@ bool mix::SimInfoOverlayFilter::filter(art::Event & e)
   }
 
   if(fFillPOTInfo){
-    /*
+
+    if(fAuxHasSeparateGenG4){
+    fPOTSum_totpot += fSR_POTPerEvent[gEvent.eventAuxiliary().subRun()];
+    fPOTSum_totgoodpot += fSR_GoodPOTPerEvent[gEvent.eventAuxiliary().subRun()];
+    fPOTSum_totspills += fSR_SpillsPerEvent[gEvent.eventAuxiliary().subRun()];
+    fPOTSum_goodspills += fSR_GoodSpillsPerEvent[gEvent.eventAuxiliary().subRun()];
+    }
+    else{
        auto eventsInGalleryFile = gEvent.numberOfEventsInFile();
        gallery::Handle< sumdata::POTSummary > potsum_handle;
        if(!gEvent.getByLabel<sumdata::POTSummary>(fPOTSummaryTag,potsum_handle))
@@ -524,12 +500,8 @@ bool mix::SimInfoOverlayFilter::filter(art::Event & e)
        fPOTSum_totgoodpot += potsum.totgoodpot/eventsInGalleryFile;
        fPOTSum_totspills += double(potsum.totspills)/eventsInGalleryFile;
        fPOTSum_goodspills += double(potsum.goodspills)/eventsInGalleryFile;
-       */
 
-    fPOTSum_totpot += fSR_POTPerEvent[gEvent.eventAuxiliary().subRun()];
-    fPOTSum_totgoodpot += fSR_GoodPOTPerEvent[gEvent.eventAuxiliary().subRun()];
-    fPOTSum_totspills += fSR_SpillsPerEvent[gEvent.eventAuxiliary().subRun()];
-    fPOTSum_goodspills += fSR_GoodSpillsPerEvent[gEvent.eventAuxiliary().subRun()];
+    }
 
   }
 
@@ -560,25 +532,10 @@ bool mix::SimInfoOverlayFilter::filter(art::Event & e)
 						     mctruth_artptr_lookup,
 						     gtruth_artptr_lookup);
 
-  std::cout << "Filling mcpart_artptr_lookup" << std::endl; 
-  std::cout << "fMCParticleInputModuleLabels.size()= " << fMCParticleInputModuleLabels.size() << std::endl;
-  if(fMCParticleInputModuleLabels.size()){
-    std::cout << "Using label " << fMCParticleInputModuleLabels.at(0) << std::endl;
-    auto canonical_product_name =  art::canonicalProductName(
-        art::friendlyname::friendlyName("std::vector<simb::MCParticle>"),
-        fMCParticleInputModuleLabels.at(0).label(),
-        fMCParticleInputModuleLabels.at(0).instance(),
-        fMCParticleInputModuleLabels.at(0).process()
-        );
-    auto product_id = art::ProductID(canonical_product_name);
-    std::cout << "Equivalent ProductID: " << product_id << std::endl;
-  }
-
   auto mcpart_artptr_lookup = FillCollectionMap<simb::MCParticle>(fMCParticleInputModuleLabels,
 							          fMCParticleMap,
 							          "std::vector<simb::MCParticle>",
 							          e);
-  std::cout << "mcpart_artptr_lookup.size()=" << mcpart_artptr_lookup.size() << std::endl;
 
 
   FillCollectionMap<sim::SimEnergyDeposit>(fSimEnergyDepositInputModuleLabels,
@@ -614,8 +571,6 @@ bool mix::SimInfoOverlayFilter::filter(art::Event & e)
       if(process_name != moduleDescription().processName()) {
         continue;
       }
-      std::cout << "Making mctruth_artptr_lookup" << std::endl;
-      std::cout << "Using label " << module_name << " " << instance_name << " " << fMCTruthMCParticleAssnsInputModuleLabels.begin()->process() << std::endl;
       auto canonical_product_name =  art::canonicalProductName(
           art::friendlyname::friendlyName("std::vector<simb::MCTruth>"),
 	  module_name,
@@ -634,7 +589,6 @@ bool mix::SimInfoOverlayFilter::filter(art::Event & e)
             fMCTruthMCParticleAssnsMCTruthLookupLabel.at(0).process());
           product_id = art::ProductID(canonical_product_name);
       }
-      std::cout << "ProductID: " << product_id << std::endl;
       for(size_t m = 0; m < mclistHandle->size(); ++m){
         art::Ptr<simb::MCTruth> mct(mclistHandle, m);
 
@@ -643,6 +597,7 @@ bool mix::SimInfoOverlayFilter::filter(art::Event & e)
     }
   }
 
+  if(fAuxHasSeparateGenG4){
   std::cout << "List of ProductIDs in mctruth_artptr_lookup:" << std::endl;
   std::map< std::pair<art::ProductID,size_t> , art::Ptr<simb::MCTruth> >::iterator it_T; 
   for(it_T = mctruth_artptr_lookup.begin();it_T != mctruth_artptr_lookup.end();it_T++)
@@ -654,14 +609,13 @@ bool mix::SimInfoOverlayFilter::filter(art::Event & e)
         std::cout << it_U->first.first << std::endl;
         break;
   }
+  }
 
-  std::cout << "Calling FillAssnsCollectionMap" << std::endl;
   FillAssnsCollectionMap<simb::MCTruth,simb::MCParticle,sim::GeneratedParticleInfo>
     (fMCTruthMCParticleAssnsInputModuleLabels,
      fMCTruthMCParticleAssnsMap,
      mctruth_artptr_lookup,
      mcpart_artptr_lookup);
-  std::cout << "Finished FillAssnsCollectionMap" << std::endl;
 
   //put onto event and loop the gallery event
   PutCollectionsOntoEvent(e);
@@ -680,7 +634,7 @@ void mix::SimInfoOverlayFilter::MakePOTMap(){
    fSR_SpillsPerEvent.clear();
    fSR_GoodSpillsPerEvent.clear();
 
-   unsigned int current_sr = 0;
+   int current_sr = -1;
    unsigned int events_in_sr = 0;
 
    double current_sr_POT = 0;
@@ -691,8 +645,8 @@ void mix::SimInfoOverlayFilter::MakePOTMap(){
    // Iterate through all events in auxillary file, count how many are in each subrun
    while(!gEvent.atEnd()){
 
-      if(gEvent.eventAuxiliary().subRun() != current_sr){
-         if(current_sr != 0){
+      if((int)gEvent.eventAuxiliary().subRun() != current_sr){
+         if(current_sr != -1){
             fSR_POTPerEvent[current_sr] = current_sr_POT/events_in_sr;
             fSR_GoodPOTPerEvent[current_sr] = current_sr_GoodPOT/events_in_sr;
             fSR_SpillsPerEvent[current_sr] = (double)current_sr_Spills/events_in_sr;
@@ -717,7 +671,7 @@ void mix::SimInfoOverlayFilter::MakePOTMap(){
    }
 
    // Add the last sr
-   if(current_sr != 0){
+   if(current_sr != -1){
       fSR_POTPerEvent[current_sr] = current_sr_POT/events_in_sr;
       fSR_GoodPOTPerEvent[current_sr] = current_sr_GoodPOT/events_in_sr;
       fSR_SpillsPerEvent[current_sr] = (double)current_sr_Spills/events_in_sr;
