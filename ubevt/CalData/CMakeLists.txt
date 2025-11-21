@@ -85,6 +85,7 @@ cet_build_plugin(
   ShowWire art::EDAnalyzer
   LIBRARIES
   PRIVATE
+  larcorealg::Geometry
   lardataobj::RecoBase
   larevt::DetPedestalService
   art_root_io::TFileService_service
