@@ -44,6 +44,16 @@ microboone_g4_dark_services.LArG4Parameters.KeepEMShowerDaughters: true
 microboone_g4_dark_services.LArG4Parameters.StoreTrajectories: true
 microboone_g4_dark_services.LArG4Parameters.UseModBoxRecomb: true
 
+# Add services used by refactored geant to microboone_g4_dark_services.
+
+microboone_g4_dark_services.DetectorHolder:     {}
+microboone_g4_dark_services.PhysicsListHolder:  {}
+microboone_g4_dark_services.ActionHolder:       {}
+microboone_g4_dark_services.LArG4Detector:      @local::microboone_larg4detector
+microboone_g4_dark_services.PhysicsList:        @local::microboone_physicslist
+microboone_g4_dark_services.MCTruthEventAction: {}
+microboone_g4_dark_services.ParticleListAction: @local::microboone_particlelistaction
+
 # Define microboone_detsim_dark_services ... (2)
 microboone_detsim_dark_services:                                @local::microboone_basic_services
 microboone_detsim_dark_services.LArFFT:                         @local::microboone_larfft
