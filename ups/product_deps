@@ -248,11 +248,11 @@ fwdir	product_dir	scripts
 #
 ####################################
 product		version		qual	flags		<table_format=2>
-gallery		v1_22_06	-
-ifdh_art	v2_17_09	-
-larevt		v10_00_26	-
-nurandom	v1_11_06	-
-ubcore		v10_30_00	-
+gallery		v1_23_02	-
+ifdh_art	v2_18_03	-
+larevt		v11_00_00	-
+nurandom	v1_12_00	-
+ubcore		v11_00_00	-
 cetmodules	v3_24_01	-	only_for_build
 end_product_list
 ####################################
